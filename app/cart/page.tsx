@@ -74,7 +74,7 @@ export default function CartPage() {
       <Header />
 
       <main className="flex-1">
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-6 md:px-12 py-6">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm mb-6">
             <Link href="/" className="text-gray-500">Home</Link>
@@ -82,7 +82,7 @@ export default function CartPage() {
             <span className="font-medium">Cart</span>
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-integral font-bold mb-8">Your cart</h1>
+          <h1 className="text-2xl md:text-3xl font-integral font-bold mb-6">Your cart</h1>
 
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Cart Items */}
@@ -103,8 +103,8 @@ export default function CartPage() {
                     {/* Product Info */}
                     <div className="flex-1 flex flex-col md:flex-row justify-between gap-4">
                       <div className="space-y-2">
-                        <h3 className="font-bold text-lg">{item.name}</h3>
-                        <div className="text-sm space-y-1">
+                        <h3 className="font-bold text-base">{item.name}</h3>
+                        <div className="text-xs space-y-1">
                           <p>
                             <span className="font-medium">Size:</span>{' '}
                             <span className="text-gray-600">{item.size}</span>
@@ -114,7 +114,7 @@ export default function CartPage() {
                             <span className="text-gray-600">{item.color}</span>
                           </p>
                         </div>
-                        <p className="text-2xl font-bold">${item.price}</p>
+                        <p className="text-xl font-bold">${item.price}</p>
                       </div>
 
                       <div className="flex md:flex-col items-end justify-between md:justify-start gap-4">
@@ -151,8 +151,8 @@ export default function CartPage() {
 
             {/* Order Summary */}
             <div className="lg:col-span-1">
-              <div className="border border-gray-200 rounded-2xl p-6 space-y-6 sticky top-6">
-                <h2 className="text-2xl font-bold">Order Summary</h2>
+              <div className="border border-gray-200 rounded-2xl p-5 space-y-5 sticky top-6">
+                <h2 className="text-xl font-bold">Order Summary</h2>
 
                 <div className="space-y-4">
                   <div className="flex justify-between">

@@ -36,21 +36,21 @@ export default function ProductCard({
 
         {/* Product Info */}
         <div className="space-y-2">
-          <h3 className="font-bold text-lg line-clamp-1">{name}</h3>
+          <h3 className="font-bold text-sm md:text-base line-clamp-1">{name}</h3>
           
           {/* Rating */}
           <div className="flex items-center gap-2">
-            <div className="flex gap-1">
+            <div className="flex gap-0.5">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`w-4 h-4 ${
+                  className={`w-3 h-3 md:w-4 md:h-4 ${
                     i < Math.floor(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
                   }`}
                 />
               ))}
             </div>
-            <span className="text-sm">
+            <span className="text-xs md:text-sm">
               <span className="font-medium">{rating}</span>
               <span className="text-gray-500">/5</span>
             </span>
@@ -58,14 +58,14 @@ export default function ProductCard({
 
           {/* Price */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-2xl font-bold">${price}</span>
+            <span className="text-lg md:text-xl font-bold">${price}</span>
             {originalPrice && (
               <>
-                <span className="text-2xl font-bold text-gray-400 line-through">
+                <span className="text-lg md:text-xl font-bold text-gray-400 line-through">
                   ${originalPrice}
                 </span>
                 {discount && (
-                  <span className="bg-red-100 text-red-600 text-xs font-medium px-3 py-1 rounded-full">
+                  <span className="bg-red-100 text-red-600 text-xs font-medium px-2 py-0.5 rounded-full">
                     -{discount}%
                   </span>
                 )}

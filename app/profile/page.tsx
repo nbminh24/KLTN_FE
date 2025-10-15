@@ -14,7 +14,7 @@ export default function ProfilePage() {
       <Header />
 
       <main className="flex-1">
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-6 md:px-12 py-6">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm mb-6">
             <Link href="/" className="text-gray-500">Home</Link>
@@ -22,7 +22,7 @@ export default function ProfilePage() {
             <span className="font-medium">My Profile</span>
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-integral font-bold mb-8">My Profile</h1>
+          <h1 className="text-2xl md:text-3xl font-integral font-bold mb-6">My Profile</h1>
 
           <div className="grid lg:grid-cols-4 gap-6">
             {/* Sidebar */}
@@ -79,8 +79,8 @@ export default function ProfilePage() {
             {/* Content */}
             <div className="lg:col-span-3">
               {activeTab === 'account' && (
-                <div className="border border-gray-200 rounded-2xl p-6">
-                  <h2 className="text-2xl font-bold mb-6">Account Details</h2>
+                <div className="border border-gray-200 rounded-2xl p-5">
+                  <h2 className="text-xl font-bold mb-5">Account Details</h2>
                   <form className="space-y-4">
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>

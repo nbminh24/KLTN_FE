@@ -6,9 +6,9 @@ export default function Footer() {
     <footer className="bg-gray-100 mt-20">
       {/* Newsletter Section */}
       <div className="bg-black text-white">
-        <div className="container mx-auto px-4 py-8 md:py-12">
+        <div className="container mx-auto px-6 md:px-12 py-6 md:py-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <h2 className="text-2xl md:text-4xl font-integral font-bold max-w-xl">
+            <h2 className="text-xl md:text-3xl font-integral font-bold max-w-xl">
               STAY UPTO DATE ABOUT OUR LATEST OFFERS
             </h2>
             <div className="flex flex-col gap-3 w-full md:w-auto">
@@ -16,10 +16,10 @@ export default function Footer() {
                 <input
                   type="email"
                   placeholder="Enter your email address"
-                  className="w-full md:w-80 px-4 py-3 rounded-full text-black focus:outline-none"
+                  className="w-full md:w-80 px-4 py-2.5 rounded-full text-black focus:outline-none text-sm"
                 />
               </div>
-              <button className="w-full md:w-80 bg-white text-black px-4 py-3 rounded-full font-medium hover:bg-gray-200 transition">
+              <button className="w-full md:w-80 bg-white text-black px-4 py-2.5 rounded-full font-medium hover:bg-gray-200 transition text-sm">
                 Subscribe to Newsletter
               </button>
             </div>
@@ -28,14 +28,14 @@ export default function Footer() {
       </div>
 
       {/* Main Footer */}
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-6 md:px-12 py-12">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
           {/* Brand Section */}
           <div className="md:col-span-2">
-            <Link href="/" className="text-2xl font-integral font-bold">
+            <Link href="/" className="text-xl font-integral font-bold">
               LeCas
             </Link>
-            <p className="mt-4 text-gray-600 max-w-xs">
+            <p className="mt-4 text-gray-600 max-w-xs text-sm">
               We have clothes that suits your style and which you're proud to wear. From women to men.
             </p>
             <div className="flex gap-3 mt-6">
@@ -56,8 +56,8 @@ export default function Footer() {
 
           {/* Company Links */}
           <div>
-            <h3 className="font-medium text-sm tracking-wider uppercase mb-4">Company</h3>
-            <ul className="space-y-3 text-gray-600">
+            <h3 className="font-medium text-xs tracking-wider uppercase mb-4">Company</h3>
+            <ul className="space-y-3 text-gray-600 text-sm">
               <li><Link href="/about">About</Link></li>
               <li><Link href="/features">Features</Link></li>
               <li><Link href="/works">Works</Link></li>
@@ -67,8 +67,8 @@ export default function Footer() {
 
           {/* Help Links */}
           <div>
-            <h3 className="font-medium text-sm tracking-wider uppercase mb-4">Help</h3>
-            <ul className="space-y-3 text-gray-600">
+            <h3 className="font-medium text-xs tracking-wider uppercase mb-4">Help</h3>
+            <ul className="space-y-3 text-gray-600 text-sm">
               <li><Link href="/support">Customer Support</Link></li>
               <li><Link href="/delivery">Delivery Details</Link></li>
               <li><Link href="/terms">Terms & Conditions</Link></li>
@@ -78,8 +78,8 @@ export default function Footer() {
 
           {/* FAQ Links */}
           <div>
-            <h3 className="font-medium text-sm tracking-wider uppercase mb-4">FAQ</h3>
-            <ul className="space-y-3 text-gray-600">
+            <h3 className="font-medium text-xs tracking-wider uppercase mb-4">FAQ</h3>
+            <ul className="space-y-3 text-gray-600 text-sm">
               <li><Link href="/account">Account</Link></li>
               <li><Link href="/deliveries">Manage Deliveries</Link></li>
               <li><Link href="/orders">Orders</Link></li>

@@ -14,7 +14,7 @@ export default function CheckoutPage() {
       <Header />
 
       <main className="flex-1">
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-6 md:px-12 py-6">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm mb-6">
             <Link href="/" className="text-gray-500">Home</Link>
@@ -24,16 +24,16 @@ export default function CheckoutPage() {
             <span className="font-medium">Checkout</span>
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-integral font-bold mb-8">Checkout</h1>
+          <h1 className="text-2xl md:text-3xl font-integral font-bold mb-6">Checkout</h1>
 
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Checkout Form */}
             <div className="lg:col-span-2 space-y-8">
               {/* Shipping Information */}
-              <div className="border border-gray-200 rounded-2xl p-6">
-                <div className="flex items-center gap-3 mb-6">
-                  <Truck className="w-6 h-6" />
-                  <h2 className="text-xl font-bold">Shipping Information</h2>
+              <div className="border border-gray-200 rounded-2xl p-5">
+                <div className="flex items-center gap-3 mb-5">
+                  <Truck className="w-5 h-5" />
+                  <h2 className="text-lg font-bold">Shipping Information</h2>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <input
@@ -75,10 +75,10 @@ export default function CheckoutPage() {
               </div>
 
               {/* Payment Method */}
-              <div className="border border-gray-200 rounded-2xl p-6">
-                <div className="flex items-center gap-3 mb-6">
-                  <CreditCard className="w-6 h-6" />
-                  <h2 className="text-xl font-bold">Payment Method</h2>
+              <div className="border border-gray-200 rounded-2xl p-5">
+                <div className="flex items-center gap-3 mb-5">
+                  <CreditCard className="w-5 h-5" />
+                  <h2 className="text-lg font-bold">Payment Method</h2>
                 </div>
                 <div className="space-y-4">
                   <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-black transition">
@@ -142,8 +142,8 @@ export default function CheckoutPage() {
 
             {/* Order Summary */}
             <div className="lg:col-span-1">
-              <div className="border border-gray-200 rounded-2xl p-6 space-y-6 sticky top-6">
-                <h2 className="text-2xl font-bold">Order Summary</h2>
+              <div className="border border-gray-200 rounded-2xl p-5 space-y-5 sticky top-6">
+                <h2 className="text-xl font-bold">Order Summary</h2>
 
                 <div className="space-y-4">
                   <div className="flex justify-between">

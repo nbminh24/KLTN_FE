@@ -33,7 +33,7 @@ export default function OrdersPage() {
       <Header />
 
       <main className="flex-1">
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-6 md:px-12 py-6">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm mb-6">
             <Link href="/" className="text-gray-500">Home</Link>
@@ -41,7 +41,7 @@ export default function OrdersPage() {
             <span className="font-medium">My Orders</span>
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-integral font-bold mb-8">My Orders</h1>
+          <h1 className="text-2xl md:text-3xl font-integral font-bold mb-6">My Orders</h1>
 
           <div className="space-y-4">
             {orders.map((order) => (
@@ -52,7 +52,7 @@ export default function OrdersPage() {
                       <Package className="w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-lg">{order.id}</h3>
+                      <h3 className="font-bold text-base">{order.id}</h3>
                       <p className="text-gray-600 text-sm">Order date: {order.date}</p>
                       <p className="text-gray-600 text-sm">{order.items} items</p>
                     </div>

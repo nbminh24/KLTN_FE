@@ -81,13 +81,13 @@ export default function HomePage() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="bg-gray-100 relative">
-          <div className="container mx-auto px-4 py-12 md:py-20">
+          <div className="container mx-auto px-6 md:px-12 py-12 md:py-20">
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div className="space-y-6">
-                <h1 className="text-4xl md:text-6xl font-integral font-bold leading-tight">
+                <h1 className="text-3xl md:text-5xl font-integral font-bold leading-tight">
                   FIND CLOTHES THAT MATCHES YOUR STYLE
                 </h1>
-                <p className="text-gray-600 text-base md:text-lg max-w-xl">
+                <p className="text-gray-600 text-sm md:text-base max-w-xl">
                   Browse through our diverse range of meticulously crafted garments, designed to bring out your individuality and cater to your sense of style.
                 </p>
                 <Link
@@ -98,20 +98,20 @@ export default function HomePage() {
                 </Link>
                 
                 {/* Stats */}
-                <div className="flex flex-wrap gap-6 md:gap-8 pt-4">
+                <div className="flex flex-wrap gap-4 md:gap-6 pt-4">
                   <div>
-                    <p className="text-3xl md:text-4xl font-bold">200+</p>
-                    <p className="text-gray-600 text-sm md:text-base">International Brands</p>
+                    <p className="text-2xl md:text-3xl font-bold">200+</p>
+                    <p className="text-gray-600 text-xs md:text-sm">International Brands</p>
                   </div>
-                  <div className="h-12 w-px bg-gray-300"></div>
+                  <div className="h-10 w-px bg-gray-300"></div>
                   <div>
-                    <p className="text-3xl md:text-4xl font-bold">2,000+</p>
-                    <p className="text-gray-600 text-sm md:text-base">High-Quality Products</p>
+                    <p className="text-2xl md:text-3xl font-bold">2,000+</p>
+                    <p className="text-gray-600 text-xs md:text-sm">High-Quality Products</p>
                   </div>
-                  <div className="h-12 w-px bg-gray-300"></div>
+                  <div className="h-10 w-px bg-gray-300"></div>
                   <div>
-                    <p className="text-3xl md:text-4xl font-bold">30,000+</p>
-                    <p className="text-gray-600 text-sm md:text-base">Happy Customers</p>
+                    <p className="text-2xl md:text-3xl font-bold">30,000+</p>
+                    <p className="text-gray-600 text-xs md:text-sm">Happy Customers</p>
                   </div>
                 </div>
               </div>
@@ -131,7 +131,7 @@ export default function HomePage() {
 
         {/* Brands Section */}
         <section className="bg-black py-8">
-          <div className="container mx-auto px-4">
+          <div className="container mx-auto px-6 md:px-12">
             <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16">
               <div className="text-white text-2xl md:text-3xl font-bold">VERSACE</div>
               <div className="text-white text-2xl md:text-3xl font-bold">ZARA</div>
@@ -143,8 +143,8 @@ export default function HomePage() {
         </section>
 
         {/* New Arrivals */}
-        <section className="container mx-auto px-4 py-12 md:py-16">
-          <h2 className="text-3xl md:text-5xl font-integral font-bold text-center mb-8 md:mb-12">
+        <section className="container mx-auto px-6 md:px-12 py-10 md:py-14">
+          <h2 className="text-2xl md:text-4xl font-integral font-bold text-center mb-6 md:mb-10">
             NEW ARRIVALS
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
@@ -162,13 +162,13 @@ export default function HomePage() {
           </div>
         </section>
 
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-6 md:px-12">
           <hr className="border-gray-200" />
         </div>
 
         {/* Top Selling */}
-        <section className="container mx-auto px-4 py-12 md:py-16">
-          <h2 className="text-3xl md:text-5xl font-integral font-bold text-center mb-8 md:mb-12">
+        <section className="container mx-auto px-6 md:px-12 py-10 md:py-14">
+          <h2 className="text-2xl md:text-4xl font-integral font-bold text-center mb-6 md:mb-10">
             TOP SELLING
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
@@ -187,35 +187,35 @@ export default function HomePage() {
         </section>
 
         {/* Browse by Style */}
-        <section className="container mx-auto px-4 py-12 md:py-16">
-          <div className="bg-gray-100 rounded-3xl p-8 md:p-16">
-            <h2 className="text-3xl md:text-5xl font-integral font-bold text-center mb-8 md:mb-12">
+        <section className="container mx-auto px-6 md:px-12 py-10 md:py-14">
+          <div className="bg-gray-100 rounded-3xl p-6 md:p-12">
+            <h2 className="text-2xl md:text-4xl font-integral font-bold text-center mb-6 md:mb-10">
               BROWSE BY DRESS STYLE
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Link href="/products?style=casual" className="relative h-64 bg-white rounded-2xl overflow-hidden group">
+              <Link href="/products?style=casual" className="relative h-48 md:h-56 bg-white rounded-2xl overflow-hidden group">
                 <Image src="https://placehold.co/973x649" alt="Casual" fill className="object-cover group-hover:scale-105 transition" />
-                <span className="absolute top-6 left-6 text-3xl font-bold">Casual</span>
+                <span className="absolute top-4 left-4 text-xl md:text-2xl font-bold">Casual</span>
               </Link>
-              <Link href="/products?style=formal" className="relative h-64 md:col-span-2 bg-white rounded-2xl overflow-hidden group">
+              <Link href="/products?style=formal" className="relative h-48 md:h-56 md:col-span-2 bg-white rounded-2xl overflow-hidden group">
                 <Image src="https://placehold.co/1306x870" alt="Formal" fill className="object-cover group-hover:scale-105 transition" />
-                <span className="absolute top-6 left-6 text-3xl font-bold">Formal</span>
+                <span className="absolute top-4 left-4 text-xl md:text-2xl font-bold">Formal</span>
               </Link>
-              <Link href="/products?style=party" className="relative h-64 md:col-span-2 bg-white rounded-2xl overflow-hidden group">
+              <Link href="/products?style=party" className="relative h-48 md:h-56 md:col-span-2 bg-white rounded-2xl overflow-hidden group">
                 <Image src="https://placehold.co/770x616" alt="Party" fill className="object-cover group-hover:scale-105 transition" />
-                <span className="absolute top-6 left-6 text-3xl font-bold">Party</span>
+                <span className="absolute top-4 left-4 text-xl md:text-2xl font-bold">Party</span>
               </Link>
-              <Link href="/products?style=gym" className="relative h-64 bg-white rounded-2xl overflow-hidden group">
+              <Link href="/products?style=gym" className="relative h-48 md:h-56 bg-white rounded-2xl overflow-hidden group">
                 <Image src="https://placehold.co/452x677" alt="Gym" fill className="object-cover group-hover:scale-105 transition" />
-                <span className="absolute top-6 left-6 text-3xl font-bold">Gym</span>
+                <span className="absolute top-4 left-4 text-xl md:text-2xl font-bold">Gym</span>
               </Link>
             </div>
           </div>
         </section>
 
         {/* Customer Reviews */}
-        <section className="container mx-auto px-4 py-12 md:py-16">
-          <h2 className="text-3xl md:text-5xl font-integral font-bold mb-8 md:mb-12">
+        <section className="container mx-auto px-6 md:px-12 py-10 md:py-14">
+          <h2 className="text-2xl md:text-4xl font-integral font-bold mb-6 md:mb-10">
             OUR HAPPY CUSTOMERS
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -29,7 +29,7 @@ export default function ProductsPage() {
       <Header />
 
       <main className="flex-1">
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-6 md:px-12 py-6">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm mb-6">
             <span className="text-gray-500">Home</span>
@@ -39,19 +39,19 @@ export default function ProductsPage() {
 
           <div className="flex gap-6">
             {/* Filters Sidebar - Desktop */}
-            <aside className="hidden lg:block w-72 flex-shrink-0">
-              <div className="border border-gray-200 rounded-2xl p-6 space-y-6 sticky top-6">
+            <aside className="hidden lg:block w-64 flex-shrink-0">
+              <div className="border border-gray-200 rounded-2xl p-5 space-y-5 sticky top-6">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold">Filters</h3>
+                  <h3 className="text-lg font-bold">Filters</h3>
                   <SlidersHorizontal className="w-5 h-5 text-gray-400" />
                 </div>
 
                 <hr className="border-gray-200" />
 
                 {/* Categories */}
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {['T-shirts', 'Shorts', 'Shirts', 'Hoodie', 'Jeans'].map((category) => (
-                    <div key={category} className="flex items-center justify-between text-gray-600 cursor-pointer hover:text-black">
+                    <div key={category} className="flex items-center justify-between text-gray-600 cursor-pointer hover:text-black text-sm">
                       <span>{category}</span>
                       <ChevronRight className="w-4 h-4" />
                     </div>
@@ -103,9 +103,9 @@ export default function ProductsPage() {
                 <hr className="border-gray-200" />
 
                 {/* Size */}
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-bold">Size</h4>
+                    <h4 className="font-bold text-sm">Size</h4>
                     <ChevronDown className="w-4 h-4" />
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -113,7 +113,7 @@ export default function ProductsPage() {
                       <button
                         key={size}
                         onClick={() => setSelectedSize(size)}
-                        className={`px-4 py-2 rounded-full text-sm ${
+                        className={`px-3 py-1.5 rounded-full text-xs ${
                           selectedSize === size
                             ? 'bg-black text-white'
                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -150,7 +150,7 @@ export default function ProductsPage() {
             {/* Products Grid */}
             <div className="flex-1">
               <div className="flex items-center justify-between mb-6">
-                <h1 className="text-2xl md:text-3xl font-bold">Casual</h1>
+                <h1 className="text-xl md:text-2xl font-bold">Casual</h1>
                 <div className="flex items-center gap-4">
                   <span className="text-gray-600 text-sm">Showing 1-{products.length} of 100 Products</span>
                   <button className="lg:hidden" onClick={() => setShowFilters(!showFilters)}>

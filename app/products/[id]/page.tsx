@@ -27,7 +27,7 @@ export default function ProductDetailPage() {
       <Header />
 
       <main className="flex-1">
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-6 md:px-12 py-6">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm mb-6">
             <Link href="/" className="text-gray-500">Home</Link>
@@ -66,9 +66,9 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Product Info */}
-            <div className="space-y-6">
+            <div className="space-y-5">
               <div>
-                <h1 className="text-3xl md:text-4xl font-integral font-bold mb-4">
+                <h1 className="text-2xl md:text-3xl font-integral font-bold mb-4">
                   One Life Graphic T-shirt
                 </h1>
                 <div className="flex items-center gap-3 mb-4">
@@ -86,15 +86,15 @@ export default function ProductDetailPage() {
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-3xl font-bold">$260</span>
-                  <span className="text-3xl font-bold text-gray-400 line-through">$300</span>
-                  <span className="bg-red-100 text-red-600 text-sm font-medium px-3 py-1 rounded-full">
+                  <span className="text-2xl font-bold">$260</span>
+                  <span className="text-2xl font-bold text-gray-400 line-through">$300</span>
+                  <span className="bg-red-100 text-red-600 text-xs font-medium px-2.5 py-1 rounded-full">
                     -40%
                   </span>
                 </div>
               </div>
 
-              <p className="text-gray-600">
+              <p className="text-gray-600 text-sm">
                 This graphic t-shirt which is perfect for any occasion. Crafted from a soft and breathable fabric, it offers superior comfort and style.
               </p>
 
@@ -102,7 +102,7 @@ export default function ProductDetailPage() {
 
               {/* Color Selection */}
               <div>
-                <p className="text-gray-600 mb-3">Select Colors</p>
+                <p className="text-gray-600 mb-3 text-sm">Select Colors</p>
                 <div className="flex gap-3">
                   {[
                     { name: 'olive', color: 'bg-[#4F4631]' },
@@ -126,13 +126,13 @@ export default function ProductDetailPage() {
 
               {/* Size Selection */}
               <div>
-                <p className="text-gray-600 mb-3">Choose Size</p>
-                <div className="flex flex-wrap gap-3">
+                <p className="text-gray-600 mb-3 text-sm">Choose Size</p>
+                <div className="flex flex-wrap gap-2">
                   {['Small', 'Medium', 'Large', 'X-Large'].map((size) => (
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
-                      className={`px-6 py-3 rounded-full ${
+                      className={`px-5 py-2.5 rounded-full text-sm ${
                         selectedSize === size
                           ? 'bg-black text-white'
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -240,7 +240,7 @@ export default function ProductDetailPage() {
 
           {/* You Might Also Like */}
           <section>
-            <h2 className="text-3xl md:text-4xl font-integral font-bold text-center mb-12">
+            <h2 className="text-2xl md:text-3xl font-integral font-bold text-center mb-10">
               You might also like
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">

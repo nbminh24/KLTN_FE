@@ -5,7 +5,7 @@ export default function Header() {
   return (
     <>
       {/* Top Banner */}
-      <div className="bg-black text-white text-center py-2 text-sm">
+      <div className="bg-black text-white text-center py-2 text-xs md:text-sm">
         <p>
           Sign up and get 20% off to your first order.{' '}
           <Link href="/signup" className="underline font-medium">
@@ -16,15 +16,15 @@ export default function Header() {
 
       {/* Main Header */}
       <header className="border-b">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-6 md:px-12 py-4">
           <div className="flex items-center justify-between gap-8">
             {/* Logo */}
-            <Link href="/" className="text-2xl md:text-3xl font-integral font-bold">
+            <Link href="/" className="text-xl md:text-2xl font-integral font-bold">
               LeCas
             </Link>
 
             {/* Navigation - Hidden on mobile */}
-            <nav className="hidden md:flex items-center gap-6">
+            <nav className="hidden md:flex items-center gap-6 text-sm">
               <Link href="/products" className="hover:text-gray-600 transition">
                 Shop
               </Link>
@@ -46,7 +46,7 @@ export default function Header() {
                 <input
                   type="text"
                   placeholder="Search for products..."
-                  className="w-full pl-12 pr-4 py-3 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full pl-12 pr-4 py-2.5 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-black text-sm"
                 />
               </div>
             </div>
@@ -66,7 +66,7 @@ export default function Header() {
           </div>
 
           {/* Mobile Search */}
-          <div className="md:hidden mt-4">
+          <div className="md:hidden mt-4 px-0">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
