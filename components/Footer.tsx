@@ -33,10 +33,10 @@ export default function Footer() {
           {/* Brand Section */}
           <div className="md:col-span-2">
             <Link href="/" className="text-xl font-integral font-bold">
-              LeCas
+              LeCas - Casually Elegant Every Moment
             </Link>
             <p className="mt-4 text-gray-600 max-w-xs text-sm">
-              We have clothes that suits your style and which you're proud to wear. From women to men.
+              Experience the essence of modern men's fashion - refined, confident, and built to last. Every design embodies a balance of style and quality made for today's man.
             </p>
             <div className="flex gap-3 mt-6">
               <a href="#" className="w-10 h-10 bg-white border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-50 transition">

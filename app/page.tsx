@@ -85,10 +85,10 @@ export default function HomePage() {
             <div className="grid md:grid-cols-2 gap-4 md:gap-2 items-stretch h-full min-h-[600px] md:min-h-[750px]">
               <div className="flex flex-col justify-center space-y-6 py-12 md:py-20">
                 <h1 className="text-3xl md:text-5xl font-integral font-bold leading-tight">
-                  FIND CLOTHES THAT MATCHES YOUR STYLE
+                  LeCas - Casually Elegant Every Moment
                 </h1>
                 <p className="text-gray-600 text-sm md:text-base max-w-xl">
-                  Browse through our diverse range of meticulously crafted garments, designed to bring out your individuality and cater to your sense of style.
+                  Experience the essence of modern men's fashion - refined, confident, and built to last. Every design embodies a balance of style and quality made for today's man.
                 </p>
                 <Link
                   href="/products"
