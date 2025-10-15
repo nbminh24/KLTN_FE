@@ -81,8 +81,8 @@ export default function HomePage() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative min-h-[600px] md:min-h-[750px]" style={{ backgroundColor: '#dadee3' }}>
-          <div className="container mx-auto px-6 md:px-12 h-full">
-            <div className="grid md:grid-cols-2 gap-8 items-stretch h-full min-h-[600px] md:min-h-[750px]">
+          <div className="container mx-auto px-6 md:px-20 h-full">
+            <div className="grid md:grid-cols-2 gap-4 md:gap-2 items-stretch h-full min-h-[600px] md:min-h-[750px]">
               <div className="flex flex-col justify-center space-y-6 py-12 md:py-20">
                 <h1 className="text-3xl md:text-5xl font-integral font-bold leading-tight">
                   FIND CLOTHES THAT MATCHES YOUR STYLE
@@ -92,7 +92,7 @@ export default function HomePage() {
                 </p>
                 <Link
                   href="/products"
-                  className="inline-block bg-black text-white px-12 py-4 rounded-full font-medium hover:bg-gray-800 transition"
+                  className="inline-block bg-black text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition w-auto max-w-xs text-center"
                 >
                   Shop Now
                 </Link>
