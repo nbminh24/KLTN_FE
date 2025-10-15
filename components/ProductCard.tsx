@@ -25,7 +25,7 @@ export default function ProductCard({
     <Link href={`/products/${id}`} className="group">
       <div className="space-y-3">
         {/* Product Image */}
-        <div className="relative bg-gray-100 rounded-2xl overflow-hidden aspect-[295/298]">
+        <div className="relative aspect-[3/4] rounded-2xl overflow-hidden group" style={{ backgroundColor: '#dadee3' }}>
           <Image
             src={image}
             alt={name}

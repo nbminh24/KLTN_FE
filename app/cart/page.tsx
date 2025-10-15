@@ -22,7 +22,7 @@ export default function CartPage() {
     {
       id: '1',
       name: 'Gradient Graphic T-shirt',
-      image: '/product.avif',
+      image: '/bmm32410_black_xl.webp',
       size: 'Large',
       color: 'White',
       price: 145,
@@ -31,7 +31,7 @@ export default function CartPage() {
     {
       id: '2',
       name: 'Checkered Shirt',
-      image: '/product.avif',
+      image: '/bmm32410_black_xl.webp',
       size: 'Medium',
       color: 'Red',
       price: 180,
@@ -40,7 +40,7 @@ export default function CartPage() {
     {
       id: '3',
       name: 'Skinny Fit Jeans',
-      image: '/product.avif',
+      image: '/bmm32410_black_xl.webp',
       size: 'Large',
       color: 'Blue',
       price: 240,

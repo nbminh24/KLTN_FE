@@ -9,14 +9,14 @@ const newArrivals = [
   {
     id: '1',
     name: 'T-SHIRT WITH TAPE DETAILS',
-    image: '/product.avif',
+    image: '/bmm32410_black_xl.webp',
     price: 120,
     rating: 4.5,
   },
   {
     id: '2',
     name: 'SKINNY FIT JEANS',
-    image: '/product.avif',
+    image: '/bmm32410_black_xl.webp',
     price: 240,
     originalPrice: 260,
     rating: 3.5,
@@ -25,14 +25,14 @@ const newArrivals = [
   {
     id: '3',
     name: 'CHECKERED SHIRT',
-    image: '/product.avif',
+    image: '/bmm32410_black_xl.webp',
     price: 180,
     rating: 4.5,
   },
   {
     id: '4',
     name: 'SLEEVE STRIPED T-SHIRT',
-    image: '/product.avif',
+    image: '/bmm32410_black_xl.webp',
     price: 130,
     originalPrice: 160,
     rating: 4.5,
@@ -44,7 +44,7 @@ const topSelling = [
   {
     id: '5',
     name: 'VERTICAL STRIPED SHIRT',
-    image: '/product.avif',
+    image: '/bmm32410_black_xl.webp',
     price: 212,
     originalPrice: 232,
     rating: 5.0,
@@ -53,21 +53,21 @@ const topSelling = [
   {
     id: '6',
     name: 'COURAGE GRAPHIC T-SHIRT',
-    image: '/product.avif',
+    image: '/bmm32410_black_xl.webp',
     price: 145,
     rating: 4.0,
   },
   {
     id: '7',
     name: 'LOOSE FIT BERMUDA SHORTS',
-    image: '/product.avif',
+    image: '/bmm32410_black_xl.webp',
     price: 80,
     rating: 3.0,
   },
   {
     id: '8',
     name: 'FADED SKINNY JEANS',
-    image: '/product.avif',
+    image: '/bmm32410_black_xl.webp',
     price: 210,
     rating: 4.5,
   },
@@ -80,10 +80,10 @@ export default function HomePage() {
       
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="bg-gray-100 relative">
-          <div className="container mx-auto px-6 md:px-12 py-12 md:py-20">
-            <div className="grid md:grid-cols-2 gap-8 items-center">
-              <div className="space-y-6">
+        <section className="relative min-h-[600px] md:min-h-[750px]" style={{ backgroundColor: '#dadee3' }}>
+          <div className="container mx-auto px-6 md:px-12 h-full">
+            <div className="grid md:grid-cols-2 gap-8 items-stretch h-full min-h-[600px] md:min-h-[750px]">
+              <div className="flex flex-col justify-center space-y-6 py-12 md:py-20">
                 <h1 className="text-3xl md:text-5xl font-integral font-bold leading-tight">
                   FIND CLOTHES THAT MATCHES YOUR STYLE
                 </h1>
@@ -116,9 +116,9 @@ export default function HomePage() {
                 </div>
               </div>
               
-              <div className="relative h-[400px] md:h-[600px]">
+              <div className="relative h-full min-h-[600px] md:min-h-[750px]">
                 <Image
-                  src="/hero-banner.png"
+                  src="/bmm32410_black_xl.webp"
                   alt="Hero"
                   fill
                   className="object-contain"

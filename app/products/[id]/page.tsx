@@ -10,10 +10,10 @@ import { ChevronRight, Minus, Plus, Star, Check } from 'lucide-react';
 
 // Mock data
 const relatedProducts = [
-  { id: '5', name: 'Polo with Contrast Trims', image: '/product.avif', price: 212, originalPrice: 242, rating: 4.0, discount: 20 },
-  { id: '6', name: 'Gradient Graphic T-shirt', image: '/product.avif', price: 145, rating: 3.5 },
-  { id: '7', name: 'Polo with Tipping Details', image: '/product.avif', price: 180, rating: 4.5 },
-  { id: '8', name: 'Black Striped T-shirt', image: '/product.avif', price: 120, originalPrice: 150, rating: 5.0, discount: 30 },
+  { id: '5', name: 'Polo with Contrast Trims', image: '/bmm32410_black_xl.webp', price: 212, originalPrice: 242, rating: 4.0, discount: 20 },
+  { id: '6', name: 'Gradient Graphic T-shirt', image: '/bmm32410_black_xl.webp', price: 145, rating: 3.5 },
+  { id: '7', name: 'Polo with Tipping Details', image: '/bmm32410_black_xl.webp', price: 180, rating: 4.5 },
+  { id: '8', name: 'Black Striped T-shirt', image: '/bmm32410_black_xl.webp', price: 120, originalPrice: 150, rating: 5.0, discount: 30 },
 ];
 
 export default function ProductDetailPage() {
@@ -43,9 +43,9 @@ export default function ProductDetailPage() {
           <div className="grid md:grid-cols-2 gap-8 mb-12">
             {/* Product Images */}
             <div className="space-y-4">
-              <div className="relative aspect-square bg-gray-100 rounded-2xl overflow-hidden">
+              <div className="relative aspect-square rounded-2xl overflow-hidden" style={{ backgroundColor: '#dadee3' }}>
                 <Image
-                  src="/product.avif"
+                  src="/bmm32410_black_xl.webp"
                   alt="Product"
                   fill
                   className="object-cover"
@@ -53,9 +53,9 @@ export default function ProductDetailPage() {
               </div>
               <div className="grid grid-cols-3 gap-4">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="relative aspect-square bg-gray-100 rounded-xl overflow-hidden cursor-pointer border-2 border-transparent hover:border-black">
+                  <div key={i} className="relative aspect-square rounded-xl overflow-hidden cursor-pointer border-2 border-transparent hover:border-black" style={{ backgroundColor: '#dadee3' }}>
                     <Image
-                      src="/product.avif"
+                      src="/bmm32410_black_xl.webp"
                       alt={`Product ${i}`}
                       fill
                       className="object-cover"
