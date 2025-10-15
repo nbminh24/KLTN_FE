@@ -77,7 +77,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      
+
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative min-h-[600px] md:min-h-[750px]" style={{ backgroundColor: '#dadee3' }}>
@@ -96,7 +96,7 @@ export default function HomePage() {
                 >
                   Shop Now
                 </Link>
-                
+
                 {/* Stats */}
                 <div className="flex flex-wrap gap-4 md:gap-6 pt-4">
                   <div>
@@ -115,10 +115,10 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="relative h-full min-h-[600px] md:min-h-[750px]">
                 <Image
-                  src="/bmm32410_black_xl.webp"
+                  src="/bmm32410_black_xl-Photoroom.png"
                   alt="Hero"
                   fill
                   className="object-contain"
