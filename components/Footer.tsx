@@ -33,7 +33,7 @@ export default function Footer() {
           {/* Brand Section */}
           <div className="md:col-span-2">
             <Link href="/" className="text-2xl font-integral font-bold">
-              SHOP.CO
+              LeCas
             </Link>
             <p className="mt-4 text-gray-600 max-w-xs">
               We have clothes that suits your style and which you're proud to wear. From women to men.
@@ -88,17 +88,6 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="mt-12 pt-6 border-t border-gray-200 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-gray-600 text-sm">Shop.co © 2000-2023, All Rights Reserved</p>
-          <div className="flex gap-3">
-            <img src="/payment-visa.png" alt="Visa" className="h-8" />
-            <img src="/payment-mastercard.png" alt="Mastercard" className="h-8" />
-            <img src="/payment-paypal.png" alt="PayPal" className="h-8" />
-            <img src="/payment-applepay.png" alt="Apple Pay" className="h-8" />
-            <img src="/payment-googlepay.png" alt="Google Pay" className="h-8" />
-          </div>
-        </div>
       </div>
     </footer>
   );

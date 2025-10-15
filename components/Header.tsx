@@ -20,7 +20,7 @@ export default function Header() {
           <div className="flex items-center justify-between gap-8">
             {/* Logo */}
             <Link href="/" className="text-2xl md:text-3xl font-integral font-bold">
-              SHOP.CO
+              LeCas
             </Link>
 
             {/* Navigation - Hidden on mobile */}

@@ -10,10 +10,10 @@ import { ChevronRight, Minus, Plus, Star, Check } from 'lucide-react';
 
 // Mock data
 const relatedProducts = [
-  { id: '5', name: 'Polo with Contrast Trims', image: 'https://placehold.co/296x444', price: 212, originalPrice: 242, rating: 4.0, discount: 20 },
-  { id: '6', name: 'Gradient Graphic T-shirt', image: 'https://placehold.co/294x441', price: 145, rating: 3.5 },
-  { id: '7', name: 'Polo with Tipping Details', image: 'https://placehold.co/296x444', price: 180, rating: 4.5 },
-  { id: '8', name: 'Black Striped T-shirt', image: 'https://placehold.co/296x444', price: 120, originalPrice: 150, rating: 5.0, discount: 30 },
+  { id: '5', name: 'Polo with Contrast Trims', image: '/product.avif', price: 212, originalPrice: 242, rating: 4.0, discount: 20 },
+  { id: '6', name: 'Gradient Graphic T-shirt', image: '/product.avif', price: 145, rating: 3.5 },
+  { id: '7', name: 'Polo with Tipping Details', image: '/product.avif', price: 180, rating: 4.5 },
+  { id: '8', name: 'Black Striped T-shirt', image: '/product.avif', price: 120, originalPrice: 150, rating: 5.0, discount: 30 },
 ];
 
 export default function ProductDetailPage() {
@@ -45,7 +45,7 @@ export default function ProductDetailPage() {
             <div className="space-y-4">
               <div className="relative aspect-square bg-gray-100 rounded-2xl overflow-hidden">
                 <Image
-                  src="https://placehold.co/444x530"
+                  src="/product.avif"
                   alt="Product"
                   fill
                   className="object-cover"
@@ -55,7 +55,7 @@ export default function ProductDetailPage() {
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="relative aspect-square bg-gray-100 rounded-xl overflow-hidden cursor-pointer border-2 border-transparent hover:border-black">
                     <Image
-                      src={`https://placehold.co/152x16${i + 5}`}
+                      src="/product.avif"
                       alt={`Product ${i}`}
                       fill
                       className="object-cover"

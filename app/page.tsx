@@ -9,14 +9,14 @@ const newArrivals = [
   {
     id: '1',
     name: 'T-SHIRT WITH TAPE DETAILS',
-    image: 'https://placehold.co/296x444',
+    image: '/product.avif',
     price: 120,
     rating: 4.5,
   },
   {
     id: '2',
     name: 'SKINNY FIT JEANS',
-    image: 'https://placehold.co/268x402',
+    image: '/product.avif',
     price: 240,
     originalPrice: 260,
     rating: 3.5,
@@ -25,14 +25,14 @@ const newArrivals = [
   {
     id: '3',
     name: 'CHECKERED SHIRT',
-    image: 'https://placehold.co/296x444',
+    image: '/product.avif',
     price: 180,
     rating: 4.5,
   },
   {
     id: '4',
     name: 'SLEEVE STRIPED T-SHIRT',
-    image: 'https://placehold.co/296x444',
+    image: '/product.avif',
     price: 130,
     originalPrice: 160,
     rating: 4.5,
@@ -44,7 +44,7 @@ const topSelling = [
   {
     id: '5',
     name: 'VERTICAL STRIPED SHIRT',
-    image: 'https://placehold.co/296x444',
+    image: '/product.avif',
     price: 212,
     originalPrice: 232,
     rating: 5.0,
@@ -53,21 +53,21 @@ const topSelling = [
   {
     id: '6',
     name: 'COURAGE GRAPHIC T-SHIRT',
-    image: 'https://placehold.co/294x441',
+    image: '/product.avif',
     price: 145,
     rating: 4.0,
   },
   {
     id: '7',
     name: 'LOOSE FIT BERMUDA SHORTS',
-    image: 'https://placehold.co/296x444',
+    image: '/product.avif',
     price: 80,
     rating: 3.0,
   },
   {
     id: '8',
     name: 'FADED SKINNY JEANS',
-    image: 'https://placehold.co/252x378',
+    image: '/product.avif',
     price: 210,
     rating: 4.5,
   },
@@ -118,7 +118,7 @@ export default function HomePage() {
               
               <div className="relative h-[400px] md:h-[600px]">
                 <Image
-                  src="https://placehold.co/1440x663"
+                  src="/hero-banner.png"
                   alt="Hero"
                   fill
                   className="object-contain"

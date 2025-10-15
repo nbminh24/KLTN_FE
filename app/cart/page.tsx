@@ -22,7 +22,7 @@ export default function CartPage() {
     {
       id: '1',
       name: 'Gradient Graphic T-shirt',
-      image: 'https://placehold.co/125x187',
+      image: '/product.avif',
       size: 'Large',
       color: 'White',
       price: 145,
@@ -31,7 +31,7 @@ export default function CartPage() {
     {
       id: '2',
       name: 'Checkered Shirt',
-      image: 'https://placehold.co/125x187',
+      image: '/product.avif',
       size: 'Medium',
       color: 'Red',
       price: 180,
@@ -40,7 +40,7 @@ export default function CartPage() {
     {
       id: '3',
       name: 'Skinny Fit Jeans',
-      image: 'https://placehold.co/102x153',
+      image: '/product.avif',
       size: 'Large',
       color: 'Blue',
       price: 240,

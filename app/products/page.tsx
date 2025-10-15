@@ -8,15 +8,15 @@ import { ChevronRight, SlidersHorizontal, ChevronDown } from 'lucide-react';
 
 // Mock data
 const products = [
-  { id: '1', name: 'Gradient Graphic T-shirt', image: 'https://placehold.co/294x441', price: 145, originalPrice: 242, rating: 3.5, discount: 20 },
-  { id: '2', name: 'Polo with Tipping Details', image: 'https://placehold.co/296x444', price: 180, originalPrice: 242, rating: 4.5, discount: 20 },
-  { id: '3', name: 'Black Striped T-shirt', image: 'https://placehold.co/296x444', price: 120, originalPrice: 150, rating: 5.0, discount: 30 },
-  { id: '4', name: 'Skinny Fit Jeans', image: 'https://placehold.co/268x402', price: 240, originalPrice: 260, rating: 3.5, discount: 20 },
-  { id: '5', name: 'Checkered Shirt', image: 'https://placehold.co/296x444', price: 180, rating: 4.5 },
-  { id: '6', name: 'Sleeve Striped T-shirt', image: 'https://placehold.co/296x444', price: 130, originalPrice: 160, rating: 4.5, discount: 30 },
-  { id: '7', name: 'Vertical Striped Shirt', image: 'https://placehold.co/296x444', price: 212, originalPrice: 232, rating: 5.0, discount: 20 },
-  { id: '8', name: 'Courage Graphic T-shirt', image: 'https://placehold.co/294x441', price: 145, rating: 4.0 },
-  { id: '9', name: 'Loose Fit Bermuda Shorts', image: 'https://placehold.co/296x444', price: 80, rating: 3.0 },
+  { id: '1', name: 'Gradient Graphic T-shirt', image: '/product.avif', price: 145, originalPrice: 242, rating: 3.5, discount: 20 },
+  { id: '2', name: 'Polo with Tipping Details', image: '/product.avif', price: 180, originalPrice: 242, rating: 4.5, discount: 20 },
+  { id: '3', name: 'Black Striped T-shirt', image: '/product.avif', price: 120, originalPrice: 150, rating: 5.0, discount: 30 },
+  { id: '4', name: 'Skinny Fit Jeans', image: '/product.avif', price: 240, originalPrice: 260, rating: 3.5, discount: 20 },
+  { id: '5', name: 'Checkered Shirt', image: '/product.avif', price: 180, rating: 4.5 },
+  { id: '6', name: 'Sleeve Striped T-shirt', image: '/product.avif', price: 130, originalPrice: 160, rating: 4.5, discount: 30 },
+  { id: '7', name: 'Vertical Striped Shirt', image: '/product.avif', price: 212, originalPrice: 232, rating: 5.0, discount: 20 },
+  { id: '8', name: 'Courage Graphic T-shirt', image: '/product.avif', price: 145, rating: 4.0 },
+  { id: '9', name: 'Loose Fit Bermuda Shorts', image: '/product.avif', price: 80, rating: 3.0 },
 ];
 
 export default function ProductsPage() {
