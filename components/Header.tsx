@@ -1,7 +1,26 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
-import { Search, ShoppingCart, User, Menu, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Search, ShoppingCart, User, Menu, X, Camera } from 'lucide-react';
 
 export default function Header() {
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showImageSearch, setShowImageSearch] = useState(false);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery)}&mode=text`);
+      setSearchQuery('');
+    }
+  };
+
+  const handleImageSearch = () => {
+    router.push('/search?mode=image');
+  };
   return (
     <>
       {/* Top Banner */}
@@ -41,14 +60,26 @@ export default function Header() {
 
             {/* Search Bar */}
             <div className="hidden md:flex flex-1 max-w-xl">
-              <div className="relative w-full">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="Search for products..."
-                  className="w-full pl-12 pr-4 py-2.5 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-black text-sm"
-                />
-              </div>
+              <form onSubmit={handleSearch} className="relative w-full flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search for products..."
+                    className="w-full pl-12 pr-4 py-2.5 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-black text-sm"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleImageSearch}
+                  className="p-2.5 bg-gray-100 rounded-full hover:bg-gray-200 transition"
+                  title="Search by image"
+                >
+                  <Camera className="w-5 h-5 text-gray-600" />
+                </button>
+              </form>
             </div>
 
             {/* Icons */}
@@ -67,14 +98,26 @@ export default function Header() {
 
           {/* Mobile Search */}
           <div className="md:hidden mt-4 px-0">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search for products..."
-                className="w-full pl-12 pr-4 py-3 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-black"
-              />
-            </div>
+            <form onSubmit={handleSearch} className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search for products..."
+                  className="w-full pl-12 pr-4 py-3 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-black"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleImageSearch}
+                className="p-3 bg-gray-100 rounded-full hover:bg-gray-200 transition"
+                title="Search by image"
+              >
+                <Camera className="w-5 h-5 text-gray-600" />
+              </button>
+            </form>
           </div>
         </div>
       </header>

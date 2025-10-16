@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, X, MessageCircle, Bot } from 'lucide-react';
+import { Send, X, MessageCircle, Bot, Camera, Image as ImageIcon } from 'lucide-react';
+import Image from 'next/image';
 
 interface Message {
   id: string;
   text: string;
   sender: 'user' | 'bot';
   timestamp: Date;
+  image?: string;
 }
 
 export default function Chatbot() {
@@ -21,6 +23,8 @@ export default function Chatbot() {
     },
   ]);
   const [inputValue, setInputValue] = useState('');
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -32,28 +36,43 @@ export default function Chatbot() {
   }, [messages]);
 
   const handleSend = () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() && !uploadedImage) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: inputValue,
+      text: inputValue || 'What products are similar to this?',
       sender: 'user',
       timestamp: new Date(),
+      image: uploadedImage || undefined,
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setInputValue('');
+    setUploadedImage(null);
 
     // Simulate bot response
     setTimeout(() => {
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: 'Thank you for your message! I can help you with product recommendations, order tracking, and general questions. How can I assist you?',
+        text: uploadedImage 
+          ? 'Great! I found some similar products based on your image. Let me show you the best matches from our collection. Would you like to see items in a specific category or price range?'
+          : 'Thank you for your message! I can help you with product recommendations, order tracking, and general questions. How can I assist you?',
         sender: 'bot',
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, botMessage]);
     }, 1000);
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setUploadedImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -104,6 +123,16 @@ export default function Chatbot() {
                       : 'bg-gray-100 text-black'
                   }`}
                 >
+                  {message.image && (
+                    <div className="relative w-full h-32 mb-2 rounded-lg overflow-hidden">
+                      <Image
+                        src={message.image}
+                        alt="Uploaded"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
                   <p className="text-sm">{message.text}</p>
                   <p
                     className={`text-xs mt-1 ${
@@ -147,7 +176,41 @@ export default function Chatbot() {
 
           {/* Input */}
           <div className="p-4 border-t border-gray-200">
+            {/* Image Preview */}
+            {uploadedImage && (
+              <div className="mb-3 relative inline-block">
+                <div className="relative w-20 h-20 rounded-lg overflow-hidden border-2 border-gray-300">
+                  <Image
+                    src={uploadedImage}
+                    alt="Preview"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <button
+                  onClick={() => setUploadedImage(null)}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+            
             <div className="flex gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="p-3 border border-gray-300 rounded-full hover:bg-gray-50 transition"
+                title="Upload image"
+              >
+                <Camera className="w-5 h-5 text-gray-600" />
+              </button>
               <input
                 type="text"
                 value={inputValue}
@@ -158,7 +221,8 @@ export default function Chatbot() {
               />
               <button
                 onClick={handleSend}
-                className="bg-black text-white p-3 rounded-full hover:bg-gray-800 transition"
+                disabled={!inputValue.trim() && !uploadedImage}
+                className="bg-black text-white p-3 rounded-full hover:bg-gray-800 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
                 <Send className="w-5 h-5" />
               </button>

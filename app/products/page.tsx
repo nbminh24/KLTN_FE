@@ -4,25 +4,66 @@ import { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
+import Pagination from '@/components/Pagination';
 import { ChevronRight, SlidersHorizontal, ChevronDown } from 'lucide-react';
 
 // Mock data
-const products = [
-  { id: '1', name: 'Gradient Graphic T-shirt', image: '/bmm32410_black_xl.webp', price: 145, originalPrice: 242, rating: 3.5, discount: 20 },
-  { id: '2', name: 'Polo with Tipping Details', image: '/bmm32410_black_xl.webp', price: 180, originalPrice: 242, rating: 4.5, discount: 20 },
-  { id: '3', name: 'Black Striped T-shirt', image: '/bmm32410_black_xl.webp', price: 120, originalPrice: 150, rating: 5.0, discount: 30 },
-  { id: '4', name: 'Skinny Fit Jeans', image: '/bmm32410_black_xl.webp', price: 240, originalPrice: 260, rating: 3.5, discount: 20 },
-  { id: '5', name: 'Checkered Shirt', image: '/bmm32410_black_xl.webp', price: 180, rating: 4.5 },
-  { id: '6', name: 'Sleeve Striped T-shirt', image: '/bmm32410_black_xl.webp', price: 130, originalPrice: 160, rating: 4.5, discount: 30 },
-  { id: '7', name: 'Vertical Striped Shirt', image: '/bmm32410_black_xl.webp', price: 212, originalPrice: 232, rating: 5.0, discount: 20 },
-  { id: '8', name: 'Courage Graphic T-shirt', image: '/bmm32410_black_xl.webp', price: 145, rating: 4.0 },
-  { id: '9', name: 'Loose Fit Bermuda Shorts', image: '/bmm32410_black_xl.webp', price: 80, rating: 3.0 },
+const allProducts = [
+  { id: '1', name: 'Gradient Graphic T-shirt', image: '/bmm32410_black_xl.webp', price: 145, originalPrice: 242, rating: 3.5, discount: 20, category: 'T-shirts', size: ['S', 'M', 'L', 'XL'] },
+  { id: '2', name: 'Polo with Tipping Details', image: '/bmm32410_black_xl.webp', price: 180, originalPrice: 242, rating: 4.5, discount: 20, category: 'Shirts', size: ['M', 'L', 'XL'] },
+  { id: '3', name: 'Black Striped T-shirt', image: '/bmm32410_black_xl.webp', price: 120, originalPrice: 150, rating: 5.0, discount: 30, category: 'T-shirts', size: ['S', 'M', 'L'] },
+  { id: '4', name: 'Skinny Fit Jeans', image: '/bmm32410_black_xl.webp', price: 240, originalPrice: 260, rating: 3.5, discount: 20, category: 'Jeans', size: ['M', 'L', 'XL', 'XXL'] },
+  { id: '5', name: 'Checkered Shirt', image: '/bmm32410_black_xl.webp', price: 180, rating: 4.5, category: 'Shirts', size: ['S', 'M', 'L'] },
+  { id: '6', name: 'Sleeve Striped T-shirt', image: '/bmm32410_black_xl.webp', price: 130, originalPrice: 160, rating: 4.5, discount: 30, category: 'T-shirts', size: ['XS', 'S', 'M', 'L'] },
+  { id: '7', name: 'Vertical Striped Shirt', image: '/bmm32410_black_xl.webp', price: 212, originalPrice: 232, rating: 5.0, discount: 20, category: 'Shirts', size: ['M', 'L', 'XL'] },
+  { id: '8', name: 'Courage Graphic T-shirt', image: '/bmm32410_black_xl.webp', price: 145, rating: 4.0, category: 'T-shirts', size: ['S', 'M', 'L', 'XL'] },
+  { id: '9', name: 'Loose Fit Bermuda Shorts', image: '/bmm32410_black_xl.webp', price: 80, rating: 3.0, category: 'Shorts', size: ['M', 'L', 'XL'] },
+  { id: '10', name: 'Classic Hoodie', image: '/bmm32410_black_xl.webp', price: 195, rating: 4.8, category: 'Hoodie', size: ['S', 'M', 'L', 'XL', 'XXL'] },
+  { id: '11', name: 'Faded Denim Jeans', image: '/bmm32410_black_xl.webp', price: 220, originalPrice: 250, rating: 4.2, discount: 12, category: 'Jeans', size: ['M', 'L', 'XL'] },
+  { id: '12', name: 'Summer Shorts', image: '/bmm32410_black_xl.webp', price: 95, rating: 3.8, category: 'Shorts', size: ['S', 'M', 'L'] },
 ];
+
+const ITEMS_PER_PAGE = 9;
 
 export default function ProductsPage() {
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedSize, setSelectedSize] = useState('Large');
-  const [priceRange, setPriceRange] = useState([50, 200]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  const [priceRange, setPriceRange] = useState([0, 300]);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Filter products
+  const filteredProducts = allProducts.filter((product) => {
+    const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(product.category);
+    const matchesSize = selectedSizes.length === 0 || selectedSizes.some(size => product.size.includes(size));
+    const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
+    return matchesCategory && matchesSize && matchesPrice;
+  });
+
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const toggleCategory = (category: string) => {
+    setSelectedCategories(prev => 
+      prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]
+    );
+    setCurrentPage(1);
+  };
+
+  const toggleSize = (size: string) => {
+    setSelectedSizes(prev => 
+      prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]
+    );
+    setCurrentPage(1);
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -49,12 +90,18 @@ export default function ProductsPage() {
                 <hr className="border-gray-200" />
 
                 {/* Categories */}
-                <div className="space-y-2">
+                <div className="space-y-3">
+                  <h4 className="font-bold text-sm">Category</h4>
                   {['T-shirts', 'Shorts', 'Shirts', 'Hoodie', 'Jeans'].map((category) => (
-                    <div key={category} className="flex items-center justify-between text-gray-600 cursor-pointer hover:text-black text-sm">
-                      <span>{category}</span>
-                      <ChevronRight className="w-4 h-4" />
-                    </div>
+                    <label key={category} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedCategories.includes(category)}
+                        onChange={() => toggleCategory(category)}
+                        className="w-4 h-4 rounded"
+                      />
+                      <span className="text-sm">{category}</span>
+                    </label>
                   ))}
                 </div>
 
@@ -104,17 +151,14 @@ export default function ProductsPage() {
 
                 {/* Size */}
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-bold text-sm">Size</h4>
-                    <ChevronDown className="w-4 h-4" />
-                  </div>
+                  <h4 className="font-bold text-sm">Size</h4>
                   <div className="flex flex-wrap gap-2">
-                    {['XX-Small', 'X-Small', 'Small', 'Medium', 'Large', 'X-Large', 'XX-Large', '3X-Large', '4X-Large'].map((size) => (
+                    {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => (
                       <button
                         key={size}
-                        onClick={() => setSelectedSize(size)}
+                        onClick={() => toggleSize(size)}
                         className={`px-3 py-1.5 rounded-full text-xs ${
-                          selectedSize === size
+                          selectedSizes.includes(size)
                             ? 'bg-black text-white'
                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
@@ -141,8 +185,16 @@ export default function ProductsPage() {
                   ))}
                 </div>
 
-                <button className="w-full bg-black text-white py-3 rounded-full font-medium hover:bg-gray-800 transition">
-                  Apply Filter
+                <button 
+                  onClick={() => {
+                    setSelectedCategories([]);
+                    setSelectedSizes([]);
+                    setPriceRange([0, 300]);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full border border-gray-300 py-2 rounded-full text-sm font-medium hover:bg-gray-50 transition"
+                >
+                  Clear All Filters
                 </button>
               </div>
             </aside>
@@ -152,7 +204,9 @@ export default function ProductsPage() {
               <div className="flex items-center justify-between mb-6">
                 <h1 className="text-xl md:text-2xl font-bold">Casual</h1>
                 <div className="flex items-center gap-4">
-                  <span className="text-gray-600 text-sm">Showing 1-{products.length} of 100 Products</span>
+                  <span className="text-gray-600 text-sm">
+                    Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredProducts.length)} of {filteredProducts.length} Products
+                  </span>
                   <button className="lg:hidden" onClick={() => setShowFilters(!showFilters)}>
                     <SlidersHorizontal className="w-6 h-6" />
                   </button>
@@ -160,25 +214,19 @@ export default function ProductsPage() {
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-                {products.map((product) => (
+                {paginatedProducts.map((product) => (
                   <ProductCard key={product.id} {...product} />
                 ))}
               </div>
 
               {/* Pagination */}
-              <div className="flex items-center justify-center gap-2 mt-12">
-                <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-                  Previous
-                </button>
-                <button className="px-4 py-2 bg-black text-white rounded-lg">1</button>
-                <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">2</button>
-                <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">...</button>
-                <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">9</button>
-                <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">10</button>
-                <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-                  Next
-                </button>
-              </div>
+              {totalPages > 1 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              )}
             </div>
           </div>
         </div>

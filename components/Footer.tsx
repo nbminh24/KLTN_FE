@@ -69,25 +69,39 @@ export default function Footer() {
           <div>
             <h3 className="font-medium text-xs tracking-wider uppercase mb-4">Help</h3>
             <ul className="space-y-3 text-gray-600 text-sm">
-              <li><Link href="/support">Customer Support</Link></li>
-              <li><Link href="/delivery">Delivery Details</Link></li>
-              <li><Link href="/terms">Terms & Conditions</Link></li>
-              <li><Link href="/privacy">Privacy Policy</Link></li>
+              <li><Link href="/support" className="hover:text-black transition">Customer Support</Link></li>
+              <li><Link href="/delivery" className="hover:text-black transition">Delivery Details</Link></li>
+              <li><Link href="/terms" className="hover:text-black transition">Terms & Conditions</Link></li>
+              <li><Link href="/privacy" className="hover:text-black transition">Privacy Policy</Link></li>
+              <li><Link href="/faq" className="hover:text-black transition">FAQ</Link></li>
             </ul>
           </div>
 
-          {/* FAQ Links */}
+          {/* Account Links */}
           <div>
-            <h3 className="font-medium text-xs tracking-wider uppercase mb-4">FAQ</h3>
+            <h3 className="font-medium text-xs tracking-wider uppercase mb-4">Account</h3>
             <ul className="space-y-3 text-gray-600 text-sm">
-              <li><Link href="/account">Account</Link></li>
-              <li><Link href="/deliveries">Manage Deliveries</Link></li>
-              <li><Link href="/orders">Orders</Link></li>
-              <li><Link href="/payments">Payments</Link></li>
+              <li><Link href="/profile" className="hover:text-black transition">My Account</Link></li>
+              <li><Link href="/manage-deliveries" className="hover:text-black transition">Manage Deliveries</Link></li>
+              <li><Link href="/orders" className="hover:text-black transition">Orders</Link></li>
+              <li><Link href="/payments" className="hover:text-black transition">Payments</Link></li>
             </ul>
           </div>
         </div>
 
+        {/* Copyright */}
+        <div className="border-t border-gray-300 mt-8 pt-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-gray-600 text-sm">
+              © 2025 LeCas. All Rights Reserved.
+            </p>
+            <div className="flex gap-4 text-xs text-gray-600">
+              <Link href="/terms" className="hover:text-black transition">Terms</Link>
+              <Link href="/privacy" className="hover:text-black transition">Privacy</Link>
+              <Link href="/support" className="hover:text-black transition">Support</Link>
+            </div>
+          </div>
+        </div>
       </div>
     </footer>
   );
