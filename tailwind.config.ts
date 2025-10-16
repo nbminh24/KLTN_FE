@@ -13,8 +13,9 @@ const config: Config = {
         foreground: "var(--foreground)",
       },
       fontFamily: {
-        'integral': ['Integral CF', 'sans-serif'],
-        'satoshi': ['Satoshi', 'sans-serif'],
+        'integral': ['var(--font-poppins)', 'Poppins', 'sans-serif'],
+        'satoshi': ['var(--font-inter)', 'Inter', 'sans-serif'],
+        'sans': ['var(--font-inter)', 'Inter', 'sans-serif'],
       },
     },
   },

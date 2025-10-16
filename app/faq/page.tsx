@@ -153,7 +153,7 @@ export default function FAQPage() {
               Still Have Questions?
             </h2>
             <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-              Can\'t find the answer you\'re looking for? Our support team is here to help.
+              Can't find the answer you're looking for? Our support team is here to help.
             </p>
             <Link
               href="/support"
