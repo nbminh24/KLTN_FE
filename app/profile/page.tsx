@@ -141,16 +141,24 @@ export default function ProfilePage() {
               {activeTab === 'addresses' && (
                 <div className="border border-gray-200 rounded-2xl p-6">
                   <h2 className="text-2xl font-bold mb-6">Saved Addresses</h2>
-                  <button className="border border-gray-300 px-6 py-3 rounded-full font-medium hover:bg-gray-50 transition">
-                    + Add New Address
-                  </button>
+                  <p className="text-gray-600 mb-4">
+                    Manage your delivery addresses.{' '}
+                    <Link href="/addresses" className="text-black font-medium underline">
+                      View All Addresses
+                    </Link>
+                  </p>
                 </div>
               )}
 
               {activeTab === 'wishlist' && (
                 <div className="border border-gray-200 rounded-2xl p-6">
                   <h2 className="text-2xl font-bold mb-6">My Wishlist</h2>
-                  <p className="text-gray-600">Your wishlist is empty.</p>
+                  <p className="text-gray-600 mb-4">
+                    View and manage your saved items.{' '}
+                    <Link href="/wishlist" className="text-black font-medium underline">
+                      Go to Wishlist
+                    </Link>
+                  </p>
                 </div>
               )}
 

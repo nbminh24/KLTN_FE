@@ -165,9 +165,12 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                <button className="w-full bg-black text-white py-4 rounded-full font-medium hover:bg-gray-800 transition">
+                <Link
+                  href="/order-confirmation?orderId=ORD-001"
+                  className="w-full bg-black text-white py-4 rounded-full font-medium hover:bg-gray-800 transition block text-center"
+                >
                   Place Order
-                </button>
+                </Link>
               </div>
             </div>
           </div>

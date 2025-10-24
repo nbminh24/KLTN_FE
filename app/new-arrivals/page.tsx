@@ -49,9 +49,8 @@ export default function NewArrivalsPage() {
           </div>
 
           {/* Hero Section */}
-          <div className="bg-gradient-to-br from-purple-500 to-blue-500 text-white rounded-3xl p-8 md:p-12 mb-8">
+          <div className="bg-black text-white rounded-3xl p-8 md:p-12 mb-8">
             <div className="flex items-center gap-3 mb-4">
-              <Sparkles className="w-8 h-8" />
               <h1 className="text-3xl md:text-5xl font-integral font-bold">
                 NEW ARRIVALS
               </h1>

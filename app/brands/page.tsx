@@ -75,10 +75,10 @@ export default function BrandsPage() {
           {/* CTA Section */}
           <div className="mt-16 bg-black text-white rounded-3xl p-8 md:p-12 text-center">
             <h2 className="text-2xl md:text-4xl font-bold mb-4">
-              Can\'t find your favorite brand?
+              Can't find your favorite brand?
             </h2>
             <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
-              We\'re constantly adding new brands to our collection. Let us know what you\'re looking for!
+              We're constantly adding new brands to our collection. Let us know what you're looking for!
             </p>
             <Link
               href="/contact"

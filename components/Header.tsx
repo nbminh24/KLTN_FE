@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, ShoppingCart, User, Menu, X, Camera } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, X, Camera, Heart } from 'lucide-react';
 
 export default function Header() {
   const router = useRouter();
@@ -87,10 +87,13 @@ export default function Header() {
               <button className="md:hidden">
                 <Search className="w-6 h-6" />
               </button>
-              <Link href="/cart" className="hover:text-gray-600 transition">
+              <Link href="/wishlist" className="hover:text-gray-600 transition" title="Wishlist">
+                <Heart className="w-6 h-6" />
+              </Link>
+              <Link href="/cart" className="hover:text-gray-600 transition" title="Shopping Cart">
                 <ShoppingCart className="w-6 h-6" />
               </Link>
-              <Link href="/profile" className="hover:text-gray-600 transition">
+              <Link href="/profile" className="hover:text-gray-600 transition" title="Profile">
                 <User className="w-6 h-6" />
               </Link>
             </div>

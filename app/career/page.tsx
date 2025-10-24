@@ -13,7 +13,7 @@ const jobs = [
     department: 'Engineering',
     location: 'Remote',
     type: 'Full-time',
-    description: 'We're looking for an experienced frontend developer to join our team and help build amazing user experiences.',
+    description: 'We are looking for an experienced frontend developer to join our team and help build amazing user experiences.',
   },
   {
     id: '2',
@@ -59,11 +59,11 @@ const jobs = [
 
 export default function CareerPage() {
   const [selectedDepartment, setSelectedDepartment] = useState<string>('All');
-  
+
   const departments = ['All', 'Engineering', 'Design', 'Customer Support', 'Marketing', 'Analytics'];
-  
-  const filteredJobs = selectedDepartment === 'All' 
-    ? jobs 
+
+  const filteredJobs = selectedDepartment === 'All'
+    ? jobs
     : jobs.filter(job => job.department === selectedDepartment);
 
   return (
@@ -119,11 +119,10 @@ export default function CareerPage() {
                 <button
                   key={dept}
                   onClick={() => setSelectedDepartment(dept)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                    selectedDepartment === dept
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition ${selectedDepartment === dept
                       ? 'bg-black text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                    }`}
                 >
                   {dept}
                 </button>

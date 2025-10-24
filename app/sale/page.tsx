@@ -57,7 +57,7 @@ export default function SalePage() {
           </div>
 
           {/* Hero Banner */}
-          <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-3xl p-8 md:p-12 mb-8">
+          <div className="bg-black text-white rounded-3xl p-8 md:p-12 mb-8">
             <h1 className="text-3xl md:text-5xl font-integral font-bold mb-4">
               FLASH SALE
             </h1>

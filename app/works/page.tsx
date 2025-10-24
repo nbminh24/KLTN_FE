@@ -59,9 +59,8 @@ export default function WorksPage() {
             {steps.map((item, index) => (
               <div
                 key={index}
-                className={`flex flex-col md:flex-row items-center gap-8 ${
-                  index % 2 === 1 ? 'md:flex-row-reverse' : ''
-                }`}
+                className={`flex flex-col md:flex-row items-center gap-8 ${index % 2 === 1 ? 'md:flex-row-reverse' : ''
+                  }`}
               >
                 <div className="flex-1 text-center md:text-left">
                   <div className="inline-block bg-black text-white text-sm font-bold px-4 py-2 rounded-full mb-4">
@@ -103,7 +102,7 @@ export default function WorksPage() {
           </div>
 
           {/* CTA */}
-          <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-3xl p-8 md:p-12 text-center">
+          <div className="bg-black text-white rounded-3xl p-8 md:p-12 text-center">
             <h2 className="text-2xl md:text-4xl font-bold mb-4">
               Ready to Start Shopping?
             </h2>

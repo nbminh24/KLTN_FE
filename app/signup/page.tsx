@@ -30,9 +30,8 @@ export default function SignupPage() {
       return;
     }
 
-    // Mock signup - redirect to login
-    alert('Account created successfully! Please sign in.');
-    router.push('/login');
+    // Mock signup - redirect to email verification
+    router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
   };
 
   const handleGoogleSignup = () => {
