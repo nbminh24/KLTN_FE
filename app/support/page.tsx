@@ -12,13 +12,14 @@ export default function SupportPage() {
     email: '',
     subject: '',
     message: '',
+    triedAI: false,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Handle form submission
     alert('Your message has been sent! We\'ll get back to you soon.');
-    setFormData({ name: '', email: '', subject: '', message: '' });
+    setFormData({ name: '', email: '', subject: '', message: '', triedAI: false });
   };
 
   return (
@@ -39,9 +40,31 @@ export default function SupportPage() {
             <h1 className="text-3xl md:text-5xl font-integral font-bold mb-6">
               HOW CAN WE HELP?
             </h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-6">
               Our support team is here to assist you 24/7
             </p>
+            
+            {/* AI Chatbot Notice */}
+            <div className="max-w-2xl mx-auto bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-6">
+              <div className="flex items-start gap-4">
+                <MessageCircle className="w-8 h-8 text-purple-600 flex-shrink-0 mt-1" />
+                <div className="text-left">
+                  <h3 className="font-bold text-purple-900 text-lg mb-2">Try Our AI Chatbot First! 🤖</h3>
+                  <p className="text-sm text-purple-800 mb-3">
+                    Our AI assistant can instantly help you with:
+                  </p>
+                  <ul className="text-sm text-purple-800 space-y-1 mb-4">
+                    <li>✓ Order tracking & status updates</li>
+                    <li>✓ Product information & recommendations</li>
+                    <li>✓ Return & refund policies</li>
+                    <li>✓ Size guides & fitting advice</li>
+                  </ul>
+                  <p className="text-xs text-purple-700 font-medium">
+                    💡 The AI chatbot resolves 80% of inquiries instantly! If it can't help, you'll be guided to fill this form.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Contact Options */}
@@ -127,6 +150,19 @@ export default function SupportPage() {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                     placeholder="Tell us more about your inquiry..."
                   />
+                </div>
+                <div className="flex items-start gap-3 bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <input
+                    type="checkbox"
+                    id="triedAI"
+                    checked={formData.triedAI}
+                    onChange={(e) => setFormData({ ...formData, triedAI: e.target.checked })}
+                    className="w-5 h-5 mt-0.5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                    required
+                  />
+                  <label htmlFor="triedAI" className="text-sm text-purple-900">
+                    <span className="font-bold">I tried the AI chatbot first</span> and it couldn't help
+                  </label>
                 </div>
                 <button
                   type="submit"

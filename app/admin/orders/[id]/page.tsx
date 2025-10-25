@@ -1,14 +1,35 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, Package, MapPin, CreditCard, Truck, Download, Edit } from 'lucide-react';
+import { showToast } from '@/components/Toast';
+import { canTransitionTo, getAllowedNextStatuses, getStatusColor, getStatusLabel, OrderStatus } from '@/lib/orderStatus';
 
 export default function OrderDetailPage({ params }: { params: { id: string } }) {
+  const [orderStatus, setOrderStatus] = useState<OrderStatus>('delivered');
+
+  const handleStatusChange = (newStatus: string) => {
+    const newOrderStatus = newStatus as OrderStatus;
+    
+    if (!canTransitionTo(orderStatus, newOrderStatus)) {
+      showToast(`Cannot change status from ${orderStatus} to ${newStatus}`, 'error');
+      return;
+    }
+
+    if (confirm(`Are you sure you want to change status to "${getStatusLabel(newOrderStatus)}"?`)) {
+      setOrderStatus(newOrderStatus);
+      showToast(`Order status updated to ${getStatusLabel(newOrderStatus)}`, 'success');
+    }
+  };
+
+  const allowedStatuses = getAllowedNextStatuses(orderStatus);
+
   const order = {
     id: params.id,
     date: '2024-01-15 10:30 AM',
-    status: 'Delivered',
+    status: orderStatus,
     customer: {
       name: 'Christine Brooks',
       email: 'christine@example.com',
@@ -72,13 +93,24 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
             <Download className="w-4 h-4" />
             <span className="font-semibold text-sm">Download Invoice</span>
           </button>
-          <select className="px-4 py-2.5 bg-[#4880FF] text-white rounded-lg font-semibold">
-            <option>Delivered</option>
-            <option>Shipped</option>
-            <option>Processing</option>
-            <option>Pending</option>
-            <option>Cancelled</option>
-          </select>
+          {allowedStatuses.length > 0 ? (
+            <select 
+              onChange={(e) => handleStatusChange(e.target.value)}
+              value=""
+              className="px-4 py-2.5 bg-[#4880FF] text-white rounded-lg font-semibold cursor-pointer"
+            >
+              <option value="" disabled>Change Status</option>
+              {allowedStatuses.map((status) => (
+                <option key={status} value={status}>
+                  {getStatusLabel(status)}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div className={`px-4 py-2.5 rounded-lg font-semibold border ${getStatusColor(orderStatus)}`}>
+              {getStatusLabel(orderStatus)} (Final)
+            </div>
+          )}
         </div>
       </div>
 

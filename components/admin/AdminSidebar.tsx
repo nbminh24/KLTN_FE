@@ -7,15 +7,13 @@ import {
   Package,
   ShoppingCart,
   Users,
-  RotateCcw,
   Tag,
   PackageSearch,
   MessageSquare,
-  MessageCircle,
+  Mail,
   Settings,
   LogOut,
   Folder,
-  BookOpen,
   FileText,
 } from 'lucide-react';
 
@@ -34,15 +32,13 @@ export default function AdminSidebar() {
     { name: 'Categories', path: '/admin/categories', icon: <Folder className="w-5 h-5" /> },
     { name: 'Orders', path: '/admin/orders', icon: <ShoppingCart className="w-5 h-5" /> },
     { name: 'Customers', path: '/admin/customers', icon: <Users className="w-5 h-5" /> },
-    { name: 'Returns', path: '/admin/returns', icon: <RotateCcw className="w-5 h-5" /> },
   ];
 
   const pagesItems: MenuItem[] = [
     { name: 'Promotions', path: '/admin/promotions', icon: <Tag className="w-5 h-5" /> },
     { name: 'Inventory', path: '/admin/inventory', icon: <PackageSearch className="w-5 h-5" /> },
     { name: 'Chatbot', path: '/admin/chatbot', icon: <MessageSquare className="w-5 h-5" /> },
-    { name: 'Knowledge Base', path: '/admin/chatbot/knowledge', icon: <BookOpen className="w-5 h-5" /> },
-    { name: 'Support', path: '/admin/support', icon: <MessageCircle className="w-5 h-5" /> },
+    { name: 'Support Inbox', path: '/admin/support-inbox', icon: <Mail className="w-5 h-5" /> },
     { name: 'Pages (CMS)', path: '/admin/pages', icon: <FileText className="w-5 h-5" /> },
   ];
 

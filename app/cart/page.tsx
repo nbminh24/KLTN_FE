@@ -1,73 +1,75 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { showToast } from '@/components/Toast';
+import { getCart, updateCartItemQuantity, removeFromCart, getCartSubtotal, getCartDiscount, CartItem } from '@/lib/cart';
+import { validatePromoCode } from '@/lib/pricing';
 import { ChevronRight, Minus, Plus, Trash2, Tag, ArrowRight } from 'lucide-react';
 
-interface CartItem {
-  id: string;
-  name: string;
-  image: string;
-  size: string;
-  color: string;
-  price: number;
-  quantity: number;
-}
-
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: '1',
-      name: 'Gradient Graphic T-shirt',
-      image: '/bmm32410_black_xl.webp',
-      size: 'Large',
-      color: 'White',
-      price: 145,
-      quantity: 1,
-    },
-    {
-      id: '2',
-      name: 'Checkered Shirt',
-      image: '/bmm32410_black_xl.webp',
-      size: 'Medium',
-      color: 'Red',
-      price: 180,
-      quantity: 1,
-    },
-    {
-      id: '3',
-      name: 'Skinny Fit Jeans',
-      image: '/bmm32410_black_xl.webp',
-      size: 'Large',
-      color: 'Blue',
-      price: 240,
-      quantity: 1,
-    },
-  ]);
-
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [promoCode, setPromoCode] = useState('');
+  const [promoDiscount, setPromoDiscount] = useState(0);
 
-  const updateQuantity = (id: string, delta: number) => {
-    setCartItems(items =>
-      items.map(item =>
-        item.id === id
-          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
-          : item
-      )
-    );
+  // Load cart from localStorage on mount
+  useEffect(() => {
+    setCartItems(getCart());
+    
+    // Listen for cart updates
+    const handleCartUpdate = () => {
+      setCartItems(getCart());
+    };
+    
+    window.addEventListener('cart-updated', handleCartUpdate);
+    return () => window.removeEventListener('cart-updated', handleCartUpdate);
+  }, []);
+
+  const updateQuantity = (id: string, size: string | undefined, color: string | undefined, delta: number) => {
+    const item = cartItems.find(i => i.id === id && i.size === size && i.color === color);
+    if (item) {
+      const newQuantity = item.quantity + delta;
+      if (newQuantity <= 0) {
+        handleRemoveItem(id, size, color);
+        return;
+      }
+      
+      const success = updateCartItemQuantity(id, newQuantity, size, color);
+      if (!success) {
+        showToast('Cannot exceed available stock', 'error');
+      }
+    }
   };
 
-  const removeItem = (id: string) => {
-    setCartItems(items => items.filter(item => item.id !== id));
+  const handleRemoveItem = (id: string, size?: string, color?: string) => {
+    removeFromCart(id, size, color);
+    showToast('Item removed from cart', 'info');
   };
 
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const discount = subtotal * 0.2; // 20% discount
-  const deliveryFee = 15;
-  const total = subtotal - discount + deliveryFee;
+  const handleApplyPromo = () => {
+    if (!promoCode.trim()) {
+      showToast('Please enter a promo code', 'warning');
+      return;
+    }
+
+    const result = validatePromoCode(promoCode, subtotal);
+    
+    if (result.valid) {
+      setPromoDiscount(result.discount);
+      showToast(result.message, 'success');
+    } else {
+      setPromoDiscount(0);
+      showToast(result.message, 'error');
+    }
+  };
+
+  const subtotal = getCartSubtotal();
+  const discount = getCartDiscount();
+  const deliveryFee = subtotal > 0 ? 15 : 0;
+  const total = Math.max(0, subtotal - discount - promoDiscount + deliveryFee);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -120,7 +122,7 @@ export default function CartPage() {
                       <div className="flex md:flex-col items-end justify-between md:justify-start gap-4">
                         {/* Delete Button */}
                         <button
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => handleRemoveItem(item.id, item.size, item.color)}
                           className="text-red-500 hover:text-red-700 transition"
                         >
                           <Trash2 className="w-5 h-5" />
@@ -129,14 +131,14 @@ export default function CartPage() {
                         {/* Quantity Controls */}
                         <div className="flex items-center bg-gray-100 rounded-full px-4 py-2">
                           <button
-                            onClick={() => updateQuantity(item.id, -1)}
+                            onClick={() => updateQuantity(item.id, item.size, item.color, -1)}
                             className="p-1"
                           >
                             <Minus className="w-4 h-4" />
                           </button>
                           <span className="px-4 font-medium">{item.quantity}</span>
                           <button
-                            onClick={() => updateQuantity(item.id, 1)}
+                            onClick={() => updateQuantity(item.id, item.size, item.color, 1)}
                             className="p-1"
                           >
                             <Plus className="w-4 h-4" />
@@ -159,10 +161,18 @@ export default function CartPage() {
                     <span className="text-gray-600">Subtotal</span>
                     <span className="font-bold">${subtotal}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Discount (-20%)</span>
-                    <span className="font-bold text-red-500">-${discount.toFixed(0)}</span>
-                  </div>
+                  {discount > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Discount</span>
+                      <span className="font-bold text-red-500">-${discount.toFixed(0)}</span>
+                    </div>
+                  )}
+                  {promoDiscount > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Promo Code</span>
+                      <span className="font-bold text-green-500">-${promoDiscount}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-gray-600">Delivery Fee</span>
                     <span className="font-bold">${deliveryFee}</span>
@@ -186,7 +196,10 @@ export default function CartPage() {
                       className="w-full pl-12 pr-4 py-3 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-black"
                     />
                   </div>
-                  <button className="bg-black text-white px-6 py-3 rounded-full font-medium hover:bg-gray-800 transition">
+                  <button 
+                    onClick={handleApplyPromo}
+                    className="bg-black text-white px-6 py-3 rounded-full font-medium hover:bg-gray-800 transition"
+                  >
                     Apply
                   </button>
                 </div>

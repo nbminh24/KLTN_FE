@@ -7,6 +7,8 @@ import { ArrowLeft, Search, Filter, MessageSquare, CheckCircle, Clock } from 'lu
 export default function ConversationsPage() {
   const [selectedConv, setSelectedConv] = useState<string | null>('1');
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'resolved' | 'unresolved'>('all');
+  const [filterIntent, setFilterIntent] = useState<string>('all');
 
   const conversations = [
     {
@@ -56,6 +58,18 @@ export default function ConversationsPage() {
     { role: 'bot', text: 'For size Large:\n• Chest: 42 inches\n• Length: 29 inches\n• Shoulder: 18 inches\n\nWould you like help with anything else?', time: '10:32 AM' },
   ];
 
+  // Filter conversations
+  const filteredConversations = conversations.filter((conv) => {
+    const matchesSearch = conv.user.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         conv.lastMessage.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = filterStatus === 'all' ||
+                         (filterStatus === 'resolved' && conv.resolved) ||
+                         (filterStatus === 'unresolved' && !conv.resolved);
+    const matchesIntent = filterIntent === 'all' || conv.intent === filterIntent;
+    
+    return matchesSearch && matchesStatus && matchesIntent;
+  });
+
   const selectedConversation = conversations.find((c) => c.id === selectedConv);
 
   return (
@@ -87,17 +101,39 @@ export default function ConversationsPage() {
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF] text-sm"
                 />
               </div>
-              <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF] text-sm">
-                <option>All Conversations</option>
-                <option>Resolved</option>
-                <option>Unresolved</option>
-                <option>With Fallbacks</option>
-              </select>
+              <div className="space-y-2">
+                <select 
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value as any)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF] text-sm"
+                >
+                  <option value="all">All Status</option>
+                  <option value="resolved">Resolved</option>
+                  <option value="unresolved">Unresolved</option>
+                </select>
+                <select 
+                  value={filterIntent}
+                  onChange={(e) => setFilterIntent(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF] text-sm"
+                >
+                  <option value="all">All Intents</option>
+                  <option value="product_inquiry">Product Inquiry</option>
+                  <option value="order_status">Order Status</option>
+                  <option value="return_policy">Return Policy</option>
+                  <option value="shipping_info">Shipping Info</option>
+                </select>
+              </div>
             </div>
 
             {/* Conversations */}
             <div className="overflow-y-auto max-h-[600px]">
-              {conversations.map((conv) => (
+              {filteredConversations.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  <MessageSquare className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                  <p>No conversations found</p>
+                </div>
+              ) : (
+                filteredConversations.map((conv) => (
                 <div
                   key={conv.id}
                   onClick={() => setSelectedConv(conv.id)}
@@ -129,7 +165,8 @@ export default function ConversationsPage() {
                     <span className="text-xs text-gray-500">{conv.time}</span>
                   </div>
                 </div>
-              ))}
+              ))
+              )}
             </div>
           </div>
         </div>

@@ -1,17 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { Save, Upload, Globe, Mail, CreditCard, Truck, Bell, Shield, Users } from 'lucide-react';
+import { Save, Upload, Globe, Mail, CreditCard, Truck, Bell } from 'lucide-react';
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<'general' | 'shipping' | 'payment' | 'notifications' | 'team'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'shipping' | 'payment' | 'notifications'>('general');
 
   const tabs = [
     { id: 'general' as const, name: 'General', icon: <Globe className="w-4 h-4" /> },
     { id: 'shipping' as const, name: 'Shipping', icon: <Truck className="w-4 h-4" /> },
     { id: 'payment' as const, name: 'Payment', icon: <CreditCard className="w-4 h-4" /> },
     { id: 'notifications' as const, name: 'Notifications', icon: <Bell className="w-4 h-4" /> },
-    { id: 'team' as const, name: 'Team', icon: <Users className="w-4 h-4" /> },
   ];
 
   return (
@@ -215,7 +214,6 @@ export default function SettingsPage() {
                   'Order status updates',
                   'Low stock alerts',
                   'New customer registration',
-                  'Return requests',
                   'Weekly sales report',
                 ].map((notification, i) => (
                   <div key={i} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
@@ -227,47 +225,6 @@ export default function SettingsPage() {
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* Team Settings */}
-        {activeTab === 'team' && (
-          <div className="p-6 space-y-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">Team Members</h2>
-              <button className="px-4 py-2 bg-[#4880FF] text-white rounded-lg hover:bg-blue-600 transition text-sm font-semibold">
-                Invite Member
-              </button>
-            </div>
-            <div className="space-y-3">
-              {[
-                { name: 'Admin User', email: 'admin@lecas.com', role: 'Owner', active: true },
-                { name: 'John Smith', email: 'john@lecas.com', role: 'Admin', active: true },
-                { name: 'Sarah Johnson', email: 'sarah@lecas.com', role: 'Manager', active: false },
-              ].map((member, i) => (
-                <div key={i} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-white font-bold">
-                      {member.name[0]}
-                    </div>
-                    <div>
-                      <p className="font-semibold">{member.name}</p>
-                      <p className="text-sm text-gray-600">{member.email}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="px-3 py-1 bg-gray-100 rounded-full text-xs font-semibold">
-                      {member.role}
-                    </span>
-                    {member.active && (
-                      <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">
-                        Active
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         )}

@@ -1,20 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Edit2, Trash2, Folder, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Folder, X, Eye, Package } from 'lucide-react';
 
 export default function CategoriesPage() {
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
   const categories = [
-    { id: '1', name: 'T-Shirts', slug: 't-shirts', products: 45, status: 'Active', parent: null },
-    { id: '2', name: 'Shirts', slug: 'shirts', products: 32, status: 'Active', parent: null },
-    { id: '3', name: 'Jeans', slug: 'jeans', products: 28, status: 'Active', parent: null },
-    { id: '4', name: 'Hoodies', slug: 'hoodies', products: 21, status: 'Active', parent: null },
-    { id: '5', name: 'Shorts', slug: 'shorts', products: 19, status: 'Active', parent: null },
-    { id: '6', name: 'Casual Shirts', slug: 'casual-shirts', products: 15, status: 'Active', parent: 'Shirts' },
-    { id: '7', name: 'Formal Shirts', slug: 'formal-shirts', products: 12, status: 'Active', parent: 'Shirts' },
+    { id: '1', name: 'T-Shirts', slug: 't-shirts', products: 45, status: 'Active', description: 'Casual and graphic t-shirts' },
+    { id: '2', name: 'Shirts', slug: 'shirts', products: 32, status: 'Active', description: 'Casual and formal shirts' },
+    { id: '3', name: 'Jeans', slug: 'jeans', products: 28, status: 'Active', description: 'Denim jeans and pants' },
+    { id: '4', name: 'Hoodies', slug: 'hoodies', products: 21, status: 'Active', description: 'Hoodies and sweatshirts' },
+    { id: '5', name: 'Shorts', slug: 'shorts', products: 19, status: 'Active', description: 'Summer shorts' },
+    { id: '6', name: 'Jackets', slug: 'jackets', products: 15, status: 'Active', description: 'Jackets and outerwear' },
   ];
 
   return (
@@ -38,22 +37,18 @@ export default function CategoriesPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl p-5 border border-gray-200">
           <p className="text-sm text-gray-600 mb-1">Total Categories</p>
-          <p className="text-2xl font-bold text-[#202224]">7</p>
+          <p className="text-2xl font-bold text-[#202224]">{categories.length}</p>
         </div>
         <div className="bg-white rounded-xl p-5 border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">Active</p>
-          <p className="text-2xl font-bold text-green-600">7</p>
+          <p className="text-sm text-gray-600 mb-1">Active Categories</p>
+          <p className="text-2xl font-bold text-green-600">{categories.filter(c => c.status === 'Active').length}</p>
         </div>
         <div className="bg-white rounded-xl p-5 border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">Parent Categories</p>
-          <p className="text-2xl font-bold text-blue-600">5</p>
-        </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">Sub Categories</p>
-          <p className="text-2xl font-bold text-purple-600">2</p>
+          <p className="text-sm text-gray-600 mb-1">Total Products</p>
+          <p className="text-2xl font-bold text-blue-600">{categories.reduce((sum, c) => sum + c.products, 0)}</p>
         </div>
       </div>
 
@@ -65,7 +60,7 @@ export default function CategoriesPage() {
               <tr className="bg-[#F1F4F9] border-b border-gray-200">
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Category</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Slug</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Parent</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Description</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Products</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Status</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Actions</th>
@@ -81,13 +76,7 @@ export default function CategoriesPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{category.slug}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {category.parent ? (
-                      <span className="px-2 py-1 bg-gray-100 rounded text-xs">{category.parent}</span>
-                    ) : (
-                      <span className="text-gray-400">-</span>
-                    )}
-                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{category.description}</td>
                   <td className="px-6 py-4 text-sm font-semibold text-[#202224]">{category.products}</td>
                   <td className="px-6 py-4">
                     <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">
@@ -97,15 +86,22 @@ export default function CategoriesPage() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <button
+                        className="p-2 hover:bg-gray-100 rounded-lg transition"
+                        title="View Products"
+                      >
+                        <Eye className="w-4 h-4 text-gray-600" />
+                      </button>
+                      <button
                         onClick={() => {
                           setEditMode(true);
                           setShowModal(true);
                         }}
                         className="p-2 hover:bg-gray-100 rounded-lg transition"
+                        title="Edit"
                       >
                         <Edit2 className="w-4 h-4 text-gray-600" />
                       </button>
-                      <button className="p-2 hover:bg-red-50 rounded-lg transition">
+                      <button className="p-2 hover:bg-red-50 rounded-lg transition" title="Delete">
                         <Trash2 className="w-4 h-4 text-red-600" />
                       </button>
                     </div>

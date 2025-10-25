@@ -1,76 +1,53 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { ChevronRight, Heart, ShoppingCart, Trash2, Share2 } from 'lucide-react';
-
-interface WishlistItem {
-  id: string;
-  name: string;
-  image: string;
-  price: number;
-  originalPrice?: number;
-  discount?: number;
-  inStock: boolean;
-  rating: number;
-}
+import { showToast } from '@/components/Toast';
+import { getWishlist, removeFromWishlist, WishlistItem } from '@/lib/wishlist';
+import { addToCart } from '@/lib/cart';
+import { ChevronRight, Heart, ShoppingCart, Trash2, Star } from 'lucide-react';
 
 export default function WishlistPage() {
-  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([
-    {
-      id: '1',
-      name: 'Gradient Graphic T-shirt',
-      image: '/bmm32410_black_xl.webp',
-      price: 145,
-      originalPrice: 242,
-      discount: 20,
-      inStock: true,
-      rating: 3.5,
-    },
-    {
-      id: '2',
-      name: 'Checkered Shirt',
-      image: '/bmm32410_black_xl.webp',
-      price: 180,
-      inStock: true,
-      rating: 4.5,
-    },
-    {
-      id: '3',
-      name: 'Skinny Fit Jeans',
-      image: '/bmm32410_black_xl.webp',
-      price: 240,
-      originalPrice: 260,
-      discount: 20,
-      inStock: false,
-      rating: 3.5,
-    },
-    {
-      id: '4',
-      name: 'Classic Hoodie',
-      image: '/bmm32410_black_xl.webp',
-      price: 195,
-      inStock: true,
-      rating: 4.8,
-    },
-  ]);
+  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
 
-  const removeFromWishlist = (id: string) => {
-    setWishlistItems(items => items.filter(item => item.id !== id));
+  // Load wishlist from localStorage
+  useEffect(() => {
+    setWishlistItems(getWishlist());
+
+    const handleWishlistUpdate = () => {
+      setWishlistItems(getWishlist());
+    };
+
+    window.addEventListener('wishlist-updated', handleWishlistUpdate);
+    return () => window.removeEventListener('wishlist-updated', handleWishlistUpdate);
+  }, []);
+
+  const handleRemoveItem = (id: string) => {
+    removeFromWishlist(id);
+    showToast('Removed from wishlist', 'info');
   };
 
-  const addToCart = (item: WishlistItem) => {
-    // Mock add to cart functionality
-    alert(`${item.name} added to cart!`);
-  };
+  const handleMoveToCart = (item: WishlistItem) => {
+    const success = addToCart(
+      {
+        id: item.id,
+        name: item.name,
+        image: item.image,
+        price: item.price,
+        originalPrice: item.originalPrice,
+        maxStock: 50, // Default stock
+      },
+      1
+    );
 
-  const addAllToCart = () => {
-    const inStockItems = wishlistItems.filter(item => item.inStock);
-    if (inStockItems.length > 0) {
-      alert(`${inStockItems.length} items added to cart!`);
+    if (success) {
+      removeFromWishlist(item.id);
+      showToast('Moved to cart!', 'success');
+    } else {
+      showToast('Failed to add to cart', 'error');
     }
   };
 
@@ -95,20 +72,6 @@ export default function WishlistPage() {
                 {wishlistItems.length} {wishlistItems.length === 1 ? 'item' : 'items'} saved
               </p>
             </div>
-            {wishlistItems.length > 0 && (
-              <div className="flex gap-3">
-                <button className="border border-gray-300 px-6 py-2.5 rounded-full font-medium hover:bg-gray-50 transition flex items-center gap-2">
-                  <Share2 className="w-4 h-4" />
-                  Share Wishlist
-                </button>
-                <button 
-                  onClick={addAllToCart}
-                  className="bg-black text-white px-6 py-2.5 rounded-full font-medium hover:bg-gray-800 transition"
-                >
-                  Add All to Cart
-                </button>
-              </div>
-            )}
           </div>
 
           {/* Wishlist Items */}
@@ -157,15 +120,6 @@ export default function WishlistPage() {
                         -{item.discount}%
                       </div>
                     )}
-
-                    {/* Out of Stock Overlay */}
-                    {!item.inStock && (
-                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                        <span className="bg-white text-black px-4 py-2 rounded-full font-medium text-sm">
-                          Out of Stock
-                        </span>
-                      </div>
-                    )}
                   </div>
 
                   {/* Product Info */}
@@ -176,16 +130,21 @@ export default function WishlistPage() {
                   </Link>
 
                   {/* Rating */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="flex gap-0.5">
-                      {[...Array(5)].map((_, i) => (
-                        <span key={i} className={i < Math.floor(item.rating) ? 'text-yellow-400' : 'text-gray-300'}>
-                          ★
-                        </span>
-                      ))}
+                  {item.rating && (
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="flex gap-0.5">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-4 h-4 ${
+                              i < Math.floor(item.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-sm text-gray-600">{item.rating}/5</span>
                     </div>
-                    <span className="text-sm text-gray-600">{item.rating}/5</span>
-                  </div>
+                  )}
 
                   {/* Price */}
                   <div className="flex items-center gap-2 mb-4">
@@ -197,16 +156,11 @@ export default function WishlistPage() {
 
                   {/* Add to Cart Button */}
                   <button
-                    onClick={() => addToCart(item)}
-                    disabled={!item.inStock}
-                    className={`w-full py-3 rounded-full font-medium transition flex items-center justify-center gap-2 ${
-                      item.inStock
-                        ? 'bg-black text-white hover:bg-gray-800'
-                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    }`}
+                    onClick={() => handleMoveToCart(item)}
+                    className="w-full py-3 rounded-full font-medium transition flex items-center justify-center gap-2 bg-black text-white hover:bg-gray-800"
                   >
                     <ShoppingCart className="w-4 h-4" />
-                    {item.inStock ? 'Add to Cart' : 'Out of Stock'}
+                    Add to Cart
                   </button>
                 </div>
               ))}

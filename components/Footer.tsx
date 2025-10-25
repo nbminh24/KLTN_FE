@@ -61,7 +61,6 @@ export default function Footer() {
               <li><Link href="/about">About</Link></li>
               <li><Link href="/features">Features</Link></li>
               <li><Link href="/works">Works</Link></li>
-              <li><Link href="/career">Career</Link></li>
             </ul>
           </div>
 
@@ -82,7 +81,7 @@ export default function Footer() {
             <h3 className="font-medium text-xs tracking-wider uppercase mb-4">Account</h3>
             <ul className="space-y-3 text-gray-600 text-sm">
               <li><Link href="/profile" className="hover:text-black transition">My Account</Link></li>
-              <li><Link href="/manage-deliveries" className="hover:text-black transition">Manage Deliveries</Link></li>
+              <li><Link href="/addresses" className="hover:text-black transition">My Addresses</Link></li>
               <li><Link href="/orders" className="hover:text-black transition">Orders</Link></li>
               <li><Link href="/payments" className="hover:text-black transition">Payments</Link></li>
             </ul>

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, Filter, Plus, Edit2, Trash2, Download, Upload } from 'lucide-react';
+import { Search, Filter, Plus, Edit2, Trash2, Download, Upload, Sparkles, Eye } from 'lucide-react';
 
 export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -19,6 +19,7 @@ export default function ProductsPage() {
       stock: 245,
       status: 'Active',
       image: '/bmm32410_black_xl.webp',
+      aiIndexed: true,
     },
     {
       id: '2',
@@ -29,6 +30,7 @@ export default function ProductsPage() {
       stock: 89,
       status: 'Active',
       image: '/bmm32410_black_xl.webp',
+      aiIndexed: true,
     },
     {
       id: '3',
@@ -39,6 +41,7 @@ export default function ProductsPage() {
       stock: 0,
       status: 'Out of Stock',
       image: '/bmm32410_black_xl.webp',
+      aiIndexed: false,
     },
   ];
 
@@ -113,6 +116,7 @@ export default function ProductsPage() {
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Price</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Stock</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Status</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">AI Status</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Actions</th>
               </tr>
             </thead>
@@ -156,13 +160,35 @@ export default function ProductsPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
+                      {product.aiIndexed ? (
+                        <span className="flex items-center gap-1.5 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold">
+                          <Sparkles className="w-3 h-3" />
+                          Indexed
+                        </span>
+                      ) : (
+                        <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold">
+                          Pending
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/admin/products/${product.id}`}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition"
+                        title="View Details"
+                      >
+                        <Eye className="w-4 h-4 text-gray-600" />
+                      </Link>
                       <Link
                         href={`/admin/products/${product.id}/edit`}
                         className="p-2 hover:bg-gray-100 rounded-lg transition"
+                        title="Edit"
                       >
                         <Edit2 className="w-4 h-4 text-gray-600" />
                       </Link>
-                      <button className="p-2 hover:bg-red-50 rounded-lg transition">
+                      <button className="p-2 hover:bg-red-50 rounded-lg transition" title="Delete">
                         <Trash2 className="w-4 h-4 text-red-600" />
                       </button>
                     </div>

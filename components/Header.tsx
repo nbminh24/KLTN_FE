@@ -1,14 +1,35 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Search, ShoppingCart, User, Menu, X, Camera, Heart } from 'lucide-react';
+import { getCartCount } from '@/lib/cart';
+import { getWishlistCount } from '@/lib/wishlist';
 
 export default function Header() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [showImageSearch, setShowImageSearch] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
+
+  // Update cart and wishlist count on mount and when they change
+  useEffect(() => {
+    const updateCounts = () => {
+      setCartCount(getCartCount());
+      setWishlistCount(getWishlistCount());
+    };
+
+    updateCounts(); // Initial count
+    window.addEventListener('cart-updated', updateCounts);
+    window.addEventListener('wishlist-updated', updateCounts);
+    
+    return () => {
+      window.removeEventListener('cart-updated', updateCounts);
+      window.removeEventListener('wishlist-updated', updateCounts);
+    };
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,9 +74,6 @@ export default function Header() {
               <Link href="/new-arrivals" className="hover:text-gray-600 transition">
                 New Arrivals
               </Link>
-              <Link href="/brands" className="hover:text-gray-600 transition">
-                Brands
-              </Link>
             </nav>
 
             {/* Search Bar */}
@@ -87,11 +105,21 @@ export default function Header() {
               <button className="md:hidden">
                 <Search className="w-6 h-6" />
               </button>
-              <Link href="/wishlist" className="hover:text-gray-600 transition" title="Wishlist">
+              <Link href="/wishlist" className="relative hover:text-gray-600 transition" title="Wishlist">
                 <Heart className="w-6 h-6" />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {wishlistCount}
+                  </span>
+                )}
               </Link>
-              <Link href="/cart" className="hover:text-gray-600 transition" title="Shopping Cart">
+              <Link href="/cart" className="relative hover:text-gray-600 transition" title="Shopping Cart">
                 <ShoppingCart className="w-6 h-6" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-black text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
               </Link>
               <Link href="/profile" className="hover:text-gray-600 transition" title="Profile">
                 <User className="w-6 h-6" />

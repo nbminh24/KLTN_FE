@@ -40,6 +40,42 @@ const newArrivals = [
   },
 ];
 
+// AI-Personalized recommendations based on user behavior
+const recommendedForYou = [
+  {
+    id: '9',
+    name: 'CLASSIC POLO SHIRT',
+    image: '/bmm32410_black_xl.webp',
+    price: 165,
+    rating: 4.7,
+  },
+  {
+    id: '10',
+    name: 'SLIM FIT CHINOS',
+    image: '/bmm32410_black_xl.webp',
+    price: 195,
+    originalPrice: 220,
+    rating: 4.3,
+    discount: 11,
+  },
+  {
+    id: '11',
+    name: 'CASUAL BLAZER',
+    image: '/bmm32410_black_xl.webp',
+    price: 280,
+    rating: 4.9,
+  },
+  {
+    id: '12',
+    name: 'DENIM JACKET',
+    image: '/bmm32410_black_xl.webp',
+    price: 230,
+    originalPrice: 270,
+    rating: 4.6,
+    discount: 15,
+  },
+];
+
 const topSelling = [
   {
     id: '5',
@@ -149,6 +185,41 @@ export default function HomePage() {
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             {newArrivals.map((product) => (
+              <ProductCard key={product.id} {...product} />
+            ))}
+          </div>
+          <div className="flex justify-center mt-8">
+            <Link
+              href="/products"
+              className="border border-gray-300 px-12 py-3 rounded-full font-medium hover:bg-gray-50 transition"
+            >
+              View All
+            </Link>
+          </div>
+        </section>
+
+        <div className="container mx-auto px-6 md:px-12">
+          <hr className="border-gray-200" />
+        </div>
+
+        {/* Recommended for You - AI Personalization */}
+        <section className="container mx-auto px-6 md:px-12 py-10 md:py-14">
+          <div className="flex items-center justify-center gap-3 mb-6 md:mb-10">
+            <h2 className="text-2xl md:text-4xl font-integral font-bold text-center">
+              RECOMMENDED FOR YOU
+            </h2>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-100 to-blue-100 border border-purple-300 rounded-full">
+              <svg className="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+              </svg>
+              <span className="text-xs font-bold text-purple-700">AI Powered</span>
+            </div>
+          </div>
+          <p className="text-center text-gray-600 mb-8 max-w-2xl mx-auto">
+            Based on your browsing history and preferences, we've curated these items just for you
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            {recommendedForYou.map((product) => (
               <ProductCard key={product.id} {...product} />
             ))}
           </div>

@@ -3,9 +3,13 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
+import ReviewForm from '@/components/ReviewForm';
+import { showToast } from '@/components/Toast';
+import { addToCart } from '@/lib/cart';
 import { ChevronRight, Minus, Plus, Star, Check } from 'lucide-react';
 
 // Mock data
@@ -17,10 +21,53 @@ const relatedProducts = [
 ];
 
 export default function ProductDetailPage() {
+  const router = useRouter();
   const [selectedSize, setSelectedSize] = useState('Large');
   const [selectedColor, setSelectedColor] = useState('olive');
   const [quantity, setQuantity] = useState(1);
   const [selectedTab, setSelectedTab] = useState('reviews');
+  const [showReviewForm, setShowReviewForm] = useState(false);
+
+  // Mock product data (would come from API/props)
+  const product = {
+    id: '1',
+    name: 'ONE LIFE GRAPHIC T-SHIRT',
+    price: 260,
+    originalPrice: 300,
+    rating: 4.5,
+    image: '/bmm32410_black_xl.webp',
+    stock: 50,
+  };
+
+  const handleAddToCart = () => {
+    // Validate size selection
+    if (!selectedSize) {
+      showToast('Please select a size', 'warning');
+      return;
+    }
+
+    const success = addToCart(
+      {
+        id: product.id,
+        name: product.name,
+        image: product.image,
+        price: product.price,
+        originalPrice: product.originalPrice,
+        size: selectedSize,
+        color: selectedColor,
+        maxStock: product.stock,
+      },
+      quantity
+    );
+
+    if (success) {
+      showToast(`Added ${quantity} item(s) to cart!`, 'success');
+      // Optional: redirect to cart after 1 second
+      // setTimeout(() => router.push('/cart'), 1000);
+    } else {
+      showToast('Cannot add more than available stock', 'error');
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -163,7 +210,10 @@ export default function ProductDetailPage() {
                     <Plus className="w-5 h-5" />
                   </button>
                 </div>
-                <button className="flex-1 bg-black text-white py-4 rounded-full font-medium hover:bg-gray-800 transition">
+                <button 
+                  onClick={handleAddToCart}
+                  className="flex-1 bg-black text-white py-4 rounded-full font-medium hover:bg-gray-800 transition"
+                >
                   Add to Cart
                 </button>
               </div>
@@ -199,10 +249,26 @@ export default function ProductDetailPage() {
             <div className="mb-12">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-2xl font-bold">All Reviews <span className="text-gray-600">(451)</span></h3>
-                <button className="bg-black text-white px-6 py-3 rounded-full font-medium hover:bg-gray-800 transition">
-                  Write a Review
+                <button 
+                  onClick={() => setShowReviewForm(!showReviewForm)}
+                  className="bg-black text-white px-6 py-3 rounded-full font-medium hover:bg-gray-800 transition"
+                >
+                  {showReviewForm ? 'Cancel' : 'Write a Review'}
                 </button>
               </div>
+
+              {/* Review Form */}
+              {showReviewForm && (
+                <div className="mb-8 border border-gray-200 rounded-2xl p-6 bg-gray-50">
+                  <ReviewForm 
+                    productId={product.id}
+                    onSubmit={(review) => {
+                      console.log('Review submitted:', review);
+                      setShowReviewForm(false);
+                    }}
+                  />
+                </div>
+              )}
 
               <div className="grid md:grid-cols-2 gap-6">
                 {[

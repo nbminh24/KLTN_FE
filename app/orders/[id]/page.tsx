@@ -232,14 +232,6 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
                 >
                   Need Help?
                 </Link>
-                {order.status === 'Delivered' && (
-                  <Link 
-                    href="/returns"
-                    className="w-full border border-gray-300 text-gray-700 py-3 rounded-full font-medium hover:bg-gray-50 transition text-center block"
-                  >
-                    Return Items
-                  </Link>
-                )}
               </div>
             </div>
           </div>

@@ -39,45 +39,25 @@ export default function ImportProductsPage() {
       </div>
 
       <div className="max-w-3xl space-y-6">
-        {/* Instructions */}
-        <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-6">
-          <h2 className="text-lg font-bold text-blue-900 mb-3 flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            How to import products:
-          </h2>
-          <ol className="list-decimal list-inside space-y-2 text-sm text-blue-800">
-            <li>Download the CSV template below</li>
-            <li>Fill in your product data (Name, SKU, Price, Stock, Category, etc.)</li>
-            <li>Make sure all required fields are filled</li>
-            <li>Upload the completed CSV file</li>
-            <li>Preview and confirm the import</li>
-          </ol>
-        </div>
-
-        {/* Download Template */}
+        {/* Download Template (Optional) */}
         <div className="bg-white rounded-xl p-6 border border-gray-200">
           <div className="flex items-start justify-between mb-4">
             <div>
-              <h2 className="text-xl font-bold mb-2">Step 1: Download Template</h2>
+              <h2 className="text-xl font-bold mb-2">Download Template (Optional)</h2>
               <p className="text-sm text-gray-600">
-                Use our template to ensure your data is formatted correctly
+                Use our template if you need a reference for the CSV format
               </p>
             </div>
           </div>
-          <button className="flex items-center gap-2 px-6 py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition">
+          <button className="flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 border border-gray-300 rounded-lg font-semibold hover:bg-gray-200 transition">
             <Download className="w-5 h-5" />
             Download CSV Template
           </button>
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-            <p className="text-xs text-gray-600 font-mono">
-              Template includes: name, sku, description, price, sale_price, stock, category, sizes, colors, status
-            </p>
-          </div>
         </div>
 
         {/* Upload File */}
         <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <h2 className="text-xl font-bold mb-4">Step 2: Upload CSV File</h2>
+          <h2 className="text-xl font-bold mb-4">Upload CSV File</h2>
           <div className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center hover:border-[#4880FF] transition">
             <Upload className="w-16 h-16 mx-auto mb-4 text-gray-400" />
             <p className="text-lg font-semibold mb-2">Drag & drop your CSV file here</p>
@@ -122,7 +102,7 @@ export default function ImportProductsPage() {
         {/* Preview Data */}
         {preview && file && (
           <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <h2 className="text-xl font-bold mb-4">Step 3: Preview Data</h2>
+            <h2 className="text-xl font-bold mb-4">Preview Data</h2>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -218,18 +198,6 @@ export default function ImportProductsPage() {
           </div>
         )}
 
-        {/* Tips */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
-          <h3 className="font-bold text-yellow-900 mb-3">💡 Tips for successful import:</h3>
-          <ul className="space-y-2 text-sm text-yellow-800">
-            <li>• Make sure your CSV file uses UTF-8 encoding</li>
-            <li>• Product names must be unique</li>
-            <li>• SKU codes must be unique across all products</li>
-            <li>• Price and stock must be numeric values</li>
-            <li>• Categories must exist before importing (create them first)</li>
-            <li>• Images can be added after import</li>
-          </ul>
-        </div>
       </div>
     </div>
   );
