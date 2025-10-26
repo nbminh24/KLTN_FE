@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
@@ -28,7 +28,7 @@ const allProducts = [
 
 const ITEMS_PER_PAGE = 9;
 
-export default function SearchPage() {
+function SearchPageContent() {
   const searchParams = useSearchParams();
   const queryParam = searchParams.get('q');
   const modeParam = searchParams.get('mode'); // 'text' or 'image'
@@ -269,5 +269,19 @@ export default function SearchPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <SearchPageContent />
+    </Suspense>
   );
 }

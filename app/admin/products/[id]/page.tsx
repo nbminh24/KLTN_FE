@@ -1,16 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, Edit2, Trash2, Package, DollarSign, TrendingUp, Eye } from 'lucide-react';
 
-export default function AdminProductDetailPage({ params }: { params: { id: string } }) {
+export default function AdminProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const [activeTab, setActiveTab] = useState<'overview' | 'variants' | 'analytics'>('overview');
 
   // Mock product data
   const product = {
-    id: params.id,
+    id: id,
     name: 'Gradient Graphic T-shirt',
     sku: 'TSH-001',
     description: 'This t-shirt features a unique gradient design with high-quality fabric.',

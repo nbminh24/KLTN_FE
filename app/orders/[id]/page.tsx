@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, use } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { ChevronRight, Package, MapPin, CreditCard, Truck, CheckCircle, Clock, Download } from 'lucide-react';
 
-export default function OrderDetailPage({ params }: { params: { id: string } }) {
-  const orderId = params.id;
+export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const orderId = id;
 
   // Mock order data
   const order = {

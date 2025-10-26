@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, use } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Save, Eye, Bold, Italic, List, ListOrdered, Link2, Image, Heading1, Heading2 } from 'lucide-react';
 
-export default function EditPageContent({ params }: { params: { slug: string } }) {
+export default function EditPageContent({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = use(params);
   const [content, setContent] = useState(`
 <h1>About Us</h1>
 
@@ -32,7 +33,7 @@ export default function EditPageContent({ params }: { params: { slug: string } }
 
   const pageData = {
     title: 'About Us',
-    slug: params.slug,
+    slug: slug,
     lastModified: '2024-01-15',
   };
 

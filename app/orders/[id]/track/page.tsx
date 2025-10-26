@@ -1,12 +1,14 @@
 'use client';
 
+import { use } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { ChevronRight, Package, Truck, MapPin, CheckCircle, Clock } from 'lucide-react';
 
-export default function OrderTrackingPage({ params }: { params: { id: string } }) {
-  const orderId = params.id;
+export default function OrderTrackingPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const orderId = id;
 
   // Mock tracking data
   const tracking = {

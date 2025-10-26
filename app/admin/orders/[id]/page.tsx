@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, Package, MapPin, CreditCard, Truck, Download, Edit } from 'lucide-react';
 import { showToast } from '@/components/Toast';
 import { canTransitionTo, getAllowedNextStatuses, getStatusColor, getStatusLabel, OrderStatus } from '@/lib/orderStatus';
 
-export default function OrderDetailPage({ params }: { params: { id: string } }) {
+export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const [orderStatus, setOrderStatus] = useState<OrderStatus>('delivered');
 
   const handleStatusChange = (newStatus: string) => {
@@ -27,7 +28,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
   const allowedStatuses = getAllowedNextStatuses(orderStatus);
 
   const order = {
-    id: params.id,
+    id: id,
     date: '2024-01-15 10:30 AM',
     status: orderStatus,
     customer: {

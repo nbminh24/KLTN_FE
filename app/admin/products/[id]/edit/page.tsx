@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, Upload, X, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-export default function EditProductPage({ params }: { params: { id: string } }) {
+export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const [images, setImages] = useState(['/bmm32410_black_xl.webp', '/bmm32410_black_xl.webp']);
 
@@ -32,7 +33,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
           </Link>
           <div>
             <h1 className="text-3xl font-bold text-[#202224]">Edit Product</h1>
-            <p className="text-gray-600 mt-1">Product ID: {params.id}</p>
+            <p className="text-gray-600 mt-1">Product ID: {id}</p>
           </div>
         </div>
         <button

@@ -29,11 +29,6 @@ export default function Chatbot() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Hide chatbot on admin pages
-  if (pathname?.startsWith('/admin')) {
-    return null;
-  }
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -41,6 +36,11 @@ export default function Chatbot() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Hide chatbot on admin pages
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   const handleSend = () => {
     if (!inputValue.trim() && !uploadedImage) return;

@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { ArrowLeft, Mail, Phone, MapPin, ShoppingBag, Heart, Calendar, Ban, CheckCircle } from 'lucide-react';
+import { use } from 'react';
 
-export default function CustomerDetailPage({ params }: { params: { id: string } }) {
+export default function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const customer = {
-    id: params.id,
+    id: id,
     name: 'Christine Brooks',
     email: 'christine@example.com',
     phone: '+1 234 567 8900',
