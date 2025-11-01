@@ -79,7 +79,6 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
           </Link>
           <div>
             <h1 className="text-3xl font-bold text-[#202224]">{product.name}</h1>
-            <p className="text-gray-600 mt-1">SKU: {product.sku}</p>
           </div>
         </div>
         <div className="flex gap-3">
@@ -170,15 +169,9 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
           <div className="bg-white rounded-xl p-6 border border-gray-200">
             <h2 className="text-xl font-bold mb-4">Product Information</h2>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-gray-600">Product Name</label>
-                  <p className="text-base mt-1">{product.name}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-gray-600">SKU</label>
-                  <p className="text-base mt-1 font-mono">{product.sku}</p>
-                </div>
+              <div>
+                <label className="text-sm font-semibold text-gray-600">Product Name</label>
+                <p className="text-base mt-1">{product.name}</p>
               </div>
               <div>
                 <label className="text-sm font-semibold text-gray-600">Description</label>
@@ -555,7 +548,11 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
                         orderId: 'ORD-12338'
                       },
                     ].map((review) => (
-                      <div key={review.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                      <Link 
+                        key={review.id} 
+                        href={`/admin/orders/${review.orderId}`}
+                        className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-[#4880FF] transition cursor-pointer"
+                      >
                         <div className="flex items-start justify-between mb-2">
                           <div>
                             <p className="font-semibold text-sm">{review.user}</p>
@@ -571,7 +568,7 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
                           </div>
                         </div>
                         <p className="text-sm text-gray-700">{review.comment}</p>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                   <div className="mt-4 flex justify-center">
