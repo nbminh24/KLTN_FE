@@ -2,10 +2,15 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Search, Filter, Eye, Ban } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Search, Filter } from 'lucide-react';
 
 export default function CustomersPage() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortField, setSortField] = useState('joined');
+  const [sortOrder, setSortOrder] = useState('desc');
 
   const customers = [
     {
@@ -67,6 +72,38 @@ export default function CustomersPage() {
     { label: 'Blocked', value: '8', color: 'text-red-600' },
   ];
 
+  // Filter and sort customers
+  const filteredCustomers = customers
+    .filter((customer) => {
+      // Search filter
+      const matchesSearch = customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           customer.email.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      // Status filter
+      const matchesStatus = statusFilter === 'all' || customer.status.toLowerCase() === statusFilter.toLowerCase();
+      
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortField) {
+        case 'orders':
+          comparison = a.orders - b.orders;
+          break;
+        case 'spent':
+          comparison = a.totalSpent - b.totalSpent;
+          break;
+        case 'joined':
+          comparison = new Date(a.joined).getTime() - new Date(b.joined).getTime();
+          break;
+        default:
+          return 0;
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -100,15 +137,32 @@ export default function CustomersPage() {
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
             />
           </div>
-          <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]">
-            <option>All Status</option>
-            <option>Active</option>
-            <option>Blocked</option>
+          <select 
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="blocked">Blocked</option>
           </select>
-          <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
-            <Filter className="w-4 h-4" />
-            <span className="font-semibold text-sm">More Filters</span>
-          </button>
+          <select
+            value={sortField}
+            onChange={(e) => setSortField(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
+          >
+            <option value="joined">Sort by: Joined</option>
+            <option value="orders">Sort by: Orders</option>
+            <option value="spent">Sort by: Total Spent</option>
+          </select>
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
+          >
+            <option value="desc">High to Low</option>
+            <option value="asc">Low to High</option>
+          </select>
         </div>
       </div>
 
@@ -125,15 +179,18 @@ export default function CustomersPage() {
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Total Spent</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Joined</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Status</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {customers.map((customer) => (
-                <tr key={customer.id} className="hover:bg-gray-50 transition">
+              {filteredCustomers.map((customer) => (
+                <tr 
+                  key={customer.id} 
+                  onClick={() => router.push(`/admin/customers/${customer.id}`)}
+                  className="hover:bg-gray-50 transition cursor-pointer"
+                >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-white font-bold">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
                         {customer.name[0]}
                       </div>
                       <span className="font-semibold text-sm text-[#202224]">{customer.name}</span>
@@ -154,20 +211,6 @@ export default function CustomersPage() {
                     >
                       {customer.status}
                     </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <Link
-                        href={`/admin/customers/${customer.id}`}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition"
-                        title="View Details"
-                      >
-                        <Eye className="w-4 h-4 text-gray-600" />
-                      </Link>
-                      <button className="p-2 hover:bg-red-50 rounded-lg transition" title="Block User">
-                        <Ban className="w-4 h-4 text-red-600" />
-                      </button>
-                    </div>
                   </td>
                 </tr>
               ))}
