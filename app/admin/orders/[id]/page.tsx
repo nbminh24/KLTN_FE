@@ -7,9 +7,12 @@ import { ArrowLeft, Package, MapPin, CreditCard, Truck, Download, Edit } from 'l
 import { showToast } from '@/components/Toast';
 import { canTransitionTo, getAllowedNextStatuses, getStatusColor, getStatusLabel, OrderStatus } from '@/lib/orderStatus';
 
+type MoneyStatus = 'Paid' | 'COD' | 'Pending';
+
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [orderStatus, setOrderStatus] = useState<OrderStatus>('delivered');
+  const [moneyStatus] = useState<MoneyStatus>('Paid');
 
   const handleStatusChange = (newStatus: string) => {
     const newOrderStatus = newStatus as OrderStatus;
@@ -26,6 +29,17 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   };
 
   const allowedStatuses = getAllowedNextStatuses(orderStatus);
+
+  const getMoneyStatusColor = (status: MoneyStatus) => {
+    switch (status) {
+      case 'Paid':
+        return 'bg-green-100 text-green-700';
+      case 'COD':
+        return 'bg-blue-100 text-blue-700';
+      case 'Pending':
+        return 'bg-yellow-100 text-yellow-700';
+    }
+  };
 
   const order = {
     id: id,
@@ -209,9 +223,18 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           {/* Payment Info */}
           <div className="bg-white rounded-xl p-6 border border-gray-200">
             <h2 className="text-xl font-bold text-[#202224] mb-4">Payment</h2>
-            <div className="space-y-2">
-              <p className="text-sm font-semibold">{order.payment.method}</p>
-              <p className="text-sm text-gray-600">{order.payment.card}</p>
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Method</p>
+                <p className="text-sm font-semibold">{order.payment.method}</p>
+                <p className="text-sm text-gray-600">{order.payment.card}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Money Status</p>
+                <span className={`px-3 py-1 rounded-full text-xs font-bold ${getMoneyStatusColor(moneyStatus)}`}>
+                  {moneyStatus}
+                </span>
+              </div>
             </div>
           </div>
 

@@ -1,58 +1,83 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { Search, Filter, Eye, Download } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Search, Download, Package } from 'lucide-react';
+
+type OrderStatus = 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+type MoneyStatus = 'Paid' | 'COD' | 'Pending';
 
 export default function OrdersPage() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [activeTab, setActiveTab] = useState<OrderStatus>('Pending');
+  const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [showBulkUpdateModal, setShowBulkUpdateModal] = useState(false);
 
   const orders = [
     {
       id: 'ORD-00001',
       customer: 'Christine Brooks',
-      date: '2024-01-15',
+      dateReceived: '2024-01-15',
       items: 3,
       total: 467,
-      status: 'Delivered',
-      statusColor: 'bg-green-500',
+      status: 'Delivered' as OrderStatus,
+      moneyStatus: 'Paid' as MoneyStatus,
     },
     {
       id: 'ORD-00002',
       customer: 'Rosie Pearson',
-      date: '2024-01-14',
+      dateReceived: '2024-01-14',
       items: 2,
       total: 325,
-      status: 'Processing',
-      statusColor: 'bg-blue-500',
+      status: 'Processing' as OrderStatus,
+      moneyStatus: 'Paid' as MoneyStatus,
     },
     {
       id: 'ORD-00003',
       customer: 'Darrell Caldwell',
-      date: '2024-01-14',
+      dateReceived: '2024-01-14',
       items: 1,
       total: 240,
-      status: 'Pending',
-      statusColor: 'bg-yellow-500',
+      status: 'Pending' as OrderStatus,
+      moneyStatus: 'COD' as MoneyStatus,
     },
     {
       id: 'ORD-00004',
       customer: 'Gilbert Johnston',
-      date: '2024-01-13',
+      dateReceived: '2024-01-13',
       items: 4,
       total: 892,
-      status: 'Shipped',
-      statusColor: 'bg-purple-500',
+      status: 'Shipped' as OrderStatus,
+      moneyStatus: 'Paid' as MoneyStatus,
     },
     {
       id: 'ORD-00005',
       customer: 'Alan Cain',
-      date: '2024-01-13',
+      dateReceived: '2024-01-13',
       items: 2,
       total: 456,
-      status: 'Cancelled',
-      statusColor: 'bg-red-500',
+      status: 'Cancelled' as OrderStatus,
+      moneyStatus: 'Pending' as MoneyStatus,
+    },
+    {
+      id: 'ORD-00006',
+      customer: 'John Doe',
+      dateReceived: '2024-01-16',
+      items: 1,
+      total: 145,
+      status: 'Pending' as OrderStatus,
+      moneyStatus: 'COD' as MoneyStatus,
+    },
+    {
+      id: 'ORD-00007',
+      customer: 'Jane Smith',
+      dateReceived: '2024-01-16',
+      items: 3,
+      total: 520,
+      status: 'Processing' as OrderStatus,
+      moneyStatus: 'Paid' as MoneyStatus,
     },
   ];
 
@@ -62,6 +87,52 @@ export default function OrdersPage() {
     { label: 'Processing', value: '1,523', color: 'text-blue-600' },
     { label: 'Delivered', value: '6,230', color: 'text-green-600' },
   ];
+
+  // Filter and sort orders
+  const filteredOrders = orders
+    .filter((order) => {
+      // Filter by active tab (status)
+      if (order.status !== activeTab) return false;
+      
+      // Search filter
+      const matchesSearch = order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           order.customer.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      return matchesSearch;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.dateReceived).getTime();
+      const dateB = new Date(b.dateReceived).getTime();
+      return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+    });
+
+  // Checkbox handlers
+  const handleSelectAll = () => {
+    if (selectedOrders.length === filteredOrders.length) {
+      setSelectedOrders([]);
+    } else {
+      setSelectedOrders(filteredOrders.map(o => o.id));
+    }
+  };
+
+  const handleSelectOrder = (orderId: string) => {
+    setSelectedOrders(prev =>
+      prev.includes(orderId)
+        ? prev.filter(id => id !== orderId)
+        : [...prev, orderId]
+    );
+  };
+
+  const getMoneyStatusColor = (status: MoneyStatus) => {
+    switch (status) {
+      case 'Paid':
+        return 'bg-green-100 text-green-700';
+      case 'COD':
+        return 'bg-blue-100 text-blue-700';
+      case 'Pending':
+        return 'bg-yellow-100 text-yellow-700';
+    }
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -87,7 +158,30 @@ export default function OrdersPage() {
         ))}
       </div>
 
-      {/* Filters */}
+      {/* Tabs */}
+      <div className="bg-white rounded-xl border border-gray-200">
+        <div className="flex border-b border-gray-200">
+          {(['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'] as OrderStatus[]).map((status) => (
+            <button
+              key={status}
+              onClick={() => {
+                setActiveTab(status);
+                setSelectedOrders([]);
+              }}
+              className={`px-6 py-4 font-semibold text-sm transition flex items-center gap-2 ${
+                activeTab === status
+                  ? 'border-b-2 border-[#4880FF] text-[#4880FF]'
+                  : 'text-gray-600 hover:text-[#4880FF]'
+              }`}
+            >
+              <Package className="w-4 h-4" />
+              {status}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Filters & Actions */}
       <div className="bg-white rounded-xl p-4 border border-gray-200">
         <div className="flex gap-4">
           <div className="flex-1 relative">
@@ -101,21 +195,25 @@ export default function OrdersPage() {
             />
           </div>
           <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
           >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="processing">Processing</option>
-            <option value="shipped">Shipped</option>
-            <option value="delivered">Delivered</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="desc">Date: Newest</option>
+            <option value="asc">Date: Oldest</option>
           </select>
-          <input
-            type="date"
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-          />
+          <button
+            onClick={() => setShowBulkUpdateModal(true)}
+            disabled={selectedOrders.length === 0}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition ${
+              selectedOrders.length > 0
+                ? 'bg-[#4880FF] text-white hover:bg-blue-600'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            <Package className="w-4 h-4" />
+            Update Tracking ({selectedOrders.length})
+          </button>
         </div>
       </div>
 
@@ -125,39 +223,49 @@ export default function OrdersPage() {
           <table className="w-full">
             <thead>
               <tr className="bg-[#F1F4F9] border-b border-gray-200">
+                <th className="px-6 py-4 text-left">
+                  <input
+                    type="checkbox"
+                    checked={selectedOrders.length === filteredOrders.length && filteredOrders.length > 0}
+                    onChange={handleSelectAll}
+                    className="w-4 h-4 rounded border-gray-300 cursor-pointer"
+                  />
+                </th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Order ID</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Customer</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Date</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Date Received</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Items</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Money Status</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Total</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Status</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {orders.map((order) => (
-                <tr key={order.id} className="hover:bg-gray-50 transition">
+              {filteredOrders.map((order) => (
+                <tr 
+                  key={order.id} 
+                  className="hover:bg-gray-50 transition cursor-pointer"
+                  onClick={() => router.push(`/admin/orders/${order.id}`)}
+                >
+                  <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={selectedOrders.includes(order.id)}
+                      onChange={() => handleSelectOrder(order.id)}
+                      className="w-4 h-4 rounded border-gray-300 cursor-pointer"
+                    />
+                  </td>
                   <td className="px-6 py-4">
                     <span className="font-semibold text-sm text-[#202224]">{order.id}</span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{order.customer}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{order.date}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{order.dateReceived}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{order.items}</td>
-                  <td className="px-6 py-4 text-sm font-semibold text-[#202224]">${order.total}</td>
                   <td className="px-6 py-4">
-                    <span className={`${order.statusColor} text-white px-3 py-1 rounded-full text-xs font-bold`}>
-                      {order.status}
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${getMoneyStatusColor(order.moneyStatus)}`}>
+                      {order.moneyStatus}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
-                    <Link
-                      href={`/admin/orders/${order.id}`}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#4880FF] text-white rounded-lg hover:bg-blue-600 transition text-sm font-semibold"
-                    >
-                      <Eye className="w-4 h-4" />
-                      View
-                    </Link>
-                  </td>
+                  <td className="px-6 py-4 text-sm font-semibold text-[#202224]">${order.total}</td>
                 </tr>
               ))}
             </tbody>
@@ -180,6 +288,52 @@ export default function OrdersPage() {
           </div>
         </div>
       </div>
+
+      {/* Bulk Update Tracking Modal */}
+      {showBulkUpdateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowBulkUpdateModal(false)}>
+          <div className="bg-white rounded-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-xl font-bold text-[#202224] mb-4">
+              Update Tracking - {selectedOrders.length} order{selectedOrders.length > 1 ? 's' : ''} selected
+            </h2>
+            
+            <p className="text-sm text-gray-600 mb-4">
+              Update status for selected orders:
+            </p>
+
+            <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF] mb-4">
+              <option value="">Choose Status</option>
+              <option value="next">Next Status (Processing)</option>
+              <option value="cancel">Cancel Order</option>
+            </select>
+
+            <p className="text-xs text-gray-500 mb-6">
+              Note: Delivered orders will be skipped automatically
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowBulkUpdateModal(false)}
+                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (confirm(`Update ${selectedOrders.length} orders to next status?`)) {
+                    alert('Orders updated successfully!');
+                    setSelectedOrders([]);
+                    setShowBulkUpdateModal(false);
+                  }
+                }}
+                className="flex-1 px-4 py-2.5 bg-[#4880FF] text-white rounded-lg hover:bg-blue-600 transition font-semibold"
+              >
+                Confirm Update
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
