@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Edit2, Trash2, Folder, X, Eye, Package } from 'lucide-react';
+import { Plus, Edit2, Folder, X, Eye, EyeOff } from 'lucide-react';
 
 export default function CategoriesPage() {
   const [showModal, setShowModal] = useState(false);
@@ -12,9 +12,23 @@ export default function CategoriesPage() {
     { id: '2', name: 'Shirts', slug: 'shirts', products: 32, status: 'Active', description: 'Casual and formal shirts' },
     { id: '3', name: 'Jeans', slug: 'jeans', products: 28, status: 'Active', description: 'Denim jeans and pants' },
     { id: '4', name: 'Hoodies', slug: 'hoodies', products: 21, status: 'Active', description: 'Hoodies and sweatshirts' },
-    { id: '5', name: 'Shorts', slug: 'shorts', products: 19, status: 'Active', description: 'Summer shorts' },
+    { id: '5', name: 'Shorts', slug: 'shorts', products: 19, status: 'Inactive', description: 'Summer shorts' },
     { id: '6', name: 'Jackets', slug: 'jackets', products: 15, status: 'Active', description: 'Jackets and outerwear' },
   ];
+
+  const handleToggleCategoryStatus = (categoryId: string, currentStatus: string, categoryName: string, productCount: number) => {
+    if (currentStatus === 'Active') {
+      // Deactivating category
+      if (confirm(`Deactivate '${categoryName}' category? This will also deactivate ${productCount} products.`)) {
+        alert(`Category '${categoryName}' and ${productCount} products have been deactivated.`);
+        // Mock: In real implementation, update category status and all products status via API
+      }
+    } else {
+      // Activating category
+      alert(`Category '${categoryName}' has been activated.`);
+      // Mock: In real implementation, update category status via API (products remain unchanged)
+    }
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -59,8 +73,6 @@ export default function CategoriesPage() {
             <thead>
               <tr className="bg-[#F1F4F9] border-b border-gray-200">
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Category</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Slug</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Description</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Products</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Status</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Actions</th>
@@ -75,21 +87,28 @@ export default function CategoriesPage() {
                       <span className="font-semibold text-sm text-[#202224]">{category.name}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{category.slug}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{category.description}</td>
                   <td className="px-6 py-4 text-sm font-semibold text-[#202224]">{category.products}</td>
                   <td className="px-6 py-4">
-                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                      category.status === 'Active' 
+                        ? 'bg-green-100 text-green-700' 
+                        : 'bg-gray-100 text-gray-700'
+                    }`}>
                       {category.status}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <button
+                        onClick={() => handleToggleCategoryStatus(category.id, category.status, category.name, category.products)}
                         className="p-2 hover:bg-gray-100 rounded-lg transition"
-                        title="View Products"
+                        title={category.status === 'Active' ? 'Deactivate category' : 'Activate category'}
                       >
-                        <Eye className="w-4 h-4 text-gray-600" />
+                        {category.status === 'Active' ? (
+                          <Eye className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <EyeOff className="w-4 h-4 text-gray-400" />
+                        )}
                       </button>
                       <button
                         onClick={() => {
@@ -100,9 +119,6 @@ export default function CategoriesPage() {
                         title="Edit"
                       >
                         <Edit2 className="w-4 h-4 text-gray-600" />
-                      </button>
-                      <button className="p-2 hover:bg-red-50 rounded-lg transition" title="Delete">
-                        <Trash2 className="w-4 h-4 text-red-600" />
                       </button>
                     </div>
                   </td>
@@ -140,40 +156,10 @@ export default function CategoriesPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold mb-2">Slug *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. t-shirts"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-2">Parent Category</label>
-                <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]">
-                  <option value="">None (Top Level)</option>
-                  <option>T-Shirts</option>
-                  <option>Shirts</option>
-                  <option>Jeans</option>
-                  <option>Hoodies</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-2">Description</label>
-                <textarea
-                  rows={3}
-                  placeholder="Category description..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-                ></textarea>
-              </div>
-
               <div className="flex items-center gap-3">
                 <input type="checkbox" id="active" defaultChecked className="w-5 h-5" />
                 <label htmlFor="active" className="text-sm font-semibold">
-                  Active
+                  Active (Category will be visible on store)
                 </label>
               </div>
 
