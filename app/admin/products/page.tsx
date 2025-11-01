@@ -4,12 +4,17 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Search, Filter, Plus, Edit2, Trash2, Download, Upload, Sparkles, Eye } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function ProductsPage() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedStockStatus, setSelectedStockStatus] = useState('all');
+  const [sortBy, setSortBy] = useState('name');
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
 
-  const products = [
+  const allProducts = [
     {
       id: '1',
       name: 'Gradient Graphic T-shirt',
@@ -18,8 +23,7 @@ export default function ProductsPage() {
       price: 145,
       stock: 245,
       status: 'Active',
-      image: '/bmm32410_black_xl.webp',
-      aiIndexed: true,
+      images: ['/bmm32410_black_xl.webp', '/bmm32410_black_xl.webp', '/bmm32410_black_xl.webp'],
     },
     {
       id: '2',
@@ -29,8 +33,7 @@ export default function ProductsPage() {
       price: 180,
       stock: 89,
       status: 'Active',
-      image: '/bmm32410_black_xl.webp',
-      aiIndexed: true,
+      images: ['/bmm32410_black_xl.webp', '/bmm32410_black_xl.webp'],
     },
     {
       id: '3',
@@ -40,10 +43,47 @@ export default function ProductsPage() {
       price: 240,
       stock: 0,
       status: 'Out of Stock',
-      image: '/bmm32410_black_xl.webp',
-      aiIndexed: false,
+      images: ['/bmm32410_black_xl.webp'],
     },
   ];
+
+  // Filter and sort products
+  const products = allProducts
+    .filter((p) => {
+      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                           p.sku.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
+      const matchesStock = selectedStockStatus === 'all' || 
+                          (selectedStockStatus === 'in-stock' && p.stock > 0) ||
+                          (selectedStockStatus === 'out-of-stock' && p.stock === 0) ||
+                          (selectedStockStatus === 'low-stock' && p.stock > 0 && p.stock < 50);
+      return matchesSearch && matchesCategory && matchesStock;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'name') return a.name.localeCompare(b.name);
+      if (sortBy === 'price-asc') return a.price - b.price;
+      if (sortBy === 'price-desc') return b.price - a.price;
+      if (sortBy === 'stock-asc') return a.stock - b.stock;
+      if (sortBy === 'stock-desc') return b.stock - a.stock;
+      return 0;
+    });
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedProducts(checked ? products.map((p) => p.id) : []);
+  };
+
+  const handleSelectProduct = (id: string, checked: boolean) => {
+    setSelectedProducts((prev) => 
+      checked ? [...prev, id] : prev.filter((pid) => pid !== id)
+    );
+  };
+
+  const handleDeleteSelected = () => {
+    if (confirm(`Delete ${selectedProducts.length} selected product(s)?`)) {
+      alert('Products deleted successfully!');
+      setSelectedProducts([]);
+    }
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -54,13 +94,15 @@ export default function ProductsPage() {
           <p className="text-gray-600 mt-1">Manage your product inventory</p>
         </div>
         <div className="flex gap-3">
-          <Link
-            href="/admin/products/import"
-            className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-          >
-            <Upload className="w-4 h-4" />
-            <span className="font-semibold text-sm">Import CSV</span>
-          </Link>
+          {selectedProducts.length > 0 && (
+            <button
+              onClick={handleDeleteSelected}
+              className="flex items-center gap-2 px-4 py-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span className="font-semibold text-sm">Delete Selected ({selectedProducts.length})</span>
+            </button>
+          )}
           <Link
             href="/admin/products/add"
             className="flex items-center gap-2 px-4 py-2.5 bg-[#4880FF] text-white rounded-lg hover:bg-blue-600 transition"
@@ -78,7 +120,7 @@ export default function ProductsPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search products..."
+              placeholder="Search products by name or SKU..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
@@ -90,14 +132,32 @@ export default function ProductsPage() {
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
           >
             <option value="all">All Categories</option>
-            <option value="tshirts">T-Shirts</option>
-            <option value="shirts">Shirts</option>
-            <option value="jeans">Jeans</option>
+            <option value="T-Shirts">T-Shirts</option>
+            <option value="Shirts">Shirts</option>
+            <option value="Jeans">Jeans</option>
+            <option value="Hoodies">Hoodies</option>
           </select>
-          <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
-            <Filter className="w-4 h-4" />
-            <span className="font-semibold text-sm">Filters</span>
-          </button>
+          <select
+            value={selectedStockStatus}
+            onChange={(e) => setSelectedStockStatus(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
+          >
+            <option value="all">All Stock Status</option>
+            <option value="in-stock">In Stock</option>
+            <option value="low-stock">Low Stock</option>
+            <option value="out-of-stock">Out of Stock</option>
+          </select>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
+          >
+            <option value="name">Sort by Name</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="stock-asc">Stock: Low to High</option>
+            <option value="stock-desc">Stock: High to Low</option>
+          </select>
         </div>
       </div>
 
@@ -108,29 +168,47 @@ export default function ProductsPage() {
             <thead>
               <tr className="bg-[#F1F4F9] border-b border-gray-200">
                 <th className="px-6 py-4 text-left">
-                  <input type="checkbox" className="w-4 h-4 rounded" />
+                  <input 
+                    type="checkbox" 
+                    className="w-4 h-4 rounded" 
+                    checked={selectedProducts.length === products.length && products.length > 0}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                  />
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Product</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">SKU</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Category</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Price</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Stock</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Images</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Status</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">AI Status</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {products.map((product) => (
-                <tr key={product.id} className="hover:bg-gray-50 transition">
-                  <td className="px-6 py-4">
-                    <input type="checkbox" className="w-4 h-4 rounded" />
+                <tr 
+                  key={product.id} 
+                  className="hover:bg-gray-50 transition cursor-pointer"
+                  onClick={(e) => {
+                    // Don't navigate if clicking on checkbox or action buttons
+                    if ((e.target as HTMLElement).closest('input, button, a')) return;
+                    router.push(`/admin/products/${product.id}`);
+                  }}
+                >
+                  <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                    <input 
+                      type="checkbox" 
+                      className="w-4 h-4 rounded"
+                      checked={selectedProducts.includes(product.id)}
+                      onChange={(e) => handleSelectProduct(product.id, e.target.checked)}
+                    />
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="relative w-12 h-12 bg-gray-100 rounded-lg overflow-hidden">
                         <Image
-                          src={product.image}
+                          src={product.images[0]}
                           alt={product.name}
                           fill
                           className="object-cover"
@@ -143,9 +221,23 @@ export default function ProductsPage() {
                   <td className="px-6 py-4 text-sm text-gray-600">{product.category}</td>
                   <td className="px-6 py-4 text-sm font-semibold text-[#202224]">${product.price}</td>
                   <td className="px-6 py-4">
-                    <span className={`text-sm font-semibold ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className={`text-sm font-semibold ${product.stock > 50 ? 'text-green-600' : product.stock > 0 ? 'text-yellow-600' : 'text-red-600'}`}>
                       {product.stock}
                     </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex gap-1">
+                      {product.images.slice(0, 3).map((img, idx) => (
+                        <div key={idx} className="relative w-8 h-8 bg-gray-100 rounded overflow-hidden border border-gray-200">
+                          <Image src={img} alt="" fill className="object-cover" />
+                        </div>
+                      ))}
+                      {product.images.length > 3 && (
+                        <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-600 font-semibold">
+                          +{product.images.length - 3}
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <span
@@ -158,29 +250,8 @@ export default function ProductsPage() {
                       {product.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-2">
-                      {product.aiIndexed ? (
-                        <span className="flex items-center gap-1.5 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold">
-                          <Sparkles className="w-3 h-3" />
-                          Indexed
-                        </span>
-                      ) : (
-                        <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold">
-                          Pending
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <Link
-                        href={`/admin/products/${product.id}`}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition"
-                        title="View Details"
-                      >
-                        <Eye className="w-4 h-4 text-gray-600" />
-                      </Link>
                       <Link
                         href={`/admin/products/${product.id}/edit`}
                         className="p-2 hover:bg-gray-100 rounded-lg transition"
@@ -188,9 +259,6 @@ export default function ProductsPage() {
                       >
                         <Edit2 className="w-4 h-4 text-gray-600" />
                       </Link>
-                      <button className="p-2 hover:bg-red-50 rounded-lg transition" title="Delete">
-                        <Trash2 className="w-4 h-4 text-red-600" />
-                      </button>
                     </div>
                   </td>
                 </tr>
