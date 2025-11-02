@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { Mail, Clock, CheckCircle, AlertCircle, Send, Trash2, Search } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Mail, Clock, CheckCircle, AlertCircle, Send, Trash2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface SupportTicket {
   id: string;
@@ -16,10 +17,27 @@ interface SupportTicket {
 }
 
 export default function SupportInboxPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [replyMessage, setReplyMessage] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'replied' | 'resolved'>('all');
+  const [filterStatus, setFilterStatus] = useState<'pending' | 'replied' | 'resolved'>('pending');
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
+  // Sync tab with URL
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'in-progress') {
+      setFilterStatus('replied');
+    } else if (tab === 'resolved') {
+      setFilterStatus('resolved');
+    } else {
+      setFilterStatus('pending');
+    }
+    setCurrentPage(1);
+  }, [searchParams]);
 
   // Mock data - Replace with API calls later
   const [tickets, setTickets] = useState<SupportTicket[]>([
@@ -102,12 +120,34 @@ export default function SupportInboxPage() {
   };
 
   const filteredTickets = tickets.filter(ticket => {
-    const matchesStatus = filterStatus === 'all' || ticket.status === filterStatus;
+    const matchesStatus = ticket.status === filterStatus;
     const matchesSearch = ticket.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          ticket.customerEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          ticket.subject.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
+
+  // Pagination
+  const totalPages = Math.ceil(filteredTickets.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedTickets = filteredTickets.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStatus, searchQuery]);
+
+  const handleTabChange = (status: 'pending' | 'replied' | 'resolved') => {
+    setFilterStatus(status);
+    if (status === 'pending') {
+      router.push('/admin/support-inbox');
+    } else if (status === 'replied') {
+      router.push('/admin/support-inbox?tab=in-progress');
+    } else if (status === 'resolved') {
+      router.push('/admin/support-inbox?tab=resolved');
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -190,35 +230,50 @@ export default function SupportInboxPage() {
         </div>
       </div>
 
-      {/* Filters & Search */}
-      <div className="bg-white border border-gray-200 rounded-xl p-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search tickets..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-              />
-            </div>
-          </div>
-          <div className="flex gap-2">
-            {['all', 'pending', 'replied', 'resolved'].map((status) => (
-              <button
-                key={status}
-                onClick={() => setFilterStatus(status as any)}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition ${
-                  filterStatus === status
-                    ? 'bg-[#4880FF] text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {status.charAt(0).toUpperCase() + status.slice(1)}
-              </button>
-            ))}
+      {/* Tabs & Search */}
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="flex items-center gap-4 border-b border-gray-200 px-4">
+          <button
+            onClick={() => handleTabChange('pending')}
+            className={`px-4 py-3 font-semibold transition relative ${
+              filterStatus === 'pending'
+                ? 'text-[#4880FF] border-b-2 border-[#4880FF]'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            Pending
+          </button>
+          <button
+            onClick={() => handleTabChange('replied')}
+            className={`px-4 py-3 font-semibold transition relative ${
+              filterStatus === 'replied'
+                ? 'text-[#4880FF] border-b-2 border-[#4880FF]'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            In Progress
+          </button>
+          <button
+            onClick={() => handleTabChange('resolved')}
+            className={`px-4 py-3 font-semibold transition relative ${
+              filterStatus === 'resolved'
+                ? 'text-[#4880FF] border-b-2 border-[#4880FF]'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            Resolved
+          </button>
+        </div>
+        <div className="p-4">
+          <div className="relative">
+            <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search tickets..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
+            />
           </div>
         </div>
       </div>
@@ -227,13 +282,14 @@ export default function SupportInboxPage() {
       <div className="grid md:grid-cols-2 gap-6">
         {/* Ticket List */}
         <div className="space-y-4">
-          {filteredTickets.length === 0 ? (
+          {paginatedTickets.length === 0 ? (
             <div className="bg-white border border-gray-200 rounded-xl p-8 text-center">
               <Mail className="w-12 h-12 text-gray-300 mx-auto mb-3" />
               <p className="text-gray-600">No tickets found</p>
             </div>
           ) : (
-            filteredTickets.map((ticket) => (
+            <>
+              {paginatedTickets.map((ticket) => (
               <div
                 key={ticket.id}
                 onClick={() => setSelectedTicket(ticket)}
@@ -279,7 +335,35 @@ export default function SupportInboxPage() {
                   </button>
                 </div>
               </div>
-            ))
+              ))}
+              
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      Previous
+                    </button>
+                    <span className="text-sm font-semibold text-gray-700">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 
