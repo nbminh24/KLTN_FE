@@ -1,18 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Search, AlertTriangle, TrendingUp, Package, History, Upload } from 'lucide-react';
 
 type StockStatus = 'In Stock' | 'Low Stock' | 'Out of Stock';
 
-export default function InventoryPage() {
+function InventoryContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<StockStatus>('Low Stock');
-  const [categoryFilter, setCategoryFilter] = useState('all');
 
   // Read tab from query parameter on mount
   useEffect(() => {
@@ -30,7 +29,8 @@ export default function InventoryPage() {
     {
       id: '1',
       name: 'Gradient Graphic T-shirt',
-      category: 'T-Shirts',
+      variant: 'Black / M',
+      sku: 'GGT-BLK-M',
       image: '/bmm32410_black_xl.webp',
       stock: 245,
       reserved: 12,
@@ -42,7 +42,8 @@ export default function InventoryPage() {
     {
       id: '2',
       name: 'Checkered Shirt',
-      category: 'Shirts',
+      variant: 'Blue / L',
+      sku: 'CS-BLU-L',
       image: '/bmm32410_black_xl.webp',
       stock: 45,
       reserved: 8,
@@ -54,7 +55,8 @@ export default function InventoryPage() {
     {
       id: '3',
       name: 'Skinny Fit Jeans',
-      category: 'Jeans',
+      variant: 'Dark Blue / 32',
+      sku: 'SFJ-DBL-32',
       image: '/bmm32410_black_xl.webp',
       stock: 0,
       reserved: 0,
@@ -66,7 +68,8 @@ export default function InventoryPage() {
     {
       id: '4',
       name: 'Classic Hoodie',
-      category: 'Hoodies',
+      variant: 'Gray / XL',
+      sku: 'CH-GRY-XL',
       image: '/bmm32410_black_xl.webp',
       stock: 189,
       reserved: 15,
@@ -78,7 +81,8 @@ export default function InventoryPage() {
     {
       id: '5',
       name: 'Striped Polo',
-      category: 'Polo',
+      variant: 'Navy / M',
+      sku: 'SP-NVY-M',
       image: '/bmm32410_black_xl.webp',
       stock: 28,
       reserved: 5,
@@ -90,7 +94,8 @@ export default function InventoryPage() {
     {
       id: '6',
       name: 'Denim Jacket',
-      category: 'Jackets',
+      variant: 'Light Blue / L',
+      sku: 'DJ-LBL-L',
       image: '/bmm32410_black_xl.webp',
       stock: 0,
       reserved: 0,
@@ -98,6 +103,32 @@ export default function InventoryPage() {
       reorderPoint: 20,
       lastRestocked: '2023-11-28',
       status: 'Out of Stock' as StockStatus,
+    },
+    {
+      id: '7',
+      name: 'Gradient Graphic T-shirt',
+      variant: 'White / S',
+      sku: 'GGT-WHT-S',
+      image: '/bmm32410_black_xl.webp',
+      stock: 156,
+      reserved: 8,
+      available: 148,
+      reorderPoint: 50,
+      lastRestocked: '2024-01-11',
+      status: 'In Stock' as StockStatus,
+    },
+    {
+      id: '8',
+      name: 'Checkered Shirt',
+      variant: 'Red / M',
+      sku: 'CS-RED-M',
+      image: '/bmm32410_black_xl.webp',
+      stock: 18,
+      reserved: 3,
+      available: 15,
+      reorderPoint: 50,
+      lastRestocked: '2024-01-06',
+      status: 'Low Stock' as StockStatus,
     },
   ];
 
@@ -121,20 +152,16 @@ export default function InventoryPage() {
     }
   };
 
-  // Get unique categories
-  const categories = Array.from(new Set(products.map(p => p.category)));
-
   // Filter and sort products
   const filteredProducts = products
     .filter((product) => {
       // Filter by active tab (status)
       if (product.status !== activeTab) return false;
       
-      // Category filter
-      if (categoryFilter !== 'all' && product.category !== categoryFilter) return false;
-      
       // Search filter
-      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           product.variant.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           product.sku.toLowerCase().includes(searchQuery.toLowerCase());
       
       return matchesSearch;
     })
@@ -229,27 +256,15 @@ export default function InventoryPage() {
 
       {/* Filters */}
       <div className="bg-white rounded-xl p-4 border border-gray-200">
-        <div className="flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search products by name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-            />
-          </div>
-          <select 
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-          >
-            <option value="all">All Categories</option>
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search by product name, variant, or SKU..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
+          />
         </div>
       </div>
 
@@ -259,8 +274,7 @@ export default function InventoryPage() {
           <table className="w-full">
             <thead>
               <tr className="bg-[#F1F4F9] border-b border-gray-200">
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Product</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Category</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Variants</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Total Stock</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Reserved</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Available</th>
@@ -276,10 +290,16 @@ export default function InventoryPage() {
                       <div className="relative w-12 h-12 bg-gray-100 rounded-lg overflow-hidden">
                         <Image src={product.image} alt={product.name} fill className="object-cover" />
                       </div>
-                      <span className="font-semibold text-sm text-[#202224]">{product.name}</span>
+                      <div>
+                        <p className="font-semibold text-sm text-[#202224]">{product.name}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs text-gray-600">{product.variant}</span>
+                          <span className="text-xs text-gray-400">•</span>
+                          <span className="text-xs font-mono text-gray-500">SKU: {product.sku}</span>
+                        </div>
+                      </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{product.category}</td>
                   <td className="px-6 py-4">
                     <span className="font-semibold text-sm text-[#202224]">{product.stock}</span>
                   </td>
@@ -311,5 +331,22 @@ export default function InventoryPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function InventoryPage() {
+  return (
+    <Suspense fallback={
+      <div className="p-6">
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-[#4880FF] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading inventory...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <InventoryContent />
+    </Suspense>
   );
 }

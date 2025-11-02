@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Clock, CheckCircle, AlertCircle, Send, Trash2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -16,7 +16,7 @@ interface SupportTicket {
   aiAttempted: boolean;
 }
 
-export default function SupportInboxPage() {
+function SupportInboxContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
@@ -458,5 +458,22 @@ export default function SupportInboxPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SupportInboxPage() {
+  return (
+    <Suspense fallback={
+      <div className="p-6">
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-[#4880FF] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading support inbox...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <SupportInboxContent />
+    </Suspense>
   );
 }

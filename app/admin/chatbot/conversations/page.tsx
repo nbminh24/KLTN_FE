@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Search, X, MessageSquare, Bot, User } from 'lucide-react';
@@ -23,7 +23,7 @@ interface Conversation {
   fullConversation: Message[];
 }
 
-export default function ConversationsPage() {
+function ConversationsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<Tab>('all');
@@ -426,5 +426,22 @@ export default function ConversationsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ConversationsPage() {
+  return (
+    <Suspense fallback={
+      <div className="p-6">
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-[#4880FF] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading conversations...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <ConversationsContent />
+    </Suspense>
   );
 }
