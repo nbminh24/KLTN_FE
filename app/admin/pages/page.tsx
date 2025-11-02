@@ -76,17 +76,9 @@ export default function PagesManagementPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-[#202224]">Pages Management (CMS)</h1>
-          <p className="text-gray-600 mt-1">Manage static pages content without touching code</p>
-        </div>
-        <Link
-          href="/admin/pages/new"
-          className="px-4 py-2.5 bg-[#4880FF] text-white rounded-lg hover:bg-blue-600 transition font-semibold text-sm"
-        >
-          Create New Page
-        </Link>
+      <div>
+        <h1 className="text-3xl font-bold text-[#202224]">Pages Management (CMS)</h1>
+        <p className="text-gray-600 mt-1">Manage static pages content without touching code</p>
       </div>
 
       {/* Stats */}
