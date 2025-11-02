@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Search, AlertTriangle, TrendingUp, Package, History, Upload } from 'lucide-react';
 
@@ -9,9 +9,22 @@ type StockStatus = 'In Stock' | 'Low Stock' | 'Out of Stock';
 
 export default function InventoryPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<StockStatus>('Low Stock');
   const [categoryFilter, setCategoryFilter] = useState('all');
+
+  // Read tab from query parameter on mount
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'out-of-stock') {
+      setActiveTab('Out of Stock');
+    } else if (tabParam === 'low-stock') {
+      setActiveTab('Low Stock');
+    } else if (tabParam === 'in-stock') {
+      setActiveTab('In Stock');
+    }
+  }, [searchParams]);
 
   const products = [
     {
