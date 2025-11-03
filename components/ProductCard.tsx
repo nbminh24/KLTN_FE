@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Star, Heart } from 'lucide-react';
+import { Star, Heart, ShoppingCart } from 'lucide-react';
 import { toggleWishlist, isInWishlist } from '@/lib/wishlist';
 import { showToast } from './Toast';
 
@@ -53,6 +53,14 @@ export default function ProductCard({
     );
   };
 
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Add to cart logic (will integrate with cart context later)
+    showToast('Added to cart!', 'success');
+  };
+
   return (
     <Link href={`/products/${id}`} className="group">
       <div className="space-y-3">
@@ -76,6 +84,16 @@ export default function ProductCard({
             title={isWished ? 'Remove from wishlist' : 'Add to wishlist'}
           >
             <Heart className={`w-5 h-5 ${isWished ? 'fill-current' : ''}`} />
+          </button>
+
+          {/* Add to Cart Button */}
+          <button
+            onClick={handleAddToCart}
+            className="absolute bottom-3 right-3 bg-black text-white px-4 py-2 rounded-full flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-gray-800 text-sm font-medium"
+            title="Add to cart"
+          >
+            <ShoppingCart className="w-4 h-4" />
+            <span>Add to Cart</span>
           </button>
         </div>
 

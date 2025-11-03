@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { CheckCircle, Package, Mail, ArrowRight, Home } from 'lucide-react';
+import { CheckCircle, Package, Mail, ArrowRight, Home, Download } from 'lucide-react';
 
 function OrderConfirmationContent() {
   const searchParams = useSearchParams();
@@ -107,21 +107,36 @@ function OrderConfirmationContent() {
             </div>
 
             {/* Action Buttons */}
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-4">
               <Link
                 href={`/orders/${orderId}`}
-                className="bg-black text-white py-4 rounded-full font-medium hover:bg-gray-800 transition flex items-center justify-center gap-2 group"
+                className="w-full bg-black text-white py-4 rounded-full font-medium hover:bg-gray-800 transition flex items-center justify-center gap-2 group"
               >
                 View Order Details
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <Link
-                href="/"
-                className="border border-gray-300 text-black py-4 rounded-full font-medium hover:bg-gray-50 transition flex items-center justify-center gap-2"
-              >
-                <Home className="w-5 h-5" />
-                Continue Shopping
-              </Link>
+              <div className="grid md:grid-cols-2 gap-4">
+                <button
+                  onClick={() => {
+                    // Mock download invoice
+                    const link = document.createElement('a');
+                    link.href = '#';
+                    link.download = `invoice-${orderId}.pdf`;
+                    alert(`Downloading invoice for order ${orderId}`);
+                  }}
+                  className="border border-gray-300 text-black py-4 rounded-full font-medium hover:bg-gray-50 transition flex items-center justify-center gap-2"
+                >
+                  <Download className="w-5 h-5" />
+                  Download Invoice
+                </button>
+                <Link
+                  href="/"
+                  className="border border-gray-300 text-black py-4 rounded-full font-medium hover:bg-gray-50 transition flex items-center justify-center gap-2"
+                >
+                  <Home className="w-5 h-5" />
+                  Continue Shopping
+                </Link>
+              </div>
             </div>
 
             {/* Help Section */}

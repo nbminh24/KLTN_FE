@@ -8,7 +8,8 @@ import Footer from '@/components/Footer';
 import { showToast } from '@/components/Toast';
 import { getCart, updateCartItemQuantity, removeFromCart, getCartSubtotal, getCartDiscount, CartItem } from '@/lib/cart';
 import { validatePromoCode } from '@/lib/pricing';
-import { ChevronRight, Minus, Plus, Trash2, Tag, ArrowRight } from 'lucide-react';
+import { toggleWishlist, isInWishlist } from '@/lib/wishlist';
+import { ChevronRight, Minus, Plus, Trash2, Tag, ArrowRight, ShoppingBag, Heart } from 'lucide-react';
 
 export default function CartPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -49,6 +50,26 @@ export default function CartPage() {
     showToast('Item removed from cart', 'info');
   };
 
+  const handleSaveForLater = (item: CartItem) => {
+    // Add to wishlist
+    const added = toggleWishlist({
+      id: item.id,
+      name: item.name,
+      image: item.image,
+      price: item.price,
+      originalPrice: item.originalPrice,
+      rating: 4.5, // Default rating
+    });
+    
+    if (added) {
+      // Remove from cart
+      removeFromCart(item.id, item.size, item.color);
+      showToast('Moved to wishlist!', 'success');
+    } else {
+      showToast('Already in wishlist', 'info');
+    }
+  };
+
   const handleApplyPromo = () => {
     if (!promoCode.trim()) {
       showToast('Please enter a promo code', 'warning');
@@ -84,7 +105,16 @@ export default function CartPage() {
             <span className="font-medium">Cart</span>
           </div>
 
-          <h1 className="text-2xl md:text-3xl font-integral font-bold mb-6">Your cart</h1>
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl md:text-3xl font-integral font-bold">Your cart</h1>
+            <Link
+              href="/products"
+              className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-black transition"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              Continue Shopping
+            </Link>
+          </div>
 
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Cart Items */}
@@ -117,6 +147,13 @@ export default function CartPage() {
                           </p>
                         </div>
                         <p className="text-xl font-bold">${item.price}</p>
+                        <button
+                          onClick={() => handleSaveForLater(item)}
+                          className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-red-500 transition mt-2"
+                        >
+                          <Heart className="w-4 h-4" />
+                          Save for Later
+                        </button>
                       </div>
 
                       <div className="flex md:flex-col items-end justify-between md:justify-start gap-4">

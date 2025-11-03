@@ -39,20 +39,44 @@ function SearchPageContent() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState([0, 500]);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<string>('relevance');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
 
-  // Filter products based on search query and filters
-  const filteredProducts = allProducts.filter((product) => {
-    const matchesSearch = searchMode === 'text' 
-      ? product.name.toLowerCase().includes(searchQuery.toLowerCase())
-      : true; // For image search, show all matching products (mock)
-    
-    const matchesCategory = selectedCategories.length === 0 || 
-      selectedCategories.includes(product.category);
-    
-    const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
-    
-    return matchesSearch && matchesCategory && matchesPrice;
-  });
+  // Generate search suggestions
+  useEffect(() => {
+    if (searchQuery.length > 0 && searchMode === 'text') {
+      const matchingProducts = allProducts
+        .filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        .map(p => p.name)
+        .slice(0, 5);
+      setSuggestions(matchingProducts);
+    } else {
+      setSuggestions([]);
+    }
+  }, [searchQuery, searchMode]);
+
+  // Filter and sort products based on search query and filters
+  const filteredProducts = allProducts
+    .filter((product) => {
+      const matchesSearch = searchMode === 'text' 
+        ? product.name.toLowerCase().includes(searchQuery.toLowerCase())
+        : true; // For image search, show all matching products (mock)
+      
+      const matchesCategory = selectedCategories.length === 0 || 
+        selectedCategories.includes(product.category);
+      
+      const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
+      
+      return matchesSearch && matchesCategory && matchesPrice;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'price-asc') return a.price - b.price;
+      if (sortBy === 'price-desc') return b.price - a.price;
+      if (sortBy === 'rating-desc') return b.rating - a.rating;
+      if (sortBy === 'rating-asc') return a.rating - b.rating;
+      return 0; // relevance (default)
+    });
 
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
   const paginatedProducts = filteredProducts.slice(
@@ -70,6 +94,12 @@ function SearchPageContent() {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setSearchQuery(suggestion);
+    setShowSuggestions(false);
+    setCurrentPage(1);
   };
 
   return (
@@ -118,7 +148,7 @@ function SearchPageContent() {
           {/* Search Input / Image Upload */}
           <div className="mb-8">
             {searchMode === 'text' ? (
-              <div className="max-w-2xl">
+              <div className="max-w-2xl relative">
                 <div className="relative">
                   <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
@@ -126,12 +156,31 @@ function SearchPageContent() {
                     value={searchQuery}
                     onChange={(e) => {
                       setSearchQuery(e.target.value);
+                      setShowSuggestions(true);
                       setCurrentPage(1);
                     }}
+                    onFocus={() => setShowSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                     placeholder="Search for products..."
                     className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-black"
                   />
                 </div>
+                
+                {/* Search Suggestions */}
+                {showSuggestions && suggestions.length > 0 && searchQuery && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-2xl shadow-lg z-10 overflow-hidden">
+                    {suggestions.map((suggestion, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        className="w-full text-left px-4 py-3 hover:bg-gray-50 transition flex items-center gap-3"
+                      >
+                        <SearchIcon className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm">{suggestion}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="max-w-2xl">
@@ -229,9 +278,22 @@ function SearchPageContent() {
                     ? `Results for "${searchQuery}"` 
                     : 'Similar Products'}
                 </h1>
-                <span className="text-gray-600 text-sm">
-                  Showing {paginatedProducts.length} of {filteredProducts.length} products
-                </span>
+                <div className="flex items-center gap-4">
+                  <span className="text-gray-600 text-sm hidden md:block">
+                    Showing {paginatedProducts.length} of {filteredProducts.length} products
+                  </span>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                  >
+                    <option value="relevance">Most Relevant</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                    <option value="rating-desc">Rating: High to Low</option>
+                    <option value="rating-asc">Rating: Low to High</option>
+                  </select>
+                </div>
               </div>
 
               {filteredProducts.length === 0 ? (

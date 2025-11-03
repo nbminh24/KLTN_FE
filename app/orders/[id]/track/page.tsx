@@ -4,7 +4,7 @@ import { use } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { ChevronRight, Package, Truck, MapPin, CheckCircle, Clock } from 'lucide-react';
+import { ChevronRight, Package, Truck, MapPin, CheckCircle, Clock, Phone, AlertTriangle } from 'lucide-react';
 
 export default function OrderTrackingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -147,17 +147,29 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
                 </div>
               </div>
 
-              {/* Delivery Instructions */}
+              {/* Contact & Support */}
               <div className="border border-gray-200 rounded-2xl p-6">
-                <h3 className="font-bold text-lg mb-4">Delivery Instructions</h3>
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-sm text-gray-700">
-                    Please leave the package at the front door if no one is home. Contact me at the provided phone number if there are any issues.
-                  </p>
+                <h3 className="font-bold text-lg mb-4">Need Help?</h3>
+                <div className="space-y-3">
+                  <button className="w-full flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition group">
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center group-hover:bg-blue-500 transition">
+                      <Phone className="w-5 h-5 text-blue-600 group-hover:text-white" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium">Contact Carrier</p>
+                      <p className="text-sm text-gray-600">Call {tracking.courier}</p>
+                    </div>
+                  </button>
+                  <button className="w-full flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-red-500 hover:bg-red-50 transition group">
+                    <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center group-hover:bg-red-500 transition">
+                      <AlertTriangle className="w-5 h-5 text-red-600 group-hover:text-white" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium">Report Issue</p>
+                      <p className="text-sm text-gray-600">Having problems?</p>
+                    </div>
+                  </button>
                 </div>
-                <button className="mt-4 text-sm font-medium text-black underline hover:no-underline">
-                  Update delivery instructions
-                </button>
               </div>
             </div>
 

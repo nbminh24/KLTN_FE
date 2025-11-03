@@ -4,10 +4,21 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { ChevronRight, User, Package, MapPin, Heart, Settings } from 'lucide-react';
+import { ChevronRight, User, Package, MapPin, Heart, Settings, LogOut, Lock } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { showToast } from '@/components/Toast';
 
 export default function ProfilePage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('account');
+
+  const handleLogout = () => {
+    if (confirm('Are you sure you want to logout?')) {
+      // Clear session/localStorage here
+      showToast('Logged out successfully', 'success');
+      router.push('/login');
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -72,6 +83,14 @@ export default function ProfilePage() {
                 >
                   <Settings className="w-5 h-5" />
                   <span>Settings</span>
+                </button>
+                <hr className="border-gray-200 my-2" />
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition"
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span>Logout</span>
                 </button>
               </div>
             </div>
@@ -163,21 +182,64 @@ export default function ProfilePage() {
               )}
 
               {activeTab === 'settings' && (
-                <div className="border border-gray-200 rounded-2xl p-6">
-                  <h2 className="text-2xl font-bold mb-6">Settings</h2>
-                  <div className="space-y-4">
-                    <label className="flex items-center justify-between">
-                      <span className="font-medium">Email Notifications</span>
-                      <input type="checkbox" className="w-5 h-5" defaultChecked />
-                    </label>
-                    <label className="flex items-center justify-between">
-                      <span className="font-medium">SMS Notifications</span>
-                      <input type="checkbox" className="w-5 h-5" />
-                    </label>
-                    <label className="flex items-center justify-between">
-                      <span className="font-medium">Newsletter</span>
-                      <input type="checkbox" className="w-5 h-5" defaultChecked />
-                    </label>
+                <div className="space-y-6">
+                  {/* Change Password */}
+                  <div className="border border-gray-200 rounded-2xl p-6">
+                    <div className="flex items-center gap-3 mb-5">
+                      <Lock className="w-5 h-5" />
+                      <h2 className="text-xl font-bold">Change Password</h2>
+                    </div>
+                    <form className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Current Password</label>
+                        <input
+                          type="password"
+                          placeholder="Enter current password"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">New Password</label>
+                        <input
+                          type="password"
+                          placeholder="Enter new password"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Confirm New Password</label>
+                        <input
+                          type="password"
+                          placeholder="Confirm new password"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        className="bg-black text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition"
+                      >
+                        Update Password
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* Notification Settings */}
+                  <div className="border border-gray-200 rounded-2xl p-6">
+                    <h2 className="text-xl font-bold mb-5">Notification Preferences</h2>
+                    <div className="space-y-4">
+                      <label className="flex items-center justify-between">
+                        <span className="font-medium">Email Notifications</span>
+                        <input type="checkbox" className="w-5 h-5" defaultChecked />
+                      </label>
+                      <label className="flex items-center justify-between">
+                        <span className="font-medium">SMS Notifications</span>
+                        <input type="checkbox" className="w-5 h-5" />
+                      </label>
+                      <label className="flex items-center justify-between">
+                        <span className="font-medium">Newsletter</span>
+                        <input type="checkbox" className="w-5 h-5" defaultChecked />
+                      </label>
+                    </div>
                   </div>
                 </div>
               )}

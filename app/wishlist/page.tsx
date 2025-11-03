@@ -8,7 +8,8 @@ import Footer from '@/components/Footer';
 import { showToast } from '@/components/Toast';
 import { getWishlist, removeFromWishlist, WishlistItem } from '@/lib/wishlist';
 import { addToCart } from '@/lib/cart';
-import { ChevronRight, Heart, ShoppingCart, Trash2, Star } from 'lucide-react';
+import { ChevronRight, Heart, ShoppingCart, Trash2, Star, Share2 } from 'lucide-react';
+import ProductCard from '@/components/ProductCard';
 
 export default function WishlistPage() {
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
@@ -51,6 +52,36 @@ export default function WishlistPage() {
     }
   };
 
+  const handleClearAll = () => {
+    if (confirm('Are you sure you want to clear all items from your wishlist?')) {
+      wishlistItems.forEach(item => removeFromWishlist(item.id));
+      showToast('Wishlist cleared', 'info');
+    }
+  };
+
+  const handleShareWishlist = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'My Wishlist',
+        text: 'Check out my wishlist!',
+        url: window.location.href,
+      }).then(() => {
+        showToast('Wishlist shared!', 'success');
+      }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      showToast('Link copied to clipboard!', 'success');
+    }
+  };
+
+  // Mock suggestion products
+  const suggestionProducts = [
+    { id: '101', name: 'Classic White T-shirt', image: '/bmm32410_black_xl.webp', price: 95, rating: 4.2 },
+    { id: '102', name: 'Denim Jacket', image: '/bmm32410_black_xl.webp', price: 320, originalPrice: 380, rating: 4.8, discount: 15 },
+    { id: '103', name: 'Casual Hoodie', image: '/bmm32410_black_xl.webp', price: 195, rating: 4.5 },
+    { id: '104', name: 'Summer Polo', image: '/bmm32410_black_xl.webp', price: 155, rating: 4.3 },
+  ];
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -72,6 +103,24 @@ export default function WishlistPage() {
                 {wishlistItems.length} {wishlistItems.length === 1 ? 'item' : 'items'} saved
               </p>
             </div>
+            {wishlistItems.length > 0 && (
+              <div className="flex gap-3">
+                <button
+                  onClick={handleShareWishlist}
+                  className="flex items-center gap-2 px-5 py-2.5 border border-gray-300 rounded-full font-medium hover:bg-gray-50 transition"
+                >
+                  <Share2 className="w-4 h-4" />
+                  Share
+                </button>
+                <button
+                  onClick={handleClearAll}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-red-500 text-white rounded-full font-medium hover:bg-red-600 transition"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Clear All
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Wishlist Items */}
@@ -167,16 +216,14 @@ export default function WishlistPage() {
             </div>
           )}
 
-          {/* Recommendations */}
+          {/* You Might Also Like */}
           {wishlistItems.length > 0 && (
             <div className="mt-12">
-              <h2 className="text-2xl font-bold mb-6">You might also like</h2>
-              <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-2xl">
-                <p className="text-gray-600">
-                  <Link href="/products" className="font-medium text-black underline hover:no-underline">
-                    Browse more products
-                  </Link>
-                </p>
+              <h2 className="text-2xl md:text-3xl font-integral font-bold mb-8">You might also like</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                {suggestionProducts.map((product) => (
+                  <ProductCard key={product.id} {...product} />
+                ))}
               </div>
             </div>
           )}

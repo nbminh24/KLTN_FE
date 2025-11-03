@@ -30,15 +30,26 @@ export default function ProductsPage() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState([0, 300]);
+  const [selectedRatings, setSelectedRatings] = useState<number[]>([]);
+  const [sortBy, setSortBy] = useState<string>('featured');
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Filter products
-  const filteredProducts = allProducts.filter((product) => {
-    const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(product.category);
-    const matchesSize = selectedSizes.length === 0 || selectedSizes.some(size => product.size.includes(size));
-    const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
-    return matchesCategory && matchesSize && matchesPrice;
-  });
+  // Filter and sort products
+  const filteredProducts = allProducts
+    .filter((product) => {
+      const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(product.category);
+      const matchesSize = selectedSizes.length === 0 || selectedSizes.some(size => product.size.includes(size));
+      const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
+      const matchesRating = selectedRatings.length === 0 || selectedRatings.some(rating => product.rating >= rating && product.rating < rating + 1);
+      return matchesCategory && matchesSize && matchesPrice && matchesRating;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'price-asc') return a.price - b.price;
+      if (sortBy === 'price-desc') return b.price - a.price;
+      if (sortBy === 'rating-desc') return b.rating - a.rating;
+      if (sortBy === 'rating-asc') return a.rating - b.rating;
+      return 0; // featured (default)
+    });
 
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
   const paginatedProducts = filteredProducts.slice(
@@ -61,6 +72,13 @@ export default function ProductsPage() {
   const toggleSize = (size: string) => {
     setSelectedSizes(prev => 
       prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]
+    );
+    setCurrentPage(1);
+  };
+
+  const toggleRating = (rating: number) => {
+    setSelectedRatings(prev => 
+      prev.includes(rating) ? prev.filter(r => r !== rating) : [...prev, rating]
     );
     setCurrentPage(1);
   };
@@ -171,6 +189,32 @@ export default function ProductsPage() {
 
                 <hr className="border-gray-200" />
 
+                {/* Rating */}
+                <div className="space-y-3">
+                  <h4 className="font-bold text-sm">Rating</h4>
+                  {[5, 4, 3, 2, 1].map((rating) => (
+                    <label key={rating} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedRatings.includes(rating)}
+                        onChange={() => toggleRating(rating)}
+                        className="w-4 h-4 rounded"
+                      />
+                      <div className="flex items-center gap-1 text-sm">
+                        {Array.from({ length: rating }).map((_, i) => (
+                          <span key={i} className="text-yellow-400">★</span>
+                        ))}
+                        {Array.from({ length: 5 - rating }).map((_, i) => (
+                          <span key={i} className="text-gray-300">★</span>
+                        ))}
+                        <span className="text-gray-600 ml-1">& Up</span>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+
+                <hr className="border-gray-200" />
+
                 {/* Dress Style */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -189,7 +233,9 @@ export default function ProductsPage() {
                   onClick={() => {
                     setSelectedCategories([]);
                     setSelectedSizes([]);
+                    setSelectedRatings([]);
                     setPriceRange([0, 300]);
+                    setSortBy('featured');
                     setCurrentPage(1);
                   }}
                   className="w-full border border-gray-300 py-2 rounded-full text-sm font-medium hover:bg-gray-50 transition"
@@ -204,9 +250,20 @@ export default function ProductsPage() {
               <div className="flex items-center justify-between mb-6">
                 <h1 className="text-xl md:text-2xl font-bold">Casual</h1>
                 <div className="flex items-center gap-4">
-                  <span className="text-gray-600 text-sm">
+                  <span className="text-gray-600 text-sm hidden md:block">
                     Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredProducts.length)} of {filteredProducts.length} Products
                   </span>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                  >
+                    <option value="featured">Featured</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                    <option value="rating-desc">Rating: High to Low</option>
+                    <option value="rating-asc">Rating: Low to High</option>
+                  </select>
                   <button className="lg:hidden" onClick={() => setShowFilters(!showFilters)}>
                     <SlidersHorizontal className="w-6 h-6" />
                   </button>

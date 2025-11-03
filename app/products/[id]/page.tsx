@@ -10,7 +10,7 @@ import ProductCard from '@/components/ProductCard';
 import ReviewForm from '@/components/ReviewForm';
 import { showToast } from '@/components/Toast';
 import { addToCart } from '@/lib/cart';
-import { ChevronRight, Minus, Plus, Star, Check } from 'lucide-react';
+import { ChevronRight, Minus, Plus, Star, Check, X, Share2, Facebook, Twitter, Link as LinkIcon, Instagram } from 'lucide-react';
 
 // Mock data
 const relatedProducts = [
@@ -27,6 +27,8 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [selectedTab, setSelectedTab] = useState('reviews');
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState('/bmm32410_black_xl.webp');
 
   // Mock product data (would come from API/props)
   const product = {
@@ -69,6 +71,54 @@ export default function ProductDetailPage() {
     }
   };
 
+  const handleBuyNow = () => {
+    if (!selectedSize) {
+      showToast('Please select a size', 'warning');
+      return;
+    }
+
+    const success = addToCart(
+      {
+        id: product.id,
+        name: product.name,
+        image: product.image,
+        price: product.price,
+        originalPrice: product.originalPrice,
+        size: selectedSize,
+        color: selectedColor,
+        maxStock: product.stock,
+      },
+      quantity
+    );
+
+    if (success) {
+      router.push('/checkout');
+    } else {
+      showToast('Cannot add more than available stock', 'error');
+    }
+  };
+
+  const handleShare = (platform: string) => {
+    const url = window.location.href;
+    const text = `Check out ${product.name}!`;
+    
+    switch(platform) {
+      case 'facebook':
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+        break;
+      case 'twitter':
+        window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
+        break;
+      case 'instagram':
+        showToast('Copy link to share on Instagram!', 'info');
+        break;
+      case 'copy':
+        navigator.clipboard.writeText(url);
+        showToast('Link copied to clipboard!', 'success');
+        break;
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -90,20 +140,32 @@ export default function ProductDetailPage() {
           <div className="grid md:grid-cols-2 gap-8 mb-12">
             {/* Product Images */}
             <div className="space-y-4">
-              <div className="relative aspect-square rounded-2xl overflow-hidden" style={{ backgroundColor: '#dadee3' }}>
+              <div 
+                className="relative aspect-square rounded-2xl overflow-hidden cursor-zoom-in group" 
+                style={{ backgroundColor: '#dadee3' }}
+                onClick={() => setZoomedImage(selectedImage)}
+              >
                 <Image
-                  src="/bmm32410_black_xl.webp"
+                  src={selectedImage}
                   alt="Product"
                   fill
                   className="object-cover"
                 />
+                <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1.5 rounded-full text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                  Click to zoom
+                </div>
               </div>
               <div className="grid grid-cols-3 gap-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="relative aspect-square rounded-xl overflow-hidden cursor-pointer border-2 border-transparent hover:border-black" style={{ backgroundColor: '#dadee3' }}>
+                {['/bmm32410_black_xl.webp', '/bmm32410_black_xl.webp', '/bmm32410_black_xl.webp'].map((img, i) => (
+                  <div 
+                    key={i} 
+                    className={`relative aspect-square rounded-xl overflow-hidden cursor-pointer border-2 transition ${selectedImage === img ? 'border-black' : 'border-transparent hover:border-gray-400'}`} 
+                    style={{ backgroundColor: '#dadee3' }}
+                    onClick={() => setSelectedImage(img)}
+                  >
                     <Image
-                      src="/bmm32410_black_xl.webp"
-                      alt={`Product ${i}`}
+                      src={img}
+                      alt={`Product ${i + 1}`}
                       fill
                       className="object-cover"
                     />
@@ -193,29 +255,77 @@ export default function ProductDetailPage() {
 
               <hr className="border-gray-200" />
 
-              {/* Add to Cart */}
-              <div className="flex gap-4">
-                <div className="flex items-center bg-gray-100 rounded-full px-5">
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="p-2"
+              {/* Add to Cart & Buy Now */}
+              <div className="space-y-3">
+                <div className="flex gap-4">
+                  <div className="flex items-center bg-gray-100 rounded-full px-5">
+                    <button
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="p-2"
+                    >
+                      <Minus className="w-5 h-5" />
+                    </button>
+                    <span className="px-6 font-medium">{quantity}</span>
+                    <button
+                      onClick={() => setQuantity(quantity + 1)}
+                      className="p-2"
+                    >
+                      <Plus className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <button 
+                    onClick={handleAddToCart}
+                    className="flex-1 bg-black text-white py-4 rounded-full font-medium hover:bg-gray-800 transition"
                   >
-                    <Minus className="w-5 h-5" />
-                  </button>
-                  <span className="px-6 font-medium">{quantity}</span>
-                  <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="p-2"
-                  >
-                    <Plus className="w-5 h-5" />
+                    Add to Cart
                   </button>
                 </div>
                 <button 
-                  onClick={handleAddToCart}
-                  className="flex-1 bg-black text-white py-4 rounded-full font-medium hover:bg-gray-800 transition"
+                  onClick={handleBuyNow}
+                  className="w-full border-2 border-black text-black py-4 rounded-full font-medium hover:bg-gray-50 transition"
                 >
-                  Add to Cart
+                  Buy Now
                 </button>
+              </div>
+
+              <hr className="border-gray-200" />
+
+              {/* Share Product */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Share2 className="w-5 h-5 text-gray-600" />
+                  <p className="text-gray-600 text-sm font-medium">Share this product</p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => handleShare('facebook')}
+                    className="flex items-center justify-center w-10 h-10 bg-[#1877F2] text-white rounded-full hover:opacity-90 transition"
+                    title="Share on Facebook"
+                  >
+                    <Facebook className="w-5 h-5 fill-current" />
+                  </button>
+                  <button
+                    onClick={() => handleShare('twitter')}
+                    className="flex items-center justify-center w-10 h-10 bg-[#1DA1F2] text-white rounded-full hover:opacity-90 transition"
+                    title="Share on Twitter"
+                  >
+                    <Twitter className="w-5 h-5 fill-current" />
+                  </button>
+                  <button
+                    onClick={() => handleShare('instagram')}
+                    className="flex items-center justify-center w-10 h-10 bg-gradient-to-tr from-[#FD5949] via-[#D6249F] to-[#285AEB] text-white rounded-full hover:opacity-90 transition"
+                    title="Share on Instagram"
+                  >
+                    <Instagram className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => handleShare('copy')}
+                    className="flex items-center justify-center w-10 h-10 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition"
+                    title="Copy link"
+                  >
+                    <LinkIcon className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -317,6 +427,30 @@ export default function ProductDetailPage() {
           </section>
         </div>
       </main>
+
+      {/* Image Zoom Modal */}
+      {zoomedImage && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setZoomedImage(null)}
+        >
+          <button
+            onClick={() => setZoomedImage(null)}
+            className="absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <div className="relative w-full max-w-4xl aspect-square">
+            <Image
+              src={zoomedImage}
+              alt="Zoomed product"
+              fill
+              className="object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>
