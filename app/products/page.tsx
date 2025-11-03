@@ -213,22 +213,6 @@ export default function ProductsPage() {
                   ))}
                 </div>
 
-                <hr className="border-gray-200" />
-
-                {/* Dress Style */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-bold">Dress Style</h4>
-                    <ChevronDown className="w-4 h-4" />
-                  </div>
-                  {['Casual', 'Formal', 'Party', 'Gym'].map((style) => (
-                    <div key={style} className="flex items-center justify-between text-gray-600 cursor-pointer hover:text-black">
-                      <span>{style}</span>
-                      <ChevronRight className="w-4 h-4" />
-                    </div>
-                  ))}
-                </div>
-
                 <button 
                   onClick={() => {
                     setSelectedCategories([]);
