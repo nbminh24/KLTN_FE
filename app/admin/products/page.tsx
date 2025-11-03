@@ -176,11 +176,9 @@ export default function ProductsPage() {
                   />
                 </th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Product</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">SKU</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Category</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Price</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Stock</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Images</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Status</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Actions</th>
               </tr>
@@ -205,39 +203,14 @@ export default function ProductsPage() {
                     />
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="relative w-12 h-12 bg-gray-100 rounded-lg overflow-hidden">
-                        <Image
-                          src={product.images[0]}
-                          alt={product.name}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      <span className="font-semibold text-sm text-[#202224]">{product.name}</span>
-                    </div>
+                    <span className="font-semibold text-sm text-[#202224]">{product.name}</span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{product.sku}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{product.category}</td>
                   <td className="px-6 py-4 text-sm font-semibold text-[#202224]">${product.price}</td>
                   <td className="px-6 py-4">
                     <span className={`text-sm font-semibold ${product.stock > 50 ? 'text-green-600' : product.stock > 0 ? 'text-yellow-600' : 'text-red-600'}`}>
                       {product.stock}
                     </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex gap-1">
-                      {product.images.slice(0, 3).map((img, idx) => (
-                        <div key={idx} className="relative w-8 h-8 bg-gray-100 rounded overflow-hidden border border-gray-200">
-                          <Image src={img} alt="" fill className="object-cover" />
-                        </div>
-                      ))}
-                      {product.images.length > 3 && (
-                        <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-600 font-semibold">
-                          +{product.images.length - 3}
-                        </div>
-                      )}
-                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <span
