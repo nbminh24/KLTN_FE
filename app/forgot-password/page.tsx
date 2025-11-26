@@ -5,17 +5,44 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Mail, ArrowLeft } from 'lucide-react';
+import { Mail, ArrowLeft, AlertCircle } from 'lucide-react';
+import authService from '@/lib/services/authService';
+import axios from 'axios';
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock password reset
-    setIsSubmitted(true);
+    setError('');
+    setLoading(true);
+
+    try {
+      // Call real API
+      await authService.forgotPassword({ email });
+
+      // Success - show confirmation message
+      setIsSubmitted(true);
+    } catch (err: any) {
+      // Handle errors from API
+      if (axios.isAxiosError(err)) {
+        if (err.response?.status === 404) {
+          setError('No account found with this email address');
+        } else if (err.response?.status === 400) {
+          setError(err.response?.data?.message || 'Invalid email address');
+        } else {
+          setError(err.response?.data?.message || 'Failed to send reset email. Please try again.');
+        }
+      } else {
+        setError('Network error. Please check your connection.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -48,6 +75,14 @@ export default function ForgotPasswordPage() {
                     </p>
                   </div>
 
+                  {/* Error Message */}
+                  {error && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2">
+                      <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-red-600">{error}</p>
+                    </div>
+                  )}
+
                   {/* Form */}
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
@@ -67,9 +102,10 @@ export default function ForgotPasswordPage() {
 
                     <button
                       type="submit"
-                      className="w-full bg-black text-white py-3 rounded-full font-medium hover:bg-gray-800 transition"
+                      disabled={loading}
+                      className="w-full bg-black text-white py-3 rounded-full font-medium hover:bg-gray-800 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
                     >
-                      Reset Password
+                      {loading ? 'Sending...' : 'Reset Password'}
                     </button>
                   </form>
                 </>

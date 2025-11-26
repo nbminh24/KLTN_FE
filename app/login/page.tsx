@@ -5,28 +5,64 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import Image from 'next/image';
+import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import authService from '@/lib/services/authService';
+import axios from 'axios';
 
 export default function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock login - redirect to home
-    alert('Login successful!');
-    router.push('/');
+    setError('');
+    setLoading(true);
+
+    try {
+      // Call real API
+      const response = await authService.login({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      // Save token to localStorage (matches DB schema & API response)
+      localStorage.setItem('access_token', response.data.access_token);
+      if (response.data.refresh_token) {
+        localStorage.setItem('refresh_token', response.data.refresh_token);
+      }
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+
+      // Success - redirect to home
+      router.push('/');
+    } catch (err: any) {
+      // Handle errors from API
+      if (axios.isAxiosError(err)) {
+        if (err.response?.status === 401) {
+          setError('Invalid email or password');
+        } else if (err.response?.status === 403) {
+          setError('Account not activated. Please check your email.');
+        } else {
+          setError(err.response?.data?.message || 'Login failed. Please try again.');
+        }
+      } else {
+        setError('Network error. Please check your connection.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGoogleLogin = () => {
-    // Mock Google OAuth
-    alert('Google login integration - this would redirect to Google OAuth');
-    router.push('/');
+    // TODO: Implement Google OAuth flow
+    // This requires backend OAuth setup
+    alert('Google login will be implemented with OAuth flow');
+    // For now, redirect to Google OAuth consent screen would go here
   };
 
   return (
@@ -81,6 +117,14 @@ export default function LoginPage() {
                   <span className="px-4 bg-white text-gray-500">Or continue with email</span>
                 </div>
               </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2">
+                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-600">{error}</p>
+                </div>
+              )}
 
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -137,9 +181,10 @@ export default function LoginPage() {
                 {/* Submit */}
                 <button
                   type="submit"
-                  className="w-full bg-black text-white py-3 rounded-full font-medium hover:bg-gray-800 transition"
+                  disabled={loading}
+                  className="w-full bg-black text-white py-3 rounded-full font-medium hover:bg-gray-800 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  Sign In
+                  {loading ? 'Signing in...' : 'Sign In'}
                 </button>
               </form>
 

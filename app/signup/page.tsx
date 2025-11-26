@@ -5,11 +5,15 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import authService from '@/lib/services/authService';
+import axios from 'axios';
 
 export default function SignupPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -17,27 +21,60 @@ export default function SignupPage() {
     confirmPassword: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setError('');
+
+    // Client-side validation (matches DB schema constraints)
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!');
+      setError('Passwords do not match');
       return;
     }
 
     if (formData.password.length < 8) {
-      alert('Password must be at least 8 characters');
+      setError('Password must be at least 8 characters');
       return;
     }
 
-    // Mock signup - redirect to email verification
-    router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+    if (formData.name.trim().length < 2) {
+      setError('Name must be at least 2 characters');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Call real API - matches DB schema (name, email, password required)
+      await authService.register({
+        name: formData.name.trim(),
+        email: formData.email,
+        password: formData.password,
+      });
+
+      // Success - redirect to email verification page
+      router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+    } catch (err: any) {
+      // Handle errors from API
+      if (axios.isAxiosError(err)) {
+        if (err.response?.status === 409) {
+          // DB constraint: email UNIQUE
+          setError('Email already exists. Please use a different email or login.');
+        } else if (err.response?.status === 400) {
+          setError(err.response?.data?.message || 'Invalid registration data');
+        } else {
+          setError(err.response?.data?.message || 'Registration failed. Please try again.');
+        }
+      } else {
+        setError('Network error. Please check your connection.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGoogleSignup = () => {
-    // Mock Google OAuth
-    alert('Google signup integration - this would redirect to Google OAuth');
-    router.push('/');
+    // TODO: Implement Google OAuth flow
+    alert('Google signup will be implemented with OAuth flow');
   };
 
   return (
@@ -93,6 +130,14 @@ export default function SignupPage() {
                 </div>
               </div>
 
+              {/* Error Message */}
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2">
+                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-600">{error}</p>
+                </div>
+              )}
+
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Name */}
@@ -105,6 +150,7 @@ export default function SignupPage() {
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       required
+                      minLength={2}
                       placeholder="John Doe"
                       className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-black"
                     />
@@ -137,6 +183,7 @@ export default function SignupPage() {
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       required
+                      minLength={8}
                       placeholder="••••••••"
                       className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-black"
                     />
@@ -185,9 +232,10 @@ export default function SignupPage() {
                 {/* Submit */}
                 <button
                   type="submit"
-                  className="w-full bg-black text-white py-3 rounded-full font-medium hover:bg-gray-800 transition"
+                  disabled={loading}
+                  className="w-full bg-black text-white py-3 rounded-full font-medium hover:bg-gray-800 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  Create Account
+                  {loading ? 'Creating Account...' : 'Create Account'}
                 </button>
               </form>
 

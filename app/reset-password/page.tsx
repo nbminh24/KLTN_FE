@@ -6,6 +6,8 @@ import { useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Lock, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
+import authService from '@/lib/services/authService';
+import axios from 'axios';
 
 function ResetPasswordContent() {
   const searchParams = useSearchParams();
@@ -32,7 +34,7 @@ function ResetPasswordContent() {
 
   const passwordStrength = getPasswordStrength(newPassword);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -47,13 +49,45 @@ function ResetPasswordContent() {
       return;
     }
 
+    if (!token) {
+      setError('Invalid reset token');
+      return;
+    }
+
     setLoading(true);
 
-    // Mock API call
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      // DEBUG: Log payload before sending to API
+      console.log('🔍 DEBUG PAYLOAD:', { token, newPassword });
+
+      // Call real API - matches authService interface
+      const response = await authService.resetPassword({
+        token: token,
+        newPassword: newPassword,
+      });
+
+      console.log('✅ API Response:', response.data);
+
+      // Success
       setSuccess(true);
-    }, 1500);
+    } catch (err: any) {
+      console.error('❌ API Error:', err);
+
+      // Handle errors from API
+      if (axios.isAxiosError(err)) {
+        if (err.response?.status === 400) {
+          setError('Invalid or expired reset token. Please request a new one.');
+        } else if (err.response?.status === 404) {
+          setError('Reset token not found. Please request a new one.');
+        } else {
+          setError(err.response?.data?.message || 'Failed to reset password. Please try again.');
+        }
+      } else {
+        setError('Network error. Please check your connection.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (success) {
@@ -175,9 +209,8 @@ function ResetPasswordContent() {
                         {[1, 2, 3, 4].map((level) => (
                           <div
                             key={level}
-                            className={`h-1 flex-1 rounded-full transition-colors ${
-                              level <= passwordStrength.strength ? passwordStrength.color : 'bg-gray-200'
-                            }`}
+                            className={`h-1 flex-1 rounded-full transition-colors ${level <= passwordStrength.strength ? passwordStrength.color : 'bg-gray-200'
+                              }`}
                           />
                         ))}
                       </div>
@@ -233,11 +266,10 @@ function ResetPasswordContent() {
                 <button
                   type="submit"
                   disabled={loading || !newPassword || !confirmPassword}
-                  className={`w-full py-4 rounded-full font-medium transition ${
-                    loading || !newPassword || !confirmPassword
+                  className={`w-full py-4 rounded-full font-medium transition ${loading || !newPassword || !confirmPassword
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                       : 'bg-black text-white hover:bg-gray-800'
-                  }`}
+                    }`}
                 >
                   {loading ? 'Resetting Password...' : 'Reset Password'}
                 </button>
