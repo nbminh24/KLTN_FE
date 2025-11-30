@@ -1,115 +1,44 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
-
-// Mock data - Replace with API calls later
-const newArrivals = [
-  {
-    id: '1',
-    name: 'T-SHIRT WITH TAPE DETAILS',
-    image: '/bmm32410_black_xl.webp',
-    price: 120,
-    rating: 4.5,
-  },
-  {
-    id: '2',
-    name: 'SKINNY FIT JEANS',
-    image: '/bmm32410_black_xl.webp',
-    price: 240,
-    originalPrice: 260,
-    rating: 3.5,
-    discount: 20,
-  },
-  {
-    id: '3',
-    name: 'CHECKERED SHIRT',
-    image: '/bmm32410_black_xl.webp',
-    price: 180,
-    rating: 4.5,
-  },
-  {
-    id: '4',
-    name: 'SLEEVE STRIPED T-SHIRT',
-    image: '/bmm32410_black_xl.webp',
-    price: 130,
-    originalPrice: 160,
-    rating: 4.5,
-    discount: 30,
-  },
-];
-
-// AI-Personalized recommendations based on user behavior
-const recommendedForYou = [
-  {
-    id: '9',
-    name: 'CLASSIC POLO SHIRT',
-    image: '/bmm32410_black_xl.webp',
-    price: 165,
-    rating: 4.7,
-  },
-  {
-    id: '10',
-    name: 'SLIM FIT CHINOS',
-    image: '/bmm32410_black_xl.webp',
-    price: 195,
-    originalPrice: 220,
-    rating: 4.3,
-    discount: 11,
-  },
-  {
-    id: '11',
-    name: 'CASUAL BLAZER',
-    image: '/bmm32410_black_xl.webp',
-    price: 280,
-    rating: 4.9,
-  },
-  {
-    id: '12',
-    name: 'DENIM JACKET',
-    image: '/bmm32410_black_xl.webp',
-    price: 230,
-    originalPrice: 270,
-    rating: 4.6,
-    discount: 15,
-  },
-];
-
-const topSelling = [
-  {
-    id: '5',
-    name: 'VERTICAL STRIPED SHIRT',
-    image: '/bmm32410_black_xl.webp',
-    price: 212,
-    originalPrice: 232,
-    rating: 5.0,
-    discount: 20,
-  },
-  {
-    id: '6',
-    name: 'COURAGE GRAPHIC T-SHIRT',
-    image: '/bmm32410_black_xl.webp',
-    price: 145,
-    rating: 4.0,
-  },
-  {
-    id: '7',
-    name: 'LOOSE FIT BERMUDA SHORTS',
-    image: '/bmm32410_black_xl.webp',
-    price: 80,
-    rating: 3.0,
-  },
-  {
-    id: '8',
-    name: 'FADED SKINNY JEANS',
-    image: '/bmm32410_black_xl.webp',
-    price: 210,
-    rating: 4.5,
-  },
-];
+import { Loader2 } from 'lucide-react';
+import productService, { Product } from '@/lib/services/productService';
 
 export default function HomePage() {
+  const [newArrivals, setNewArrivals] = useState<Product[]>([]);
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+  const [topSelling, setTopSelling] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchHomeProducts();
+  }, []);
+
+  const fetchHomeProducts = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch all sections in parallel
+      const [newArrivalsRes, topSellingRes, recommendedRes] = await Promise.all([
+        productService.getNewArrivals(1, 4),
+        productService.getProducts({ page: 1, limit: 4, sort_by: 'rating' }),
+        productService.getProducts({ page: 1, limit: 4, sort_by: 'newest' }),
+      ]);
+
+      setNewArrivals(newArrivalsRes.data.data);
+      setTopSelling(topSellingRes.data.data);
+      setRecommendedProducts(recommendedRes.data.data);
+    } catch (error) {
+      console.error('Error fetching home products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -183,19 +112,36 @@ export default function HomePage() {
           <h2 className="text-2xl md:text-4xl font-integral font-bold text-center mb-6 md:mb-10">
             NEW ARRIVALS
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {newArrivals.map((product) => (
-              <ProductCard key={product.id} {...product} />
-            ))}
-          </div>
-          <div className="flex justify-center mt-8">
-            <Link
-              href="/products"
-              className="border border-gray-300 px-12 py-3 rounded-full font-medium hover:bg-gray-50 transition"
-            >
-              View All
-            </Link>
-          </div>
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-gray-600" />
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                {newArrivals.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    id={product.id.toString()}
+                    name={product.name}
+                    image={product.thumbnail_url || '/bmm32410_black_xl.webp'}
+                    price={product.selling_price}
+                    originalPrice={product.original_price}
+                    rating={product.average_rating || 0}
+                    discount={product.discount_percentage}
+                  />
+                ))}
+              </div>
+              <div className="flex justify-center mt-8">
+                <Link
+                  href="/new-arrivals"
+                  className="border border-gray-300 px-12 py-3 rounded-full font-medium hover:bg-gray-50 transition"
+                >
+                  View All
+                </Link>
+              </div>
+            </>
+          )}
         </section>
 
         <div className="container mx-auto px-6 md:px-12">
@@ -218,19 +164,36 @@ export default function HomePage() {
           <p className="text-center text-gray-600 mb-8 max-w-2xl mx-auto">
             Based on your browsing history and preferences, we've curated these items just for you
           </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {recommendedForYou.map((product) => (
-              <ProductCard key={product.id} {...product} />
-            ))}
-          </div>
-          <div className="flex justify-center mt-8">
-            <Link
-              href="/products"
-              className="border border-gray-300 px-12 py-3 rounded-full font-medium hover:bg-gray-50 transition"
-            >
-              View All
-            </Link>
-          </div>
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-gray-600" />
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                {recommendedProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    id={product.id.toString()}
+                    name={product.name}
+                    image={product.thumbnail_url || '/bmm32410_black_xl.webp'}
+                    price={product.selling_price}
+                    originalPrice={product.original_price}
+                    rating={product.average_rating || 0}
+                    discount={product.discount_percentage}
+                  />
+                ))}
+              </div>
+              <div className="flex justify-center mt-8">
+                <Link
+                  href="/products"
+                  className="border border-gray-300 px-12 py-3 rounded-full font-medium hover:bg-gray-50 transition"
+                >
+                  View All
+                </Link>
+              </div>
+            </>
+          )}
         </section>
 
         <div className="container mx-auto px-6 md:px-12">
@@ -242,19 +205,36 @@ export default function HomePage() {
           <h2 className="text-2xl md:text-4xl font-integral font-bold text-center mb-6 md:mb-10">
             TOP SELLING
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {topSelling.map((product) => (
-              <ProductCard key={product.id} {...product} />
-            ))}
-          </div>
-          <div className="flex justify-center mt-8">
-            <Link
-              href="/products"
-              className="border border-gray-300 px-12 py-3 rounded-full font-medium hover:bg-gray-50 transition"
-            >
-              View All
-            </Link>
-          </div>
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-gray-600" />
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                {topSelling.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    id={product.id.toString()}
+                    name={product.name}
+                    image={product.thumbnail_url || '/bmm32410_black_xl.webp'}
+                    price={product.selling_price}
+                    originalPrice={product.original_price}
+                    rating={product.average_rating || 0}
+                    discount={product.discount_percentage}
+                  />
+                ))}
+              </div>
+              <div className="flex justify-center mt-8">
+                <Link
+                  href="/products"
+                  className="border border-gray-300 px-12 py-3 rounded-full font-medium hover:bg-gray-50 transition"
+                >
+                  View All
+                </Link>
+              </div>
+            </>
+          )}
         </section>
 
         {/* Promotional Banners */}
