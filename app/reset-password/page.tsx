@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Lock, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
@@ -10,6 +10,7 @@ import authService from '@/lib/services/authService';
 import axios from 'axios';
 
 function ResetPasswordContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 
@@ -20,6 +21,18 @@ function ResetPasswordContent() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [countdown, setCountdown] = useState(5);
+
+  // Auto-redirect countdown
+  useEffect(() => {
+    if (success && countdown > 0) {
+      const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+    if (success && countdown === 0) {
+      router.push('/login');
+    }
+  }, [success, countdown, router]);
 
   // Password strength checker
   const getPasswordStrength = (password: string) => {
@@ -103,15 +116,37 @@ function ResetPasswordContent() {
               <h1 className="text-3xl md:text-4xl font-integral font-bold mb-4">
                 Password Reset Successful!
               </h1>
-              <p className="text-gray-600 text-lg mb-8">
+              <p className="text-gray-600 text-lg mb-4">
                 Your password has been successfully reset. You can now log in with your new password.
               </p>
-              <Link
-                href="/login"
-                className="inline-block bg-black text-white px-8 py-4 rounded-full font-medium hover:bg-gray-800 transition"
-              >
-                Go to Login
-              </Link>
+
+              {/* Countdown Timer */}
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-6 max-w-sm mx-auto">
+                <p className="text-sm text-blue-700">
+                  Redirecting to Login in <strong>{countdown}</strong> seconds...
+                </p>
+              </div>
+
+              <div className="space-y-3 max-w-sm mx-auto">
+                <Link
+                  href="/login"
+                  className="inline-block w-full bg-black text-white px-8 py-4 rounded-full font-medium hover:bg-gray-800 transition text-center"
+                >
+                  Go to Login Now
+                </Link>
+
+                <button
+                  onClick={() => {
+                    window.close();
+                    setTimeout(() => {
+                      alert('Bạn có thể đóng tab này. Mật khẩu đã được cập nhật thành công.');
+                    }, 500);
+                  }}
+                  className="w-full text-gray-600 hover:text-gray-900 font-medium py-2 transition-colors"
+                >
+                  Close this tab
+                </button>
+              </div>
             </div>
           </div>
         </main>
@@ -267,8 +302,8 @@ function ResetPasswordContent() {
                   type="submit"
                   disabled={loading || !newPassword || !confirmPassword}
                   className={`w-full py-4 rounded-full font-medium transition ${loading || !newPassword || !confirmPassword
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : 'bg-black text-white hover:bg-gray-800'
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : 'bg-black text-white hover:bg-gray-800'
                     }`}
                 >
                   {loading ? 'Resetting Password...' : 'Reset Password'}

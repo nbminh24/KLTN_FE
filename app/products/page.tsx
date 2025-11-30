@@ -1,61 +1,89 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 import Pagination from '@/components/Pagination';
-import { ChevronRight, SlidersHorizontal, ChevronDown } from 'lucide-react';
+import { ChevronRight, SlidersHorizontal, ChevronDown, Loader2 } from 'lucide-react';
+import productService, { Product } from '@/lib/services/productService';
+import filterService, { Color, Size } from '@/lib/services/filterService';
 
-// Mock data
-const allProducts = [
-  { id: '1', name: 'Gradient Graphic T-shirt', image: '/bmm32410_black_xl.webp', price: 145, originalPrice: 242, rating: 3.5, discount: 20, category: 'T-shirts', size: ['S', 'M', 'L', 'XL'] },
-  { id: '2', name: 'Polo with Tipping Details', image: '/bmm32410_black_xl.webp', price: 180, originalPrice: 242, rating: 4.5, discount: 20, category: 'Shirts', size: ['M', 'L', 'XL'] },
-  { id: '3', name: 'Black Striped T-shirt', image: '/bmm32410_black_xl.webp', price: 120, originalPrice: 150, rating: 5.0, discount: 30, category: 'T-shirts', size: ['S', 'M', 'L'] },
-  { id: '4', name: 'Skinny Fit Jeans', image: '/bmm32410_black_xl.webp', price: 240, originalPrice: 260, rating: 3.5, discount: 20, category: 'Jeans', size: ['M', 'L', 'XL', 'XXL'] },
-  { id: '5', name: 'Checkered Shirt', image: '/bmm32410_black_xl.webp', price: 180, rating: 4.5, category: 'Shirts', size: ['S', 'M', 'L'] },
-  { id: '6', name: 'Sleeve Striped T-shirt', image: '/bmm32410_black_xl.webp', price: 130, originalPrice: 160, rating: 4.5, discount: 30, category: 'T-shirts', size: ['XS', 'S', 'M', 'L'] },
-  { id: '7', name: 'Vertical Striped Shirt', image: '/bmm32410_black_xl.webp', price: 212, originalPrice: 232, rating: 5.0, discount: 20, category: 'Shirts', size: ['M', 'L', 'XL'] },
-  { id: '8', name: 'Courage Graphic T-shirt', image: '/bmm32410_black_xl.webp', price: 145, rating: 4.0, category: 'T-shirts', size: ['S', 'M', 'L', 'XL'] },
-  { id: '9', name: 'Loose Fit Bermuda Shorts', image: '/bmm32410_black_xl.webp', price: 80, rating: 3.0, category: 'Shorts', size: ['M', 'L', 'XL'] },
-  { id: '10', name: 'Classic Hoodie', image: '/bmm32410_black_xl.webp', price: 195, rating: 4.8, category: 'Hoodie', size: ['S', 'M', 'L', 'XL', 'XXL'] },
-  { id: '11', name: 'Faded Denim Jeans', image: '/bmm32410_black_xl.webp', price: 220, originalPrice: 250, rating: 4.2, discount: 12, category: 'Jeans', size: ['M', 'L', 'XL'] },
-  { id: '12', name: 'Summer Shorts', image: '/bmm32410_black_xl.webp', price: 95, rating: 3.8, category: 'Shorts', size: ['S', 'M', 'L'] },
-];
-
-const ITEMS_PER_PAGE = 9;
+const ITEMS_PER_PAGE = 20;
 
 export default function ProductsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
-  const [priceRange, setPriceRange] = useState([0, 300]);
-  const [selectedRatings, setSelectedRatings] = useState<number[]>([]);
-  const [sortBy, setSortBy] = useState<string>('featured');
+  const [selectedSizes, setSelectedSizes] = useState<number[]>([]); // Changed to number[] for IDs
+  const [selectedColors, setSelectedColors] = useState<number[]>([]); // Changed to number[] for IDs
+  const [priceRange, setPriceRange] = useState([0, 2000000]);
+  const [sortBy, setSortBy] = useState<string>('newest');
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Filter and sort products
-  const filteredProducts = allProducts
-    .filter((product) => {
-      const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(product.category);
-      const matchesSize = selectedSizes.length === 0 || selectedSizes.some(size => product.size.includes(size));
-      const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
-      const matchesRating = selectedRatings.length === 0 || selectedRatings.some(rating => product.rating >= rating && product.rating < rating + 1);
-      return matchesCategory && matchesSize && matchesPrice && matchesRating;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'price-asc') return a.price - b.price;
-      if (sortBy === 'price-desc') return b.price - a.price;
-      if (sortBy === 'rating-desc') return b.rating - a.rating;
-      if (sortBy === 'rating-asc') return a.rating - b.rating;
-      return 0; // featured (default)
-    });
+  // API state
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
 
-  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
-  const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  // Filter options from API
+  const [availableColors, setAvailableColors] = useState<Color[]>([]);
+  const [availableSizes, setAvailableSizes] = useState<Size[]>([]);
+  const [filtersLoading, setFiltersLoading] = useState(true);
+
+  // Fetch filter options on mount
+  useEffect(() => {
+    fetchFilterOptions();
+  }, []);
+
+  // Fetch products from API
+  useEffect(() => {
+    fetchProducts();
+  }, [currentPage, selectedCategories, selectedSizes, selectedColors, priceRange, sortBy]);
+
+  const fetchFilterOptions = async () => {
+    try {
+      setFiltersLoading(true);
+      const [colorsRes, sizesRes] = await Promise.all([
+        filterService.getAllColors(),
+        filterService.getAllSizes(),
+      ]);
+      setAvailableColors(colorsRes.data);
+      setAvailableSizes(sizesRes.data);
+    } catch (err) {
+      console.error('Error fetching filter options:', err);
+    } finally {
+      setFiltersLoading(false);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const response = await productService.getProducts({
+        page: currentPage,
+        limit: ITEMS_PER_PAGE,
+        category_slug: selectedCategories[0], // API accepts single category
+        sizes: selectedSizes.length > 0 ? selectedSizes.join(',') : undefined,
+        colors: selectedColors.length > 0 ? selectedColors.join(',') : undefined,
+        min_price: priceRange[0],
+        max_price: priceRange[1],
+        sort_by: sortBy as 'newest' | 'price_asc' | 'price_desc' | 'rating',
+      });
+
+      setProducts(response.data.data);
+      setTotalPages(response.data.metadata.total_pages);
+      setTotalProducts(response.data.metadata.total);
+    } catch (err: any) {
+      console.error('Error fetching products:', err);
+      setError('Failed to load products. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -63,22 +91,22 @@ export default function ProductsPage() {
   };
 
   const toggleCategory = (category: string) => {
-    setSelectedCategories(prev => 
+    setSelectedCategories(prev =>
       prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]
     );
     setCurrentPage(1);
   };
 
-  const toggleSize = (size: string) => {
-    setSelectedSizes(prev => 
-      prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]
+  const toggleSize = (sizeId: number) => {
+    setSelectedSizes(prev =>
+      prev.includes(sizeId) ? prev.filter(s => s !== sizeId) : [...prev, sizeId]
     );
     setCurrentPage(1);
   };
 
-  const toggleRating = (rating: number) => {
-    setSelectedRatings(prev => 
-      prev.includes(rating) ? prev.filter(r => r !== rating) : [...prev, rating]
+  const toggleColor = (colorId: number) => {
+    setSelectedColors(prev =>
+      prev.includes(colorId) ? prev.filter(c => c !== colorId) : [...prev, colorId]
     );
     setCurrentPage(1);
   };
@@ -135,14 +163,15 @@ export default function ProductsPage() {
                     <input
                       type="range"
                       min="0"
-                      max="300"
+                      max="2000000"
+                      step="10000"
                       value={priceRange[1]}
                       onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
                       className="w-full"
                     />
                     <div className="flex justify-between text-sm">
-                      <span>${priceRange[0]}</span>
-                      <span>${priceRange[1]}</span>
+                      <span>{priceRange[0].toLocaleString('vi-VN')}₫</span>
+                      <span>{priceRange[1].toLocaleString('vi-VN')}₫</span>
                     </div>
                   </div>
                 </div>
@@ -155,14 +184,26 @@ export default function ProductsPage() {
                     <h4 className="font-bold">Colors</h4>
                     <ChevronDown className="w-4 h-4" />
                   </div>
-                  <div className="grid grid-cols-5 gap-3">
-                    {['bg-green-500', 'bg-red-500', 'bg-yellow-500', 'bg-orange-500', 'bg-blue-400', 'bg-blue-600', 'bg-purple-500', 'bg-pink-500', 'bg-white', 'bg-black'].map((color, index) => (
-                      <button
-                        key={index}
-                        className={`w-9 h-9 rounded-full border-2 ${color} ${index === 0 ? 'border-black' : 'border-gray-200'}`}
-                      />
-                    ))}
-                  </div>
+                  {filtersLoading ? (
+                    <div className="flex justify-center py-4">
+                      <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-5 gap-3">
+                      {availableColors.map((color) => (
+                        <button
+                          key={color.id}
+                          onClick={() => toggleColor(color.id)}
+                          style={{ backgroundColor: color.hex_code }}
+                          className={`w-9 h-9 rounded-full border-2 transition-all hover:scale-110 ${selectedColors.includes(color.id)
+                            ? 'border-black ring-2 ring-offset-2 ring-black'
+                            : 'border-gray-200'
+                            }`}
+                          title={color.name}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <hr className="border-gray-200" />
@@ -170,56 +211,39 @@ export default function ProductsPage() {
                 {/* Size */}
                 <div className="space-y-3">
                   <h4 className="font-bold text-sm">Size</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => (
-                      <button
-                        key={size}
-                        onClick={() => toggleSize(size)}
-                        className={`px-3 py-1.5 rounded-full text-xs ${
-                          selectedSizes.includes(size)
+                  {filtersLoading ? (
+                    <div className="flex justify-center py-4">
+                      <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {availableSizes.map((size) => (
+                        <button
+                          key={size.id}
+                          onClick={() => toggleSize(size.id)}
+                          className={`px-3 py-1.5 rounded-full text-xs transition-all ${selectedSizes.includes(size.id)
                             ? 'bg-black text-white'
                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
-                      >
-                        {size}
-                      </button>
-                    ))}
-                  </div>
+                            }`}
+                        >
+                          {size.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <hr className="border-gray-200" />
 
-                {/* Rating */}
-                <div className="space-y-3">
-                  <h4 className="font-bold text-sm">Rating</h4>
-                  {[5, 4, 3, 2, 1].map((rating) => (
-                    <label key={rating} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={selectedRatings.includes(rating)}
-                        onChange={() => toggleRating(rating)}
-                        className="w-4 h-4 rounded"
-                      />
-                      <div className="flex items-center gap-1 text-sm">
-                        {Array.from({ length: rating }).map((_, i) => (
-                          <span key={i} className="text-yellow-400">★</span>
-                        ))}
-                        {Array.from({ length: 5 - rating }).map((_, i) => (
-                          <span key={i} className="text-gray-300">★</span>
-                        ))}
-                        <span className="text-gray-600 ml-1">& Up</span>
-                      </div>
-                    </label>
-                  ))}
-                </div>
+                {/* Note: Rating filter removed - not supported by current API */}
 
-                <button 
+                <button
                   onClick={() => {
                     setSelectedCategories([]);
                     setSelectedSizes([]);
-                    setSelectedRatings([]);
-                    setPriceRange([0, 300]);
-                    setSortBy('featured');
+                    setSelectedColors([]);
+                    setPriceRange([0, 2000000]);
+                    setSortBy('newest');
                     setCurrentPage(1);
                   }}
                   className="w-full border border-gray-300 py-2 rounded-full text-sm font-medium hover:bg-gray-50 transition"
@@ -232,21 +256,20 @@ export default function ProductsPage() {
             {/* Products Grid */}
             <div className="flex-1">
               <div className="flex items-center justify-between mb-6">
-                <h1 className="text-xl md:text-2xl font-bold">Casual</h1>
+                <h1 className="text-xl md:text-2xl font-bold">All Products</h1>
                 <div className="flex items-center gap-4">
                   <span className="text-gray-600 text-sm hidden md:block">
-                    Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredProducts.length)} of {filteredProducts.length} Products
+                    Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, totalProducts)} of {totalProducts} Products
                   </span>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
                     className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black"
                   >
-                    <option value="featured">Featured</option>
-                    <option value="price-asc">Price: Low to High</option>
-                    <option value="price-desc">Price: High to Low</option>
-                    <option value="rating-desc">Rating: High to Low</option>
-                    <option value="rating-asc">Rating: Low to High</option>
+                    <option value="newest">Newest</option>
+                    <option value="price_asc">Price: Low to High</option>
+                    <option value="price_desc">Price: High to Low</option>
+                    <option value="rating">Top Rated</option>
                   </select>
                   <button className="lg:hidden" onClick={() => setShowFilters(!showFilters)}>
                     <SlidersHorizontal className="w-6 h-6" />
@@ -254,11 +277,43 @@ export default function ProductsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-                {paginatedProducts.map((product) => (
-                  <ProductCard key={product.id} {...product} />
-                ))}
-              </div>
+              {/* Loading State */}
+              {loading && (
+                <div className="flex items-center justify-center py-20">
+                  <Loader2 className="w-8 h-8 animate-spin text-gray-600" />
+                </div>
+              )}
+
+              {/* Error State */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+                  <p className="text-red-800">{error}</p>
+                  <button
+                    onClick={() => fetchProducts()}
+                    className="mt-2 text-red-600 hover:underline font-medium"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              )}
+
+              {/* Products Grid */}
+              {!loading && !error && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+                  {products.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      id={product.id.toString()}
+                      name={product.name}
+                      image={product.thumbnail_url || '/bmm32410_black_xl.webp'}
+                      price={product.selling_price}
+                      originalPrice={product.original_price}
+                      rating={product.average_rating || 0}
+                      discount={product.discount_percentage}
+                    />
+                  ))}
+                </div>
+              )}
 
               {/* Pagination */}
               {totalPages > 1 && (

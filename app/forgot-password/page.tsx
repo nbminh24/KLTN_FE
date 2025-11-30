@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
@@ -15,6 +15,18 @@ export default function ForgotPasswordPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [countdown, setCountdown] = useState(5);
+
+  // Auto-redirect countdown
+  useEffect(() => {
+    if (isSubmitted && countdown > 0) {
+      const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+    if (isSubmitted && countdown === 0) {
+      router.push('/login');
+    }
+  }, [isSubmitted, countdown, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,15 +131,38 @@ export default function ForgotPasswordPage() {
                     <h1 className="text-2xl font-bold mb-4">
                       Check your email
                     </h1>
-                    <p className="text-gray-600 mb-8">
+                    <p className="text-gray-600 mb-4">
                       We sent a password reset link to <strong>{email}</strong>
                     </p>
-                    <Link
-                      href="/login"
-                      className="inline-block bg-black text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition"
-                    >
-                      Back to Login
-                    </Link>
+
+                    {/* Countdown Timer */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-6">
+                      <p className="text-sm text-blue-700">
+                        Redirecting to Login in <strong>{countdown}</strong> seconds...
+                      </p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Link
+                        href="/login"
+                        className="inline-block w-full bg-black text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition"
+                      >
+                        Back to Login Now
+                      </Link>
+
+                      <button
+                        onClick={() => {
+                          window.close();
+                          setTimeout(() => {
+                            alert('Bạn có thể đóng tab này. Vui lòng check email để tiếp tục.');
+                          }, 500);
+                        }}
+                        className="w-full text-gray-600 hover:text-gray-900 font-medium py-2 transition-colors"
+                      >
+                        Close this tab
+                      </button>
+                    </div>
+
                     <p className="text-sm text-gray-500 mt-6">
                       Didn\'t receive the email?{' '}
                       <button

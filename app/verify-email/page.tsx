@@ -93,11 +93,10 @@ function VerifyEmailContent() {
                 <button
                   onClick={handleResend}
                   disabled={resendLoading || countdown > 0}
-                  className={`w-full py-3 rounded-full font-medium transition flex items-center justify-center gap-2 ${
-                    resendLoading || countdown > 0
+                  className={`w-full py-3 rounded-full font-medium transition flex items-center justify-center gap-2 ${resendLoading || countdown > 0
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                       : 'bg-black text-white hover:bg-gray-800'
-                  }`}
+                    }`}
                 >
                   {resendLoading ? (
                     <>
@@ -132,11 +131,25 @@ function VerifyEmailContent() {
             </div>
 
             {/* Help Section */}
-            <div className="text-center mt-6">
-              <p className="text-gray-600 text-sm mb-2">Still having trouble?</p>
-              <Link href="/support" className="text-black font-medium underline hover:no-underline">
-                Contact Customer Support
-              </Link>
+            <div className="text-center mt-6 space-y-3">
+              <button
+                onClick={() => {
+                  window.close();
+                  // Nếu không close được, hiện message
+                  setTimeout(() => {
+                    alert('Bạn có thể đóng tab này và quay lại email để click link kích hoạt.');
+                  }, 500);
+                }}
+                className="text-blue-600 font-medium hover:underline text-sm"
+              >
+                Close this tab
+              </button>
+              <div>
+                <p className="text-gray-600 text-sm mb-2">Still having trouble?</p>
+                <Link href="/support" className="text-black font-medium underline hover:no-underline">
+                  Contact Customer Support
+                </Link>
+              </div>
             </div>
           </div>
         </div>
