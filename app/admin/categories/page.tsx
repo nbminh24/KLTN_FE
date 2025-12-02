@@ -1,32 +1,114 @@
 'use client';
 
-import { useState } from 'react';
-import { Plus, Edit2, Folder, X, Eye, EyeOff } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Edit2, Folder, X, Eye, EyeOff, Loader2 } from 'lucide-react';
+import adminCategoryService, { AdminCategory } from '@/lib/services/admin/categoryService';
+import { showToast } from '@/components/Toast';
 
 export default function CategoriesPage() {
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [categories, setCategories] = useState<AdminCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<AdminCategory | null>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    slug: '',
+    status: 'active' as 'active' | 'inactive',
+  });
 
-  const categories = [
-    { id: '1', name: 'T-Shirts', slug: 't-shirts', products: 45, status: 'Active', description: 'Casual and graphic t-shirts' },
-    { id: '2', name: 'Shirts', slug: 'shirts', products: 32, status: 'Active', description: 'Casual and formal shirts' },
-    { id: '3', name: 'Jeans', slug: 'jeans', products: 28, status: 'Active', description: 'Denim jeans and pants' },
-    { id: '4', name: 'Hoodies', slug: 'hoodies', products: 21, status: 'Active', description: 'Hoodies and sweatshirts' },
-    { id: '5', name: 'Shorts', slug: 'shorts', products: 19, status: 'Inactive', description: 'Summer shorts' },
-    { id: '6', name: 'Jackets', slug: 'jackets', products: 15, status: 'Active', description: 'Jackets and outerwear' },
-  ];
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
-  const handleToggleCategoryStatus = (categoryId: string, currentStatus: string, categoryName: string, productCount: number) => {
-    if (currentStatus === 'Active') {
-      // Deactivating category
-      if (confirm(`Deactivate '${categoryName}' category? This will also deactivate ${productCount} products.`)) {
-        alert(`Category '${categoryName}' and ${productCount} products have been deactivated.`);
-        // Mock: In real implementation, update category status and all products status via API
+  const fetchCategories = async () => {
+    try {
+      setLoading(true);
+      const response = await adminCategoryService.getCategories();
+      setCategories(Array.isArray(response.data) ? response.data : []);
+    } catch (error: any) {
+      if (error?.message === 'Network Error') {
+        // Silently handle network errors
+      } else {
+        console.warn('Failed to fetch categories:', error?.response?.status || error?.message);
+        showToast('Failed to load categories', 'error');
       }
-    } else {
-      // Activating category
-      alert(`Category '${categoryName}' has been activated.`);
-      // Mock: In real implementation, update category status via API (products remain unchanged)
+      setCategories([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
+
+  const handleToggleCategoryStatus = async (category: AdminCategory) => {
+    const newStatus = category.status === 'active' ? 'inactive' : 'active';
+    if (newStatus === 'inactive' && category.product_count && category.product_count > 0) {
+      if (!confirm(`Deactivate '${category.name}'? This may affect ${category.product_count} products.`)) return;
+    }
+
+    try {
+      await adminCategoryService.updateCategory(category.id, { status: newStatus });
+      showToast(`Category ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`, 'success');
+      fetchCategories();
+    } catch (error) {
+      console.error('Error updating category:', error);
+      showToast('Failed to update category', 'error');
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const dataToSend = {
+        ...formData,
+        slug: formData.slug || generateSlug(formData.name),
+      };
+
+      if (editMode && selectedCategory) {
+        await adminCategoryService.updateCategory(selectedCategory.id, dataToSend);
+        showToast('Category updated successfully', 'success');
+      } else {
+        await adminCategoryService.createCategory(dataToSend);
+        showToast('Category created successfully', 'success');
+      }
+      setShowModal(false);
+      setFormData({ name: '', slug: '', status: 'active' });
+      fetchCategories();
+    } catch (error) {
+      console.error('Error saving category:', error);
+      showToast('Failed to save category', 'error');
+    }
+  };
+
+  const handleEdit = (category: AdminCategory) => {
+    setSelectedCategory(category);
+    setFormData({
+      name: category.name,
+      slug: category.slug,
+      status: category.status,
+    });
+    setEditMode(true);
+    setShowModal(true);
+  };
+
+  const handleDelete = async (category: AdminCategory) => {
+    if (!confirm(`Delete '${category.name}' category?`)) return;
+    try {
+      await adminCategoryService.deleteCategory(category.id);
+      showToast('Category deleted successfully', 'success');
+      fetchCategories();
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      showToast('Failed to delete category', 'error');
     }
   };
 
@@ -54,15 +136,15 @@ export default function CategoriesPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl p-5 border border-gray-200">
           <p className="text-sm text-gray-600 mb-1">Total Categories</p>
-          <p className="text-2xl font-bold text-[#202224]">{categories.length}</p>
+          <p className="text-2xl font-bold text-[#202224]">{Array.isArray(categories) ? categories.length : 0}</p>
         </div>
         <div className="bg-white rounded-xl p-5 border border-gray-200">
           <p className="text-sm text-gray-600 mb-1">Active Categories</p>
-          <p className="text-2xl font-bold text-green-600">{categories.filter(c => c.status === 'Active').length}</p>
+          <p className="text-2xl font-bold text-green-600">{Array.isArray(categories) ? categories.filter(c => c.status === 'active').length : 0}</p>
         </div>
         <div className="bg-white rounded-xl p-5 border border-gray-200">
           <p className="text-sm text-gray-600 mb-1">Total Products</p>
-          <p className="text-2xl font-bold text-blue-600">{categories.reduce((sum, c) => sum + c.products, 0)}</p>
+          <p className="text-2xl font-bold text-blue-600">{Array.isArray(categories) ? categories.reduce((sum, c) => sum + (c.product_count || 0), 0) : 0}</p>
         </div>
       </div>
 
@@ -79,51 +161,73 @@ export default function CategoriesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {categories.map((category) => (
-                <tr key={category.id} className="hover:bg-gray-50 transition">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <Folder className="w-5 h-5 text-[#4880FF]" />
-                      <span className="font-semibold text-sm text-[#202224]">{category.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm font-semibold text-[#202224]">{category.products}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      category.status === 'Active' 
-                        ? 'bg-green-100 text-green-700' 
-                        : 'bg-gray-100 text-gray-700'
-                    }`}>
-                      {category.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleToggleCategoryStatus(category.id, category.status, category.name, category.products)}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition"
-                        title={category.status === 'Active' ? 'Deactivate category' : 'Activate category'}
-                      >
-                        {category.status === 'Active' ? (
-                          <Eye className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <EyeOff className="w-4 h-4 text-gray-400" />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setEditMode(true);
-                          setShowModal(true);
-                        }}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition"
-                        title="Edit"
-                      >
-                        <Edit2 className="w-4 h-4 text-gray-600" />
-                      </button>
-                    </div>
+              {loading ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-12 text-center">
+                    <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto" />
                   </td>
                 </tr>
-              ))}
+              ) : !Array.isArray(categories) || categories.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
+                    No categories found
+                  </td>
+                </tr>
+              ) : (
+                categories.map((category) => (
+                  <tr key={category.id} className="hover:bg-gray-50 transition">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <Folder className="w-5 h-5 text-[#4880FF]" />
+                        <div>
+                          <p className="font-semibold text-sm text-[#202224]">{category.name}</p>
+                          <p className="text-xs text-gray-500">/{category.slug}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm font-semibold text-[#202224]">
+                      {category.product_count || 0}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${category.status === 'active'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-gray-700'
+                        }`}>
+                        {category.status === 'active' ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleToggleCategoryStatus(category)}
+                          className="p-2 hover:bg-gray-100 rounded-lg transition"
+                          title={category.status === 'active' ? 'Deactivate' : 'Activate'}
+                        >
+                          {category.status === 'active' ? (
+                            <Eye className="w-4 h-4 text-green-600" />
+                          ) : (
+                            <EyeOff className="w-4 h-4 text-gray-400" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleEdit(category)}
+                          className="p-2 hover:bg-gray-100 rounded-lg transition"
+                          title="Edit"
+                        >
+                          <Edit2 className="w-4 h-4 text-gray-600" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(category)}
+                          className="p-2 hover:bg-red-100 rounded-lg transition"
+                          title="Delete"
+                        >
+                          <X className="w-4 h-4 text-red-600" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -145,19 +249,41 @@ export default function CategoriesPage() {
               </button>
             </div>
 
-            <form className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold mb-2">Category Name *</label>
                 <input
                   type="text"
                   required
+                  value={formData.name}
+                  onChange={(e) => {
+                    setFormData({ ...formData, name: e.target.value, slug: generateSlug(e.target.value) });
+                  }}
                   placeholder="e.g. T-Shirts"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-semibold mb-2">Slug</label>
+                <input
+                  type="text"
+                  value={formData.slug}
+                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                  placeholder="auto-generated from name"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF] bg-gray-50"
+                />
+                <p className="text-xs text-gray-500 mt-1">Leave empty to auto-generate from category name</p>
+              </div>
+
               <div className="flex items-center gap-3">
-                <input type="checkbox" id="active" defaultChecked className="w-5 h-5" />
+                <input
+                  type="checkbox"
+                  id="active"
+                  checked={formData.status === 'active'}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.checked ? 'active' : 'inactive' })}
+                  className="w-5 h-5"
+                />
                 <label htmlFor="active" className="text-sm font-semibold">
                   Active (Category will be visible on store)
                 </label>
@@ -165,22 +291,20 @@ export default function CategoriesPage() {
 
               <div className="flex gap-3 pt-4">
                 <button
-                  type="submit"
-                  className="flex-1 px-6 py-3 bg-[#4880FF] text-white rounded-lg font-semibold hover:bg-blue-600 transition"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    alert(editMode ? 'Category updated!' : 'Category created!');
-                    setShowModal(false);
-                  }}
-                >
-                  {editMode ? 'Update' : 'Create'}
-                </button>
-                <button
                   type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-6 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition"
+                  onClick={() => {
+                    setShowModal(false);
+                    setFormData({ name: '', slug: '', status: 'active' });
+                  }}
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-semibold"
                 >
                   Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-6 py-3 bg-[#4880FF] text-white rounded-lg font-semibold hover:bg-blue-600 transition"
+                >
+                  {editMode ? 'Update' : 'Create'}
                 </button>
               </div>
             </form>

@@ -1,53 +1,108 @@
 'use client';
 
-import { useState } from 'react';
-import { Plus, Edit2, Trash2, Copy, Tag, Calendar, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Edit2, Trash2, Copy, Tag, Calendar, X, Loader2 } from 'lucide-react';
+import adminPromotionService, { AdminPromotion } from '@/lib/services/admin/promotionService';
+import { showToast } from '@/components/Toast';
 
 export default function PromotionsPage() {
   const [showModal, setShowModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'vouchers' | 'campaigns'>('vouchers');
+  const [activeTab, setActiveTab] = useState<'active' | 'expired'>('active');
+  const [promotions, setPromotions] = useState<AdminPromotion[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+  const [selectedPromotion, setSelectedPromotion] = useState<AdminPromotion | null>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    type: 'voucher' as 'voucher' | 'flash_sale',
+    discount_value: 0,
+    discount_type: 'percentage' as 'percentage' | 'fixed_amount',
+    number_limited: 0,
+    start_date: '',
+    end_date: '',
+  });
 
-  const vouchers = [
-    {
-      id: '1',
-      code: 'SUMMER20',
-      discount: '20%',
-      type: 'Percentage',
-      minOrder: 100,
-      usage: 45,
-      limit: 100,
-      expiry: '2024-06-30',
-      status: 'Active',
-    },
-    {
-      id: '2',
-      code: 'NEWUSER',
-      discount: '$15',
-      type: 'Fixed',
-      minOrder: 50,
-      usage: 123,
-      limit: 500,
-      expiry: '2024-12-31',
-      status: 'Active',
-    },
-    {
-      id: '3',
-      code: 'FLASH50',
-      discount: '50%',
-      type: 'Percentage',
-      minOrder: 200,
-      usage: 89,
-      limit: 100,
-      expiry: '2024-02-01',
-      status: 'Expired',
-    },
-  ];
+  useEffect(() => {
+    fetchPromotions();
+  }, [activeTab]);
 
-  const campaigns = [
-    { id: '1', name: 'Summer Sale 2024', discount: '30%', products: 45, start: '2024-06-01', end: '2024-06-30', status: 'Scheduled' },
-    { id: '2', name: 'New Year Flash Sale', discount: '50%', products: 23, start: '2024-01-01', end: '2024-01-07', status: 'Active' },
-    { id: '3', name: 'Black Friday', discount: '40%', products: 120, start: '2023-11-24', end: '2023-11-27', status: 'Ended' },
-  ];
+  const fetchPromotions = async () => {
+    try {
+      setLoading(true);
+      const response = await adminPromotionService.getPromotions({
+        status: activeTab,
+        page: 1,
+        limit: 100,
+      });
+      setPromotions(response.data.promotions || []);
+    } catch (error) {
+      console.error('Error fetching promotions:', error);
+      showToast('Failed to load promotions', 'error');
+      setPromotions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editMode && selectedPromotion) {
+        await adminPromotionService.updatePromotion(selectedPromotion.id, formData);
+        showToast('Promotion updated successfully', 'success');
+      } else {
+        await adminPromotionService.createPromotion(formData);
+        showToast('Promotion created successfully', 'success');
+      }
+      setShowModal(false);
+      resetForm();
+      fetchPromotions();
+    } catch (error: any) {
+      console.error('Error saving promotion:', error);
+      showToast(error.response?.data?.message || 'Failed to save promotion', 'error');
+    }
+  };
+
+  const handleEdit = (promotion: AdminPromotion) => {
+    setSelectedPromotion(promotion);
+    setFormData({
+      name: promotion.name,
+      type: promotion.type,
+      discount_value: promotion.discount_value,
+      discount_type: promotion.discount_type,
+      number_limited: promotion.number_limited || 0,
+      start_date: promotion.start_date.split('T')[0],
+      end_date: promotion.end_date.split('T')[0],
+    });
+    setEditMode(true);
+    setShowModal(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Delete this promotion?')) return;
+    try {
+      await adminPromotionService.deletePromotion(id);
+      showToast('Promotion deleted successfully', 'success');
+      fetchPromotions();
+    } catch (error) {
+      console.error('Error deleting promotion:', error);
+      showToast('Failed to delete promotion', 'error');
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      type: 'voucher',
+      discount_value: 0,
+      discount_type: 'percentage',
+      number_limited: 0,
+      start_date: '',
+      end_date: '',
+    });
+    setEditMode(false);
+    setSelectedPromotion(null);
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -58,340 +113,281 @@ export default function PromotionsPage() {
           <p className="text-gray-600 mt-1">Manage vouchers and campaigns</p>
         </div>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            resetForm();
+            setShowModal(true);
+          }}
           className="flex items-center gap-2 px-4 py-2.5 bg-[#4880FF] text-white rounded-lg hover:bg-blue-600 transition"
         >
           <Plus className="w-4 h-4" />
-          <span className="font-semibold text-sm">Create {activeTab === 'vouchers' ? 'Voucher' : 'Campaign'}</span>
+          <span className="font-semibold text-sm">Create Promotion</span>
         </button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white rounded-xl p-5 border border-gray-200">
+          <p className="text-sm text-gray-600 mb-1">Total Promotions</p>
+          <p className="text-2xl font-bold text-[#202224]">{promotions.length}</p>
+        </div>
+        <div className="bg-white rounded-xl p-5 border border-gray-200">
+          <p className="text-sm text-gray-600 mb-1">Active</p>
+          <p className="text-2xl font-bold text-green-600">{promotions.filter(p => p.status === 'active').length}</p>
+        </div>
+        <div className="bg-white rounded-xl p-5 border border-gray-200">
+          <p className="text-sm text-gray-600 mb-1">Expired</p>
+          <p className="text-2xl font-bold text-red-600">{promotions.filter(p => p.status === 'expired').length}</p>
+        </div>
       </div>
 
       {/* Tabs */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="flex border-b border-gray-200">
           <button
-            onClick={() => setActiveTab('vouchers')}
-            className={`flex-1 px-6 py-4 font-semibold transition ${
-              activeTab === 'vouchers'
-                ? 'text-[#4880FF] border-b-2 border-[#4880FF]'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
+            onClick={() => setActiveTab('active')}
+            className={`flex-1 px-6 py-4 font-semibold transition ${activeTab === 'active'
+              ? 'text-[#4880FF] border-b-2 border-[#4880FF]'
+              : 'text-gray-600 hover:text-gray-900'
+              }`}
           >
-            Voucher Codes
+            Active Promotions
           </button>
           <button
-            onClick={() => setActiveTab('campaigns')}
-            className={`flex-1 px-6 py-4 font-semibold transition ${
-              activeTab === 'campaigns'
-                ? 'text-[#4880FF] border-b-2 border-[#4880FF]'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
+            onClick={() => setActiveTab('expired')}
+            className={`flex-1 px-6 py-4 font-semibold transition ${activeTab === 'expired'
+              ? 'text-[#4880FF] border-b-2 border-[#4880FF]'
+              : 'text-gray-600 hover:text-gray-900'
+              }`}
           >
-            Flash Sale Campaigns
+            Expired Promotions
           </button>
         </div>
 
-        {/* Vouchers Tab */}
-        {activeTab === 'vouchers' && (
-          <div className="p-6">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-[#F1F4F9]">
-                    <th className="px-4 py-3 text-left text-sm font-bold">Code</th>
-                    <th className="px-4 py-3 text-left text-sm font-bold">Discount</th>
-                    <th className="px-4 py-3 text-left text-sm font-bold">Min Order</th>
-                    <th className="px-4 py-3 text-left text-sm font-bold">Usage</th>
-                    <th className="px-4 py-3 text-left text-sm font-bold">Expiry</th>
-                    <th className="px-4 py-3 text-left text-sm font-bold">Status</th>
-                    <th className="px-4 py-3 text-left text-sm font-bold">Actions</th>
+        {/* Promotions Table */}
+        <div className="p-6">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-[#F1F4F9]">
+                  <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Name</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Type</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Discount</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Usage</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Period</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Status</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-12 text-center">
+                      <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto" />
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {vouchers.map((voucher) => (
-                    <tr key={voucher.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-4">
+                ) : promotions.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                      No promotions found
+                    </td>
+                  </tr>
+                ) : (
+                  promotions.map((promotion) => (
+                    <tr key={promotion.id} className="hover:bg-gray-50 transition">
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <Tag className="w-4 h-4 text-[#4880FF]" />
-                          <span className="font-bold text-sm">{voucher.code}</span>
-                          <button className="p-1 hover:bg-gray-100 rounded" title="Copy code">
-                            <Copy className="w-3 h-3 text-gray-500" />
-                          </button>
+                          <span className="font-semibold text-sm text-[#202224]">{promotion.name}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-4">
-                        <span className="font-semibold text-green-600">{voucher.discount}</span>
+                      <td className="px-6 py-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${promotion.type === 'voucher'
+                          ? 'bg-purple-100 text-purple-700'
+                          : 'bg-orange-100 text-orange-700'
+                          }`}>
+                          {promotion.type}
+                        </span>
                       </td>
-                      <td className="px-4 py-4 text-sm text-gray-600">${voucher.minOrder}</td>
-                      <td className="px-4 py-4 text-sm">
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-gray-200 rounded-full h-2 max-w-[100px]">
-                            <div
-                              className="bg-[#4880FF] h-2 rounded-full"
-                              style={{ width: `${(voucher.usage / voucher.limit) * 100}%` }}
-                            ></div>
+                      <td className="px-6 py-4">
+                        <span className="font-semibold text-green-600">
+                          {promotion.discount_type === 'percentage'
+                            ? `${promotion.discount_value}%`
+                            : `${promotion.discount_value.toLocaleString('vi-VN')} VND`}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        {promotion.number_limited ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-600">
+                              {promotion.used_count || 0}/{promotion.number_limited}
+                            </span>
                           </div>
-                          <span className="text-xs text-gray-600">{voucher.usage}/{voucher.limit}</span>
+                        ) : (
+                          <span className="text-gray-500">Unlimited</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          <span>{new Date(promotion.start_date).toLocaleDateString('vi-VN')}</span>
+                          <span>-</span>
+                          <span>{new Date(promotion.end_date).toLocaleDateString('vi-VN')}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-4 text-sm text-gray-600">{voucher.expiry}</td>
-                      <td className="px-4 py-4">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-bold ${
-                            voucher.status === 'Active'
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-gray-100 text-gray-700'
-                          }`}
-                        >
-                          {voucher.status}
+                      <td className="px-6 py-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${promotion.status === 'active'
+                          ? 'bg-green-100 text-green-700'
+                          : promotion.status === 'scheduled'
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'bg-gray-100 text-gray-700'
+                          }`}>
+                          {promotion.status}
                         </span>
                       </td>
-                      <td className="px-4 py-4">
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <button className="p-2 hover:bg-gray-100 rounded-lg transition">
+                          <button
+                            onClick={() => handleEdit(promotion)}
+                            className="p-2 hover:bg-gray-100 rounded-lg transition"
+                            title="Edit"
+                          >
                             <Edit2 className="w-4 h-4 text-gray-600" />
                           </button>
-                          <button className="p-2 hover:bg-red-50 rounded-lg transition">
+                          <button
+                            onClick={() => handleDelete(promotion.id)}
+                            className="p-2 hover:bg-red-100 rounded-lg transition"
+                            title="Delete"
+                          >
                             <Trash2 className="w-4 h-4 text-red-600" />
                           </button>
                         </div>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
-        )}
-
-        {/* Campaigns Tab */}
-        {activeTab === 'campaigns' && (
-          <div className="p-6">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-[#F1F4F9]">
-                    <th className="px-4 py-3 text-left text-sm font-bold">Campaign Name</th>
-                    <th className="px-4 py-3 text-left text-sm font-bold">Discount</th>
-                    <th className="px-4 py-3 text-left text-sm font-bold">Products</th>
-                    <th className="px-4 py-3 text-left text-sm font-bold">Start Date</th>
-                    <th className="px-4 py-3 text-left text-sm font-bold">End Date</th>
-                    <th className="px-4 py-3 text-left text-sm font-bold">Status</th>
-                    <th className="px-4 py-3 text-left text-sm font-bold">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {campaigns.map((campaign) => (
-                    <tr key={campaign.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-[#4880FF]" />
-                          <span className="font-semibold text-sm">{campaign.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className="font-semibold text-red-600">{campaign.discount}</span>
-                      </td>
-                      <td className="px-4 py-4 text-sm text-gray-600">{campaign.products} items</td>
-                      <td className="px-4 py-4 text-sm text-gray-600">{campaign.start}</td>
-                      <td className="px-4 py-4 text-sm text-gray-600">{campaign.end}</td>
-                      <td className="px-4 py-4">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-bold ${
-                            campaign.status === 'Active'
-                              ? 'bg-green-100 text-green-700'
-                              : campaign.status === 'Scheduled'
-                              ? 'bg-blue-100 text-blue-700'
-                              : 'bg-gray-100 text-gray-700'
-                          }`}
-                        >
-                          {campaign.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-2">
-                          <button className="p-2 hover:bg-gray-100 rounded-lg transition">
-                            <Edit2 className="w-4 h-4 text-gray-600" />
-                          </button>
-                          <button className="p-2 hover:bg-red-50 rounded-lg transition">
-                            <Trash2 className="w-4 h-4 text-red-600" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
 
-      {/* Create Modal */}
+      {/* Create/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-[#202224]">
-                Create New {activeTab === 'vouchers' ? 'Voucher' : 'Campaign'}
+                {editMode ? 'Edit Promotion' : 'Create Promotion'}
               </h2>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg transition">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {activeTab === 'vouchers' ? (
-              <form className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold mb-2">Promotion Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="e.g. Summer Sale 2024"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2">Type *</label>
+                <select
+                  required
+                  value={formData.type}
+                  onChange={(e) => setFormData({ ...formData, type: e.target.value as 'voucher' | 'flash_sale' })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
+                >
+                  <option value="voucher">Voucher</option>
+                  <option value="flash_sale">Flash Sale</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold mb-2">Voucher Code *</label>
-                  <input
-                    type="text"
+                  <label className="block text-sm font-semibold mb-2">Discount Type *</label>
+                  <select
                     required
-                    placeholder="e.g. SUMMER20"
+                    value={formData.discount_type}
+                    onChange={(e) => setFormData({ ...formData, discount_type: e.target.value as 'percentage' | 'fixed_amount' })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">Discount Type *</label>
-                    <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]">
-                      <option>Percentage</option>
-                      <option>Fixed Amount</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">Discount Value *</label>
-                    <input
-                      type="number"
-                      required
-                      placeholder="20"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">Min Order Value</label>
-                    <input
-                      type="number"
-                      placeholder="0"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">Usage Limit</label>
-                    <input
-                      type="number"
-                      placeholder="100"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-2">Expiry Date *</label>
-                  <input
-                    type="date"
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-                  />
-                </div>
-                <div className="flex items-center gap-3">
-                  <input type="checkbox" id="active-voucher" defaultChecked className="w-5 h-5" />
-                  <label htmlFor="active-voucher" className="text-sm font-semibold">
-                    Active
-                  </label>
-                </div>
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="submit"
-                    className="flex-1 px-6 py-3 bg-[#4880FF] text-white rounded-lg font-semibold hover:bg-blue-600 transition"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      alert('Voucher created!');
-                      setShowModal(false);
-                    }}
                   >
-                    Create Voucher
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="px-6 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <form className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold mb-2">Campaign Name *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Summer Sale 2024"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-                  />
+                    <option value="percentage">Percentage (%)</option>
+                    <option value="fixed_amount">Fixed Amount (VND)</option>
+                  </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-2">Discount *</label>
+                  <label className="block text-sm font-semibold mb-2">Discount Value *</label>
                   <input
                     type="number"
                     required
-                    placeholder="30"
+                    value={formData.discount_value}
+                    onChange={(e) => setFormData({ ...formData, discount_value: parseFloat(e.target.value) })}
+                    placeholder="20"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">Start Date *</label>
-                    <input
-                      type="date"
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">End Date *</label>
-                    <input
-                      type="date"
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-                    />
-                  </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2">Usage Limit</label>
+                <input
+                  type="number"
+                  value={formData.number_limited}
+                  onChange={(e) => setFormData({ ...formData, number_limited: parseInt(e.target.value) || 0 })}
+                  placeholder="0 = unlimited"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
+                />
+                <p className="text-xs text-gray-500 mt-1">Leave 0 for unlimited uses</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Start Date *</label>
+                  <input
+                    type="date"
+                    required
+                    value={formData.start_date}
+                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-2">Select Products</label>
-                  <p className="text-xs text-gray-600 mb-2">Choose which products to include in this campaign</p>
-                  <button
-                    type="button"
-                    className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-[#4880FF] transition text-sm font-semibold text-gray-600"
-                  >
-                    Select Products
-                  </button>
+                  <label className="block text-sm font-semibold mb-2">End Date *</label>
+                  <input
+                    type="date"
+                    required
+                    value={formData.end_date}
+                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
+                  />
                 </div>
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="submit"
-                    className="flex-1 px-6 py-3 bg-[#4880FF] text-white rounded-lg font-semibold hover:bg-blue-600 transition"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      alert('Campaign created!');
-                      setShowModal(false);
-                    }}
-                  >
-                    Create Campaign
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="px-6 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            )}
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 px-6 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 px-6 py-3 bg-[#4880FF] text-white rounded-lg font-semibold hover:bg-blue-600 transition disabled:opacity-50"
+                >
+                  {loading ? 'Saving...' : (editMode ? 'Update' : 'Create')}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

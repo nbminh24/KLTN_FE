@@ -1,85 +1,86 @@
 import apiClient from './apiClient';
 import { AxiosResponse } from 'axios';
-import type { Order as DBOrder, OrderItem as DBOrderItem, OrderStatusHistory as DBOrderStatusHistory } from '@/lib/types/models';
-import type { OrderFulfillmentStatus, PaymentStatus, PaymentMethod } from '@/lib/types/enums';
-
-// ========== INTERFACES ==========
-
-// Re-export DB types
-export type { OrderFulfillmentStatus, PaymentStatus, PaymentMethod };
-
-// Extended order with populated item details for display
-export interface OrderWithDetails extends DBOrder {
-    items?: Array<DBOrderItem & {
-        product_name?: string;
-        size_name?: string;
-        color_name?: string;
-        image_url?: string;
-    }>;
-}
-
-export interface OrderFilters {
-    page?: number;
-    limit?: number;
-    status?: OrderFulfillmentStatus;
-}
-
-export interface OrdersResponse {
-    data: OrderWithDetails[];
-    metadata: {
-        total: number;
-        page: number;
-        limit: number;
-        total_pages: number;
-    };
-}
-
-// Re-export with alias for backwards compatibility
-export type Order = OrderWithDetails;
-export type OrderItem = DBOrderItem;
-export type OrderStatusHistory = DBOrderStatusHistory;
+import type {
+    Order,
+    OrdersResponse,
+    OrderDetailResponse,
+    OrderFilterParams,
+    TrackOrderResponse,
+} from '@/lib/types/backend';
 
 // ========== ORDER SERVICE ==========
 
 const orderService = {
     /**
-     * Get order history with pagination and filters
-     * GET /orders
+     * Get customer's order history with pagination and filters
+     * GET /api/v1/orders
+     * 
+     * Requires authentication. Returns orders for logged-in customer.
      */
-    getOrders: async (filters?: OrderFilters): Promise<AxiosResponse<OrdersResponse>> => {
-        const params = new URLSearchParams();
-        if (filters) {
-            Object.entries(filters).forEach(([key, value]) => {
-                if (value !== undefined && value !== null) {
-                    params.append(key, value.toString());
-                }
-            });
+    getMyOrders: async (params?: OrderFilterParams): Promise<AxiosResponse<OrdersResponse>> => {
+        const queryParams = new URLSearchParams();
+
+        if (params) {
+            if (params.page) queryParams.append('page', params.page.toString());
+            if (params.limit) queryParams.append('limit', params.limit.toString());
+            if (params.status) queryParams.append('status', params.status);
+            if (params.payment_status) queryParams.append('payment_status', params.payment_status);
+            if (params.search) queryParams.append('search', params.search);
         }
-        return apiClient.get(`/orders?${params.toString()}`);
+
+        return apiClient.get(`/api/v1/orders?${queryParams.toString()}`);
     },
 
     /**
-     * Get order details
-     * GET /orders/:id
+     * Get order details with items and status history
+     * GET /api/v1/orders/:id
+     * 
+     * Requires authentication. Customer can only view their own orders.
      */
-    getOrderById: async (id: number): Promise<AxiosResponse<OrderWithDetails>> => {
-        return apiClient.get(`/orders/${id}`);
+    getOrderDetail: async (id: number): Promise<AxiosResponse<OrderDetailResponse>> => {
+        return apiClient.get(`/api/v1/orders/${id}`);
     },
 
     /**
      * Get order status timeline/history
-     * GET /orders/:id/status-history
+     * GET /api/v1/orders/:id/status-history
      */
-    getOrderStatusHistory: async (id: number): Promise<AxiosResponse<{ history: DBOrderStatusHistory[] }>> => {
-        return apiClient.get(`/orders/${id}/status-history`);
+    getOrderStatusHistory: async (id: number): Promise<AxiosResponse<OrderDetailResponse>> => {
+        return apiClient.get(`/api/v1/orders/${id}/status-history`);
     },
 
     /**
-     * Cancel order (only if status is pending)
-     * POST /orders/:id/cancel
+     * Cancel order (only if status is pending or confirmed)
+     * POST /api/v1/orders/:id/cancel
+     * 
+     * Requires authentication.
      */
-    cancelOrder: async (id: number): Promise<AxiosResponse> => {
-        return apiClient.post(`/orders/${id}/cancel`);
+    cancelOrder: async (id: number): Promise<AxiosResponse<{ message: string }>> => {
+        return apiClient.post(`/api/v1/orders/${id}/cancel`);
+    },
+
+    /**
+     * Track order by order ID (public endpoint)
+     * GET /api/v1/orders/track?order_id=123
+     * 
+     * No authentication required. For guest tracking via chatbot or public page.
+     */
+    trackOrderById: async (orderId: number): Promise<AxiosResponse<TrackOrderResponse>> => {
+        return apiClient.get('/api/v1/orders/track', {
+            params: { order_id: orderId },
+        });
+    },
+
+    /**
+     * Track order by phone + email (public endpoint)
+     * GET /api/v1/orders/track?phone=xxx&email=xxx
+     * 
+     * No authentication required. For guest tracking.
+     */
+    trackOrderByContact: async (phone: string, email: string): Promise<AxiosResponse<TrackOrderResponse>> => {
+        return apiClient.get('/api/v1/orders/track', {
+            params: { phone, email },
+        });
     },
 };
 

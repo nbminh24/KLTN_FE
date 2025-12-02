@@ -1,77 +1,38 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FileText, Edit2, Eye, Globe, Clock } from 'lucide-react';
-
-interface Page {
-  id: string;
-  title: string;
-  slug: string;
-  status: 'published' | 'draft';
-  lastModified: string;
-  modifiedBy: string;
-}
+import { FileText, Edit2, Eye, Globe, Clock, Loader2 } from 'lucide-react';
+import adminPagesService, { AdminPage } from '@/lib/services/admin/pagesService';
+import { showToast } from '@/components/Toast';
 
 export default function PagesManagementPage() {
-  const pages: Page[] = [
-    {
-      id: '1',
-      title: 'About Us',
-      slug: 'about',
-      status: 'published',
-      lastModified: '2024-01-15',
-      modifiedBy: 'Admin User',
-    },
-    {
-      id: '2',
-      title: 'Contact',
-      slug: 'contact',
-      status: 'published',
-      lastModified: '2024-01-14',
-      modifiedBy: 'Admin User',
-    },
-    {
-      id: '3',
-      title: 'FAQ',
-      slug: 'faq',
-      status: 'published',
-      lastModified: '2024-01-13',
-      modifiedBy: 'Admin User',
-    },
-    {
-      id: '4',
-      title: 'Privacy Policy',
-      slug: 'privacy',
-      status: 'published',
-      lastModified: '2024-01-12',
-      modifiedBy: 'Admin User',
-    },
-    {
-      id: '5',
-      title: 'Terms & Conditions',
-      slug: 'terms',
-      status: 'published',
-      lastModified: '2024-01-11',
-      modifiedBy: 'Admin User',
-    },
-    {
-      id: '6',
-      title: 'Return Policy',
-      slug: 'return-policy',
-      status: 'published',
-      lastModified: '2024-01-10',
-      modifiedBy: 'Admin User',
-    },
-    {
-      id: '7',
-      title: 'Shipping Policy',
-      slug: 'shipping-policy',
-      status: 'published',
-      lastModified: '2024-01-09',
-      modifiedBy: 'Admin User',
-    },
-  ];
+  const [pages, setPages] = useState<AdminPage[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPages();
+  }, []);
+
+  const fetchPages = async () => {
+    try {
+      setLoading(true);
+      const response = await adminPagesService.getPages();
+      setPages(response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch pages:', error);
+      showToast('Failed to load pages', 'error');
+      setPages([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    return status === 'Published'
+      ? 'bg-green-100 text-green-700'
+      : 'bg-gray-100 text-gray-700';
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -132,23 +93,17 @@ export default function PagesManagementPage() {
                   <code className="text-sm text-gray-700 bg-gray-100 px-2 py-1 rounded">/{page.slug}</code>
                 </td>
                 <td className="px-6 py-4">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      page.status === 'published'
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-yellow-100 text-yellow-700'
-                    }`}
-                  >
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(page.status)}`}>
                     {page.status}
                   </span>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Clock className="w-4 h-4" />
-                    {page.lastModified}
+                    {new Date(page.updated_at).toLocaleDateString('vi-VN')}
                   </div>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-600">{page.modifiedBy}</td>
+                <td className="px-6 py-4 text-sm text-gray-600">Admin</td>
                 <td className="px-6 py-4">
                   <div className="flex items-center justify-end gap-2">
                     <Link
@@ -160,7 +115,7 @@ export default function PagesManagementPage() {
                       <Eye className="w-4 h-4" />
                     </Link>
                     <Link
-                      href={`/admin/pages/edit/${page.slug}`}
+                      href={`/admin/pages/edit/${page.id}`}
                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
                       title="Edit"
                     >
@@ -170,6 +125,20 @@ export default function PagesManagementPage() {
                 </td>
               </tr>
             ))}
+            {loading && (
+              <tr>
+                <td colSpan={6} className="px-6 py-12 text-center">
+                  <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto" />
+                </td>
+              </tr>
+            )}
+            {!loading && pages.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  No pages found
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

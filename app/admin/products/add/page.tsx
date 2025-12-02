@@ -1,17 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Upload, X, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Upload, X, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import adminSizeService, { Size } from '@/lib/services/admin/sizeService';
+import adminColorService, { Color } from '@/lib/services/admin/colorService';
+import adminProductService from '@/lib/services/admin/productService';
+import adminCategoryService, { AdminCategory } from '@/lib/services/admin/categoryService';
+import { showToast } from '@/components/Toast';
 
 interface Variant {
-  id: string;
-  size: string;
-  color: string;
+  size_id: number;
+  color_id: number;
+  name: string;
   sku: string;
-  enabled: boolean;
+  total_stock: number;
+  reserved_stock: number;
+  reorder_point: number;
+  status: 'active' | 'inactive';
+  // UI only
   mainImage: string | null;
   secondaryImages: string[];
 }
@@ -19,55 +28,93 @@ interface Variant {
 export default function AddProductPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(true);
   const [showImageUpload, setShowImageUpload] = useState<string | null>(null);
-  
+
+  // Load from API
+  const [sizes, setSizes] = useState<Size[]>([]);
+  const [colors, setColors] = useState<Color[]>([]);
+  const [categories, setCategories] = useState<AdminCategory[]>([]);
+
   // Step 1 data
   const [productName, setProductName] = useState('');
+  const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
-  const [detailedDescription, setDetailedDescription] = useState('');
-  const [category, setCategory] = useState('');
+  const [fullDescription, setFullDescription] = useState('');
+  const [categoryId, setCategoryId] = useState<number>(0);
   const [costPrice, setCostPrice] = useState('');
   const [sellingPrice, setSellingPrice] = useState('');
-  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
-  const [selectedColors, setSelectedColors] = useState<string[]>([]);
-  const [isActive, setIsActive] = useState(true);
-  
+  const [thumbnailUrl, setThumbnailUrl] = useState('');
+  const [selectedSizeIds, setSelectedSizeIds] = useState<number[]>([]);
+  const [selectedColorIds, setSelectedColorIds] = useState<number[]>([]);
+  const [status, setStatus] = useState<'active' | 'inactive'>('active');
+
   // Step 2 data
   const [variants, setVariants] = useState<Variant[]>([]);
 
-  const availableSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL'];
-  const availableColors = [
-    { name: 'Black', hex: '#000000' },
-    { name: 'White', hex: '#FFFFFF' },
-    { name: 'Red', hex: '#EF4444' },
-    { name: 'Blue', hex: '#3B82F6' },
-    { name: 'Green', hex: '#10B981' },
-    { name: 'Yellow', hex: '#F59E0B' },
-    { name: 'Pink', hex: '#EC4899' },
-    { name: 'Purple', hex: '#8B5CF6' },
-  ];
+  useEffect(() => {
+    loadData();
+  }, []);
 
-  const generateSKU = (size: string, color: string) => {
+  const loadData = async () => {
+    try {
+      setLoadingData(true);
+      const [sizesRes, colorsRes, categoriesRes] = await Promise.all([
+        adminSizeService.getSizes(),
+        adminColorService.getColors(),
+        adminCategoryService.getCategories()
+      ]);
+      setSizes(Array.isArray(sizesRes.data) ? sizesRes.data : []);
+      setColors(Array.isArray(colorsRes.data) ? colorsRes.data : []);
+      setCategories(Array.isArray(categoriesRes.data) ? categoriesRes.data : []);
+    } catch (error) {
+      console.error('Failed to load data:', error);
+      showToast('Failed to load sizes, colors, and categories', 'error');
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
+
+  const generateSKU = (sizeId: number, colorId: number) => {
+    const size = sizes.find(s => s.id === sizeId);
+    const color = colors.find(c => c.id === colorId);
     const productPrefix = productName.substring(0, 3).toUpperCase() || 'PRD';
-    return `${productPrefix}-${size}-${color.substring(0, 3).toUpperCase()}`;
+    return `${productPrefix}-${size?.name || 'SIZE'}-${color?.name.substring(0, 3).toUpperCase() || 'COL'}`;
   };
 
   const handleStep1Next = () => {
-    if (!productName || !category || !costPrice || !sellingPrice || selectedSizes.length === 0 || selectedColors.length === 0) {
-      alert('Please fill all required fields and select at least one size and color');
+    if (!productName || !categoryId || !costPrice || !sellingPrice || selectedSizeIds.length === 0 || selectedColorIds.length === 0) {
+      showToast('Please fill all required fields and select at least one size and color', 'error');
       return;
     }
-    
+
     // Generate variants matrix
     const newVariants: Variant[] = [];
-    selectedSizes.forEach((size) => {
-      selectedColors.forEach((color) => {
+    selectedSizeIds.forEach((sizeId) => {
+      selectedColorIds.forEach((colorId) => {
+        const size = sizes.find(s => s.id === sizeId);
+        const color = colors.find(c => c.id === colorId);
+
         newVariants.push({
-          id: `${size}-${color}`,
-          size,
-          color,
-          sku: generateSKU(size, color),
-          enabled: true,
+          size_id: sizeId,
+          color_id: colorId,
+          name: `${size?.name} - ${color?.name}`,
+          sku: generateSKU(sizeId, colorId),
+          total_stock: 0,
+          reserved_stock: 0,
+          reorder_point: 10,
+          status: 'active',
           mainImage: null,
           secondaryImages: [],
         });
@@ -77,13 +124,59 @@ export default function AddProductPage() {
     setStep(2);
   };
 
-  const toggleVariantEnabled = (id: string) => {
-    setVariants(variants.map(v => v.id === id ? { ...v, enabled: !v.enabled } : v));
+  const toggleVariantStatus = (sizeId: number, colorId: number) => {
+    setVariants(variants.map(v =>
+      v.size_id === sizeId && v.color_id === colorId
+        ? { ...v, status: v.status === 'active' ? 'inactive' : 'active' }
+        : v
+    ));
   };
 
-  const handleSubmit = () => {
-    alert('Product created successfully with ' + variants.filter(v => v.enabled).length + ' variants!');
-    router.push('/admin/products');
+  const updateVariantStock = (sizeId: number, colorId: number, field: 'total_stock' | 'reorder_point', value: number) => {
+    setVariants(variants.map(v =>
+      v.size_id === sizeId && v.color_id === colorId
+        ? { ...v, [field]: value }
+        : v
+    ));
+  };
+
+  const handleSubmit = async () => {
+    try {
+      setLoading(true);
+
+      const productData = {
+        name: productName,
+        slug: slug || generateSlug(productName),
+        description,
+        full_description: fullDescription,
+        category_id: categoryId,
+        cost_price: parseFloat(costPrice),
+        selling_price: parseFloat(sellingPrice),
+        thumbnail_url: thumbnailUrl,
+        status,
+        variants: variants
+          .filter(v => v.status === 'active')
+          .map(v => ({
+            size_id: v.size_id,
+            color_id: v.color_id,
+            name: v.name,
+            sku: v.sku,
+            total_stock: v.total_stock,
+            reserved_stock: v.reserved_stock,
+            reorder_point: v.reorder_point,
+            status: v.status
+          }))
+      };
+
+      await adminProductService.createProduct(productData);
+      showToast('Product created successfully!', 'success');
+      router.push('/admin/products');
+    } catch (error: any) {
+      console.error('Failed to create product:', error);
+      showToast(error.response?.data?.message || 'Failed to create product', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -128,11 +221,22 @@ export default function AddProductPage() {
                 ></textarea>
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-2">Detailed Description</label>
+                <label className="block text-sm font-semibold mb-2">Slug</label>
+                <input
+                  type="text"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF] bg-gray-50"
+                  placeholder="auto-generated from product name"
+                />
+                <p className="text-xs text-gray-500 mt-1">Leave empty to auto-generate</p>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-2">Full Description</label>
                 <textarea
                   rows={5}
-                  value={detailedDescription}
-                  onChange={(e) => setDetailedDescription(e.target.value)}
+                  value={fullDescription}
+                  onChange={(e) => setFullDescription(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
                   placeholder="Detailed information: fabric, care instructions, etc..."
                 ></textarea>
@@ -180,100 +284,110 @@ export default function AddProductPage() {
           {/* Category */}
           <div className="bg-white rounded-xl p-6 border border-gray-200">
             <h2 className="text-xl font-bold mb-4">Category</h2>
-            <select
-              required
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-            >
-              <option value="">Select Category</option>
-              <option>T-Shirts</option>
-              <option>Shirts</option>
-              <option>Jeans</option>
-              <option>Hoodies</option>
-              <option>Shorts</option>
-            </select>
+            {loadingData ? (
+              <div className="flex items-center gap-2 text-gray-500">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Loading categories...
+              </div>
+            ) : (
+              <select
+                required
+                value={categoryId}
+                onChange={(e) => setCategoryId(parseInt(e.target.value))}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
+              >
+                <option value={0}>Select Category</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            )}
           </div>
 
           {/* Variants */}
           <div className="bg-white rounded-xl p-6 border border-gray-200">
             <h2 className="text-xl font-bold mb-4">Variants *</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold mb-3">Select Sizes *</label>
-                <div className="flex flex-wrap gap-2">
-                  {availableSizes.map((size) => (
-                    <label
-                      key={size}
-                      className={`flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer transition ${
-                        selectedSizes.includes(size) 
-                          ? 'border-[#4880FF] bg-blue-50' 
-                          : 'border-gray-300 hover:border-[#4880FF] hover:bg-blue-50'
-                      }`}
-                    >
-                      <input 
-                        type="checkbox" 
-                        className="w-4 h-4"
-                        checked={selectedSizes.includes(size)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedSizes([...selectedSizes, size]);
-                          } else {
-                            setSelectedSizes(selectedSizes.filter(s => s !== size));
-                          }
-                        }}
-                      />
-                      <span className="text-sm font-semibold">{size}</span>
-                    </label>
-                  ))}
-                </div>
+            {loadingData ? (
+              <div className="flex items-center gap-2 text-gray-500">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Loading sizes and colors...
               </div>
-              <div>
-                <label className="block text-sm font-semibold mb-3">Select Colors *</label>
-                <div className="flex flex-wrap gap-2">
-                  {availableColors.map((color) => (
-                    <label
-                      key={color.name}
-                      className={`flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer transition ${
-                        selectedColors.includes(color.name)
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-3">Select Sizes *</label>
+                  <div className="flex flex-wrap gap-2">
+                    {sizes.map((size) => (
+                      <label
+                        key={size.id}
+                        className={`flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer transition ${selectedSizeIds.includes(size.id)
                           ? 'border-[#4880FF] bg-blue-50'
                           : 'border-gray-300 hover:border-[#4880FF] hover:bg-blue-50'
-                      }`}
-                    >
-                      <input 
-                        type="checkbox" 
-                        className="w-4 h-4"
-                        checked={selectedColors.includes(color.name)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedColors([...selectedColors, color.name]);
-                          } else {
-                            setSelectedColors(selectedColors.filter(c => c !== color.name));
-                          }
-                        }}
-                      />
-                      <div
-                        className="w-5 h-5 rounded-full border border-gray-300"
-                        style={{ backgroundColor: color.hex }}
-                      ></div>
-                      <span className="text-sm font-semibold">{color.name}</span>
-                    </label>
-                  ))}
+                          }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4"
+                          checked={selectedSizeIds.includes(size.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedSizeIds([...selectedSizeIds, size.id]);
+                            } else {
+                              setSelectedSizeIds(selectedSizeIds.filter(id => id !== size.id));
+                            }
+                          }}
+                        />
+                        <span className="text-sm font-semibold">{size.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-3">Select Colors *</label>
+                  <div className="flex flex-wrap gap-2">
+                    {colors.map((color) => (
+                      <label
+                        key={color.id}
+                        className={`flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer transition ${selectedColorIds.includes(color.id)
+                          ? 'border-[#4880FF] bg-blue-50'
+                          : 'border-gray-300 hover:border-[#4880FF] hover:bg-blue-50'
+                          }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4"
+                          checked={selectedColorIds.includes(color.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedColorIds([...selectedColorIds, color.id]);
+                            } else {
+                              setSelectedColorIds(selectedColorIds.filter(id => id !== color.id));
+                            }
+                          }}
+                        />
+                        <div
+                          className="w-5 h-5 rounded-full border border-gray-300"
+                          style={{ backgroundColor: color.hex_code }}
+                        ></div>
+                        <span className="text-sm font-semibold">{color.name}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Status */}
           <div className="bg-white rounded-xl p-6 border border-gray-200">
             <h2 className="text-xl font-bold mb-4">Product Status</h2>
             <div className="flex items-center gap-3">
-              <input 
-                type="checkbox" 
-                id="active" 
-                checked={isActive}
-                onChange={(e) => setIsActive(e.target.checked)}
-                className="w-5 h-5" 
+              <input
+                type="checkbox"
+                id="active"
+                checked={status === 'active'}
+                onChange={(e) => setStatus(e.target.checked ? 'active' : 'inactive')}
+                className="w-5 h-5"
               />
               <label htmlFor="active" className="text-sm font-semibold">
                 Active (Product will be visible on store)
@@ -304,7 +418,7 @@ export default function AddProductPage() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-xl font-bold">Variants Matrix</h2>
-                <p className="text-sm text-gray-600 mt-1">{variants.filter(v => v.enabled).length} active variants</p>
+                <p className="text-sm text-gray-600 mt-1">{variants.filter(v => v.status === 'active').length} active variants</p>
               </div>
               <button
                 onClick={() => setStep(1)}
@@ -317,34 +431,42 @@ export default function AddProductPage() {
               <table className="w-full">
                 <thead className="bg-[#F1F4F9]">
                   <tr>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Variant</th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">SKU</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Size</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Color</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Images</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Enabled</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Stock</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Reorder Point</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {variants.map((variant) => (
-                    <tr key={variant.id} className={`${!variant.enabled ? 'opacity-50' : ''}`}>
-                      <td className="px-6 py-4 text-sm font-mono">{variant.sku}</td>
-                      <td className="px-6 py-4 text-sm font-semibold">{variant.size}</td>
-                      <td className="px-6 py-4 text-sm">{variant.color}</td>
+                    <tr key={`${variant.size_id}-${variant.color_id}`} className={`${variant.status === 'inactive' ? 'opacity-50' : ''}`}>
                       <td className="px-6 py-4">
-                        <button
-                          onClick={() => setShowImageUpload(variant.id)}
-                          className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm"
-                        >
-                          <Upload className="w-4 h-4" />
-                          {variant.mainImage ? 'Change Images' : 'Upload Images'}
-                        </button>
+                        <div className="text-sm font-semibold">{variant.name}</div>
+                      </td>
+                      <td className="px-6 py-4 text-sm font-mono">{variant.sku}</td>
+                      <td className="px-6 py-4">
+                        <input
+                          type="number"
+                          value={variant.total_stock}
+                          onChange={(e) => updateVariantStock(variant.size_id, variant.color_id, 'total_stock', parseInt(e.target.value) || 0)}
+                          className="w-20 px-2 py-1 border border-gray-300 rounded text-sm"
+                        />
+                      </td>
+                      <td className="px-6 py-4">
+                        <input
+                          type="number"
+                          value={variant.reorder_point}
+                          onChange={(e) => updateVariantStock(variant.size_id, variant.color_id, 'reorder_point', parseInt(e.target.value) || 0)}
+                          className="w-20 px-2 py-1 border border-gray-300 rounded text-sm"
+                        />
                       </td>
                       <td className="px-6 py-4">
                         <button
-                          onClick={() => toggleVariantEnabled(variant.id)}
+                          onClick={() => toggleVariantStatus(variant.size_id, variant.color_id)}
                           className="p-2 hover:bg-gray-100 rounded-lg transition"
                         >
-                          {variant.enabled ? (
+                          {variant.status === 'active' ? (
                             <Eye className="w-5 h-5 text-green-600" />
                           ) : (
                             <EyeOff className="w-5 h-5 text-gray-400" />

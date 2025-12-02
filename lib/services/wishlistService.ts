@@ -6,20 +6,22 @@ import { AxiosResponse } from 'axios';
 export interface WishlistItem {
     id: number;
     variant_id: number;
+    product_id: number;
     product_name: string;
-    size: string;
-    color: string;
+    product_slug: string;
+    size_name: string;
+    color_name: string;
     price: number;
     image_url: string;
     added_at: string;
 }
 
 export interface WishlistResponse {
-    wishlist_items: WishlistItem[];
-    total_items: number;
+    items: WishlistItem[];
+    total: number;
 }
 
-export interface ToggleWishlistData {
+export interface ToggleWishlistPayload {
     variant_id: number;
 }
 
@@ -33,26 +35,30 @@ export interface ToggleWishlistResponse {
 const wishlistService = {
     /**
      * Get customer's wishlist
-     * GET /wishlist
+     * GET /api/v1/wishlist
+     * 
+     * Requires authentication.
      */
     getWishlist: async (): Promise<AxiosResponse<WishlistResponse>> => {
-        return apiClient.get('/wishlist');
+        return apiClient.get('/api/v1/wishlist');
     },
 
     /**
      * Add or remove variant from wishlist (toggle)
-     * POST /wishlist/toggle
+     * POST /api/v1/wishlist/toggle
+     * 
+     * If variant exists in wishlist, it will be removed. Otherwise, it will be added.
      */
-    toggleWishlist: async (data: ToggleWishlistData): Promise<AxiosResponse<ToggleWishlistResponse>> => {
-        return apiClient.post('/wishlist/toggle', data);
+    toggleWishlist: async (data: ToggleWishlistPayload): Promise<AxiosResponse<ToggleWishlistResponse>> => {
+        return apiClient.post('/api/v1/wishlist/toggle', data);
     },
 
     /**
      * Remove variant from wishlist
-     * DELETE /wishlist/:variantId
+     * DELETE /api/v1/wishlist/:variantId
      */
-    removeFromWishlist: async (variantId: number): Promise<AxiosResponse> => {
-        return apiClient.delete(`/wishlist/${variantId}`);
+    removeFromWishlist: async (variantId: number): Promise<AxiosResponse<{ message: string }>> => {
+        return apiClient.delete(`/api/v1/wishlist/${variantId}`);
     },
 };
 

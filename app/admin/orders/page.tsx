@@ -1,110 +1,92 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Download, Package } from 'lucide-react';
+import { Search, Download, Package, Loader2 } from 'lucide-react';
+import adminOrderService, { AdminOrder } from '@/lib/services/admin/orderService';
+import { showToast } from '@/components/Toast';
 
-type OrderStatus = 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
-type MoneyStatus = 'Paid' | 'COD' | 'Pending';
+type FulfillmentStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+type PaymentStatus = 'unpaid' | 'paid';
 
 export default function OrdersPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<OrderStatus>('Pending');
-  const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<FulfillmentStatus>('pending');
+  const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showBulkUpdateModal, setShowBulkUpdateModal] = useState(false);
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    processing: 0,
+    shipped: 0,
+    delivered: 0
+  });
 
-  const orders = [
-    {
-      id: 'ORD-00001',
-      customer: 'Christine Brooks',
-      dateReceived: '2024-01-15',
-      items: 3,
-      total: 467,
-      status: 'Delivered' as OrderStatus,
-      moneyStatus: 'Paid' as MoneyStatus,
-    },
-    {
-      id: 'ORD-00002',
-      customer: 'Rosie Pearson',
-      dateReceived: '2024-01-14',
-      items: 2,
-      total: 325,
-      status: 'Processing' as OrderStatus,
-      moneyStatus: 'Paid' as MoneyStatus,
-    },
-    {
-      id: 'ORD-00003',
-      customer: 'Darrell Caldwell',
-      dateReceived: '2024-01-14',
-      items: 1,
-      total: 240,
-      status: 'Pending' as OrderStatus,
-      moneyStatus: 'COD' as MoneyStatus,
-    },
-    {
-      id: 'ORD-00004',
-      customer: 'Gilbert Johnston',
-      dateReceived: '2024-01-13',
-      items: 4,
-      total: 892,
-      status: 'Shipped' as OrderStatus,
-      moneyStatus: 'Paid' as MoneyStatus,
-    },
-    {
-      id: 'ORD-00005',
-      customer: 'Alan Cain',
-      dateReceived: '2024-01-13',
-      items: 2,
-      total: 456,
-      status: 'Cancelled' as OrderStatus,
-      moneyStatus: 'Pending' as MoneyStatus,
-    },
-    {
-      id: 'ORD-00006',
-      customer: 'John Doe',
-      dateReceived: '2024-01-16',
-      items: 1,
-      total: 145,
-      status: 'Pending' as OrderStatus,
-      moneyStatus: 'COD' as MoneyStatus,
-    },
-    {
-      id: 'ORD-00007',
-      customer: 'Jane Smith',
-      dateReceived: '2024-01-16',
-      items: 3,
-      total: 520,
-      status: 'Processing' as OrderStatus,
-      moneyStatus: 'Paid' as MoneyStatus,
-    },
-  ];
+  useEffect(() => {
+    fetchOrders();
+  }, [activeTab]);
 
-  const stats = [
-    { label: 'Total Orders', value: '10,293', color: 'text-blue-600' },
-    { label: 'Pending', value: '2,040', color: 'text-yellow-600' },
-    { label: 'Processing', value: '1,523', color: 'text-blue-600' },
-    { label: 'Delivered', value: '6,230', color: 'text-green-600' },
-  ];
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const response = await adminOrderService.getOrders({
+        status: activeTab,
+        page: 1,
+        limit: 100,
+        search: searchQuery
+      });
+      setOrders(response.data.orders || []);
+      // Stats will be calculated from orders or fetched separately
+      // if (response.data.statistics) {
+      //   setStats(response.data.statistics);
+      // }
+    } catch (error) {
+      console.error('Failed to fetch orders:', error);
+      showToast('Failed to load orders', 'error');
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Filter and sort orders
-  const filteredOrders = orders
-    .filter((order) => {
-      // Filter by active tab (status)
-      if (order.status !== activeTab) return false;
-      
-      // Search filter
-      const matchesSearch = order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           order.customer.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      return matchesSearch;
-    })
-    .sort((a, b) => {
-      const dateA = new Date(a.dateReceived).getTime();
-      const dateB = new Date(b.dateReceived).getTime();
-      return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
-    });
+  const getPaymentStatusColor = (status: PaymentStatus) => {
+    return status === 'paid'
+      ? 'bg-green-100 text-green-700'
+      : 'bg-yellow-100 text-yellow-700';
+  };
+
+  const getFulfillmentStatusColor = (status: FulfillmentStatus) => {
+    switch (status) {
+      case 'delivered':
+        return 'bg-green-100 text-green-700';
+      case 'shipped':
+        return 'bg-blue-100 text-blue-700';
+      case 'processing':
+        return 'bg-purple-100 text-purple-700';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-700';
+      case 'cancelled':
+        return 'bg-red-100 text-red-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
+    }
+  };
+
+  const filteredOrders = orders.filter(order => {
+    const matchesSearch =
+      order.id.toString().includes(searchQuery.toLowerCase()) ||
+      order.customer_email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (order.customer_name && order.customer_name.toLowerCase().includes(searchQuery.toLowerCase()));
+    return matchesSearch;
+  }).sort((a, b) => {
+    const dateA = new Date(a.created_at).getTime();
+    const dateB = new Date(b.created_at).getTime();
+    return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+  });
 
   // Checkbox handlers
   const handleSelectAll = () => {
@@ -115,23 +97,12 @@ export default function OrdersPage() {
     }
   };
 
-  const handleSelectOrder = (orderId: string) => {
+  const handleSelectOrder = (orderId: number) => {
     setSelectedOrders(prev =>
       prev.includes(orderId)
         ? prev.filter(id => id !== orderId)
         : [...prev, orderId]
     );
-  };
-
-  const getMoneyStatusColor = (status: MoneyStatus) => {
-    switch (status) {
-      case 'Paid':
-        return 'bg-green-100 text-green-700';
-      case 'COD':
-        return 'bg-blue-100 text-blue-700';
-      case 'Pending':
-        return 'bg-yellow-100 text-yellow-700';
-    }
   };
 
   return (
@@ -150,29 +121,38 @@ export default function OrdersPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {stats.map((stat, i) => (
-          <div key={i} className="bg-white rounded-xl p-5 border border-gray-200">
-            <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
-            <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-          </div>
-        ))}
+        <div className="bg-white rounded-xl p-5 border border-gray-200">
+          <p className="text-sm text-gray-600 mb-1">Total Orders</p>
+          <p className="text-2xl font-bold text-blue-600">{stats.total}</p>
+        </div>
+        <div className="bg-white rounded-xl p-5 border border-gray-200">
+          <p className="text-sm text-gray-600 mb-1">Pending</p>
+          <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
+        </div>
+        <div className="bg-white rounded-xl p-5 border border-gray-200">
+          <p className="text-sm text-gray-600 mb-1">Processing</p>
+          <p className="text-2xl font-bold text-blue-600">{stats.processing}</p>
+        </div>
+        <div className="bg-white rounded-xl p-5 border border-gray-200">
+          <p className="text-sm text-gray-600 mb-1">Delivered</p>
+          <p className="text-2xl font-bold text-green-600">{stats.delivered}</p>
+        </div>
       </div>
 
       {/* Tabs */}
       <div className="bg-white rounded-xl border border-gray-200">
         <div className="flex border-b border-gray-200">
-          {(['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'] as OrderStatus[]).map((status) => (
+          {(['pending', 'processing', 'shipped', 'delivered', 'cancelled'] as FulfillmentStatus[]).map((status) => (
             <button
               key={status}
               onClick={() => {
                 setActiveTab(status);
                 setSelectedOrders([]);
               }}
-              className={`px-6 py-4 font-semibold text-sm transition flex items-center gap-2 ${
-                activeTab === status
-                  ? 'border-b-2 border-[#4880FF] text-[#4880FF]'
-                  : 'text-gray-600 hover:text-[#4880FF]'
-              }`}
+              className={`px-6 py-4 font-semibold text-sm transition flex items-center gap-2 ${activeTab === status
+                ? 'border-b-2 border-[#4880FF] text-[#4880FF]'
+                : 'text-gray-600 hover:text-[#4880FF]'
+                }`}
             >
               <Package className="w-4 h-4" />
               {status}
@@ -205,11 +185,10 @@ export default function OrdersPage() {
           <button
             onClick={() => setShowBulkUpdateModal(true)}
             disabled={selectedOrders.length === 0}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition ${
-              selectedOrders.length > 0
-                ? 'bg-[#4880FF] text-white hover:bg-blue-600'
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition ${selectedOrders.length > 0
+              ? 'bg-[#4880FF] text-white hover:bg-blue-600'
+              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              }`}
           >
             <Package className="w-4 h-4" />
             Update Tracking ({selectedOrders.length})
@@ -240,34 +219,59 @@ export default function OrdersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {filteredOrders.map((order) => (
-                <tr 
-                  key={order.id} 
-                  className="hover:bg-gray-50 transition cursor-pointer"
-                  onClick={() => router.push(`/admin/orders/${order.id}`)}
-                >
-                  <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                    <input
-                      type="checkbox"
-                      checked={selectedOrders.includes(order.id)}
-                      onChange={() => handleSelectOrder(order.id)}
-                      className="w-4 h-4 rounded border-gray-300 cursor-pointer"
-                    />
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center">
+                    <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto" />
                   </td>
-                  <td className="px-6 py-4">
-                    <span className="font-semibold text-sm text-[#202224]">{order.id}</span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{order.customer}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{order.dateReceived}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{order.items}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${getMoneyStatusColor(order.moneyStatus)}`}>
-                      {order.moneyStatus}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm font-semibold text-[#202224]">${order.total}</td>
                 </tr>
-              ))}
+              ) : filteredOrders.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                    No orders found
+                  </td>
+                </tr>
+              ) : (
+                filteredOrders.map((order) => (
+                  <tr
+                    key={order.id}
+                    className="hover:bg-gray-50 transition cursor-pointer"
+                    onClick={() => router.push(`/admin/orders/${order.id}`)}
+                  >
+                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedOrders.includes(order.id)}
+                        onChange={() => handleSelectOrder(order.id)}
+                        className="w-4 h-4 rounded border-gray-300 cursor-pointer"
+                      />
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="font-semibold text-sm text-[#202224]">#{order.id}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{order.customer_name || 'Guest'}</div>
+                        <div className="text-xs text-gray-500">{order.customer_email}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {new Date(order.created_at).toLocaleDateString('vi-VN')}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {order.items?.length || 0}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${getPaymentStatusColor(order.payment_status)}`}>
+                        {order.payment_status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm font-semibold text-[#202224]">
+                      {order.total_amount.toLocaleString('vi-VN')} VND
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -296,7 +300,7 @@ export default function OrdersPage() {
             <h2 className="text-xl font-bold text-[#202224] mb-4">
               Update Tracking - {selectedOrders.length} order{selectedOrders.length > 1 ? 's' : ''} selected
             </h2>
-            
+
             <p className="text-sm text-gray-600 mb-4">
               Update status for selected orders:
             </p>

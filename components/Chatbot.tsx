@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
-import { Send, X, MessageCircle, Bot, Camera, Image as ImageIcon } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Send, X, MessageCircle, Bot, Camera, Image as ImageIcon, Maximize2 } from 'lucide-react';
 import Image from 'next/image';
 
 interface Message {
@@ -15,6 +15,7 @@ interface Message {
 
 export default function Chatbot() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -37,8 +38,8 @@ export default function Chatbot() {
     scrollToBottom();
   }, [messages]);
 
-  // Hide chatbot on admin pages
-  if (pathname?.startsWith('/admin')) {
+  // Hide chatbot on admin pages and chat page
+  if (pathname?.startsWith('/admin') || pathname === '/chat') {
     return null;
   }
 
@@ -61,7 +62,7 @@ export default function Chatbot() {
     setTimeout(() => {
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: uploadedImage 
+        text: uploadedImage
           ? 'Great! I found some similar products based on your image. Let me show you the best matches from our collection. Would you like to see items in a specific category or price range?'
           : 'Thank you for your message! I can help you with product recommendations, order tracking, and general questions. How can I assist you?',
         sender: 'bot',
@@ -108,12 +109,21 @@ export default function Chatbot() {
                 <p className="text-xs text-gray-300">Always here to help</p>
               </div>
             </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="hover:bg-gray-800 p-1 rounded"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => router.push('/chat')}
+                className="hover:bg-gray-800 p-1 rounded"
+                title="Open full screen"
+              >
+                <Maximize2 className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="hover:bg-gray-800 p-1 rounded"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           {/* Messages */}
@@ -124,11 +134,10 @@ export default function Chatbot() {
                 className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-2 ${
-                    message.sender === 'user'
-                      ? 'bg-black text-white'
-                      : 'bg-gray-100 text-black'
-                  }`}
+                  className={`max-w-[80%] rounded-2xl px-4 py-2 ${message.sender === 'user'
+                    ? 'bg-black text-white'
+                    : 'bg-gray-100 text-black'
+                    }`}
                 >
                   {message.image && (
                     <div className="relative w-full h-32 mb-2 rounded-lg overflow-hidden">
@@ -142,9 +151,8 @@ export default function Chatbot() {
                   )}
                   <p className="text-sm">{message.text}</p>
                   <p
-                    className={`text-xs mt-1 ${
-                      message.sender === 'user' ? 'text-gray-300' : 'text-gray-500'
-                    }`}
+                    className={`text-xs mt-1 ${message.sender === 'user' ? 'text-gray-300' : 'text-gray-500'
+                      }`}
                   >
                     {message.timestamp.toLocaleTimeString('en-US', {
                       hour: '2-digit',
@@ -202,7 +210,7 @@ export default function Chatbot() {
                 </button>
               </div>
             )}
-            
+
             <div className="flex gap-2">
               <input
                 ref={fileInputRef}
