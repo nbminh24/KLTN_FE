@@ -1,9 +1,12 @@
 'use client';
 
-import { useState, use } from 'react';
+import { useState, use, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, Edit2, Trash2, Package, DollarSign, TrendingUp, Eye, EyeOff, Upload, Search, Warehouse } from 'lucide-react';
+import { ArrowLeft, Edit2, Trash2, Package, DollarSign, TrendingUp, Eye, EyeOff, Upload, Search, Warehouse, Loader2 } from 'lucide-react';
+import adminProductService from '@/lib/services/admin/productService';
+import type { AdminProduct } from '@/lib/services/admin/productService';
+import { showToast } from '@/components/Toast';
 
 export default function AdminProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -14,60 +17,196 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
   const [variantSortBy, setVariantSortBy] = useState('sku');
   const [showImageUpload, setShowImageUpload] = useState<string | null>(null);
 
-  // Mock product data
-  const product = {
-    id: id,
-    name: 'Gradient Graphic T-shirt',
-    sku: 'TSH-001',
-    description: 'This t-shirt features a unique gradient design with high-quality fabric.',
-    detailedDescription: 'Premium cotton blend fabric with gradient print. Machine washable. Imported. Regular fit.',
-    category: 'T-Shirts',
-    basePrice: 145,
-    costPrice: 80,
-    status: 'Active',
-    createdAt: '2024-01-15',
-    updatedAt: '2024-01-20',
-    
-    // Variants with individual stock and images
-    variants: [
-      { id: '1', size: 'Small', color: 'Black', stock: 50, sku: 'TSH-001-S-BLK', active: true, images: ['/bmm32410_black_xl.webp', '/bmm32410_black_xl.webp'] },
-      { id: '2', size: 'Small', color: 'White', stock: 30, sku: 'TSH-001-S-WHT', active: true, images: ['/bmm32410_black_xl.webp'] },
-      { id: '3', size: 'Medium', color: 'Black', stock: 75, sku: 'TSH-001-M-BLK', active: true, images: ['/bmm32410_black_xl.webp', '/bmm32410_black_xl.webp'] },
-      { id: '4', size: 'Medium', color: 'White', stock: 45, sku: 'TSH-001-M-WHT', active: true, images: ['/bmm32410_black_xl.webp'] },
-      { id: '5', size: 'Large', color: 'Black', stock: 100, sku: 'TSH-001-L-BLK', active: true, images: ['/bmm32410_black_xl.webp', '/bmm32410_black_xl.webp', '/bmm32410_black_xl.webp'] },
-      { id: '6', size: 'Large', color: 'White', stock: 60, sku: 'TSH-001-L-WHT', active: false, images: ['/bmm32410_black_xl.webp'] },
-      { id: '7', size: 'X-Large', color: 'Black', stock: 20, sku: 'TSH-001-XL-BLK', active: true, images: ['/bmm32410_black_xl.webp'] },
-      { id: '8', size: 'X-Large', color: 'White', stock: 15, sku: 'TSH-001-XL-WHT', active: true, images: ['/bmm32410_black_xl.webp', '/bmm32410_black_xl.webp'] },
-    ],
-    
-    totalStock: 395,
-    soldCount: 234,
+  // API state
+  const [product, setProduct] = useState<AdminProduct | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // Analytics state
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [salesTrend, setSalesTrend] = useState<any>(null);
+  const [variantsAnalytics, setVariantsAnalytics] = useState<any>(null);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviewsMeta, setReviewsMeta] = useState<any>(null);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+  const [salesPeriod, setSalesPeriod] = useState<'7days' | '30days' | '3months' | '1year'>('30days');
+  const [reviewsFilter, setReviewsFilter] = useState({ rating: 'all', status: 'approved', page: 1 });
+
+  // Fetch product data
+  useEffect(() => {
+    fetchProductData();
+  }, [id]);
+
+  // Fetch analytics when tab changes
+  useEffect(() => {
+    if (activeTab === 'analytics' && product && !analytics) {
+      fetchAnalytics();
+    }
+  }, [activeTab, product]);
+
+  // Fetch sales trend when period changes
+  useEffect(() => {
+    if (analyticsTab === 'sales' && product) {
+      fetchSalesTrend();
+    }
+  }, [analyticsTab, salesPeriod, product]);
+
+  // Fetch variants analytics
+  useEffect(() => {
+    if (analyticsTab === 'variants' && product && !variantsAnalytics) {
+      fetchVariantsAnalytics();
+    }
+  }, [analyticsTab, product]);
+
+  // Fetch reviews
+  useEffect(() => {
+    if (analyticsTab === 'reviews' && product) {
+      fetchReviews();
+    }
+  }, [analyticsTab, reviewsFilter, product]);
+
+  const fetchProductData = async () => {
+    try {
+      setLoading(true);
+      console.log('📦 Fetching admin product:', id);
+
+      const response = await adminProductService.getProductById(Number(id));
+      console.log('📦 Product response:', response.data);
+      console.log('📦 Product variants:', response.data.variants);
+
+      // Backend now returns full data with variants
+      const productData = response.data.product || response.data;
+
+      console.log('📦 Product data:', productData);
+      setProduct(productData as AdminProduct);
+    } catch (err: any) {
+      console.error('❌ Failed to fetch product:', err);
+      console.error('❌ Error response:', err.response?.data);
+      setError('Failed to load product details');
+      showToast('Failed to load product', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const totalStock = product.variants.reduce((sum, v) => sum + v.stock, 0);
+  const fetchAnalytics = async () => {
+    try {
+      setLoadingAnalytics(true);
+      console.log('📊 Fetching analytics...');
+      const response = await adminProductService.getProductAnalytics(Number(id));
+      console.log('📊 Analytics:', response.data);
+      setAnalytics(response.data);
+    } catch (err: any) {
+      console.error('❌ Failed to fetch analytics:', err);
+      showToast('Failed to load analytics', 'error');
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  };
+
+  const fetchSalesTrend = async () => {
+    try {
+      console.log('📈 Fetching sales trend:', salesPeriod);
+      const response = await adminProductService.getProductSalesTrend(Number(id), salesPeriod);
+      console.log('📈 Sales trend:', response.data);
+      setSalesTrend(response.data);
+    } catch (err: any) {
+      console.error('❌ Failed to fetch sales trend:', err);
+    }
+  };
+
+  const fetchVariantsAnalytics = async () => {
+    try {
+      console.log('📦 Fetching variants analytics...');
+      const response = await adminProductService.getVariantsAnalytics(Number(id));
+      console.log('📦 Variants analytics:', response.data);
+      setVariantsAnalytics(response.data);
+    } catch (err: any) {
+      console.error('❌ Failed to fetch variants analytics:', err);
+    }
+  };
+
+  const fetchReviews = async () => {
+    try {
+      console.log('💬 Fetching reviews:', reviewsFilter);
+      const response = await adminProductService.getProductReviews(Number(id), {
+        page: reviewsFilter.page,
+        limit: 10,
+        rating: reviewsFilter.rating === 'all' ? undefined : reviewsFilter.rating,
+        status: reviewsFilter.status,
+        sort: 'created_at',
+        order: 'desc'
+      });
+      console.log('💬 Reviews:', response.data);
+      setReviews(response.data.reviews || []);
+      setReviewsMeta(response.data.metadata);
+    } catch (err: any) {
+      console.error('❌ Failed to fetch reviews:', err);
+    }
+  };
+
+  const totalStock = product?.variants?.reduce((sum, v) => sum + (v.total_stock || 0), 0) || 0;
 
   // Filter and sort variants
-  const filteredVariants = product.variants
+  const filteredVariants = (product?.variants || [])
     .filter((v) => {
+      const sizeName = v.size?.name || '';
+      const colorName = v.color?.name || '';
       const matchesSearch = v.sku.toLowerCase().includes(variantSearch.toLowerCase()) ||
-                           v.size.toLowerCase().includes(variantSearch.toLowerCase()) ||
-                           v.color.toLowerCase().includes(variantSearch.toLowerCase());
+        sizeName.toLowerCase().includes(variantSearch.toLowerCase()) ||
+        colorName.toLowerCase().includes(variantSearch.toLowerCase());
+      const stock = v.total_stock || 0;
       const matchesStock = variantStockFilter === 'all' ||
-                          (variantStockFilter === 'in-stock' && v.stock > 50) ||
-                          (variantStockFilter === 'low-stock' && v.stock > 0 && v.stock <= 50) ||
-                          (variantStockFilter === 'out-of-stock' && v.stock === 0);
+        (variantStockFilter === 'in-stock' && stock > 50) ||
+        (variantStockFilter === 'low-stock' && stock > 0 && stock <= 50) ||
+        (variantStockFilter === 'out-of-stock' && stock === 0);
       return matchesSearch && matchesStock;
     })
     .sort((a, b) => {
       if (variantSortBy === 'sku') return a.sku.localeCompare(b.sku);
-      if (variantSortBy === 'stock-asc') return a.stock - b.stock;
-      if (variantSortBy === 'stock-desc') return b.stock - a.stock;
+      if (variantSortBy === 'stock-asc') return (a.total_stock || 0) - (b.total_stock || 0);
+      if (variantSortBy === 'stock-desc') return (b.total_stock || 0) - (a.total_stock || 0);
       return 0;
     });
 
   const toggleVariantActive = (variantId: string) => {
     alert(`Toggle variant ${variantId} active status`);
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin mx-auto text-blue-600 mb-4" />
+          <p className="text-gray-600">Loading product details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !product) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center gap-4 mb-6">
+          <Link href="/admin/products" className="p-2 hover:bg-gray-100 rounded-lg transition">
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+        </div>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <p className="text-red-600 font-semibold mb-2">Error loading product</p>
+          <p className="text-gray-600 mb-4">{error || 'Product not found'}</p>
+          <button
+            onClick={fetchProductData}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -83,7 +222,7 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
         </div>
         <div className="flex gap-3">
           <Link
-            href={`/products/${product.id}`}
+            href={`/products/${product.slug || product.id}`}
             target="_blank"
             className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
           >
@@ -122,7 +261,7 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
             </div>
             <p className="text-sm text-gray-600">Sold</p>
           </div>
-          <p className="text-2xl font-bold">{product.soldCount}</p>
+          <p className="text-2xl font-bold">{(product.total_sold || 0).toLocaleString()}</p>
         </div>
         <div className="bg-white rounded-xl p-5 border border-gray-200">
           <div className="flex items-center gap-3 mb-2">
@@ -131,7 +270,7 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
             </div>
             <p className="text-sm text-gray-600">Base Price</p>
           </div>
-          <p className="text-2xl font-bold">${product.basePrice}</p>
+          <p className="text-2xl font-bold">{Number(product.selling_price || 0).toLocaleString('vi-VN')} VND</p>
         </div>
         <div className="bg-white rounded-xl p-5 border border-gray-200">
           <div className="flex items-center gap-3 mb-2">
@@ -152,9 +291,8 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
             <button
               key={tab}
               onClick={() => setActiveTab(tab as any)}
-              className={`pb-3 capitalize ${
-                activeTab === tab ? 'border-b-2 border-[#4880FF] text-[#4880FF] font-semibold' : 'text-gray-600'
-              }`}
+              className={`pb-3 capitalize ${activeTab === tab ? 'border-b-2 border-[#4880FF] text-[#4880FF] font-semibold' : 'text-gray-600'
+                }`}
             >
               {tab}
             </button>
@@ -180,25 +318,25 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="text-sm font-semibold text-gray-600">Category</label>
-                  <p className="text-base mt-1">{product.category}</p>
+                  <p className="text-base mt-1">{product.category?.name || `Category ID: ${product.category_id}`}</p>
                 </div>
                 <div>
                   <label className="text-sm font-semibold text-gray-600">Cost Price</label>
-                  <p className="text-base mt-1">${product.costPrice}</p>
+                  <p className="text-base mt-1">{Number(product.cost_price || 0).toLocaleString('vi-VN')} VND</p>
                 </div>
                 <div>
                   <label className="text-sm font-semibold text-gray-600">Selling Price</label>
-                  <p className="text-base mt-1 font-semibold">${product.basePrice}</p>
+                  <p className="text-base mt-1 font-semibold">{Number(product.selling_price || 0).toLocaleString('vi-VN')} VND</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-semibold text-gray-600">Created</label>
-                  <p className="text-base mt-1">{product.createdAt}</p>
+                  <p className="text-base mt-1">{product.created_at ? new Date(product.created_at).toLocaleDateString('vi-VN') : 'N/A'}</p>
                 </div>
                 <div>
                   <label className="text-sm font-semibold text-gray-600">Last Updated</label>
-                  <p className="text-base mt-1">{product.updatedAt}</p>
+                  <p className="text-base mt-1">{product.updated_at ? new Date(product.updated_at).toLocaleDateString('vi-VN') : 'N/A'}</p>
                 </div>
               </div>
             </div>
@@ -209,7 +347,7 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
             <h2 className="text-xl font-bold mb-4">Product Details</h2>
             <div>
               <label className="text-sm font-semibold text-gray-600">Detailed Description</label>
-              <p className="text-base mt-2 text-gray-700 whitespace-pre-wrap">{product.detailedDescription}</p>
+              <p className="text-base mt-2 text-gray-700 whitespace-pre-wrap">{product.full_description || product.description || 'No detailed description'}</p>
             </div>
           </div>
         </div>
@@ -276,59 +414,89 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {filteredVariants.map((variant) => (
-                    <tr key={variant.id} className={`hover:bg-gray-50 ${!variant.active ? 'opacity-50' : ''}`}>
-                      <td className="px-6 py-4">
-                        <div className="flex gap-1 items-center">
-                          {variant.images.slice(0, 2).map((img, idx) => (
-                            <div key={idx} className="relative w-10 h-10 bg-gray-100 rounded overflow-hidden border border-gray-200">
-                              <Image src={img} alt="" fill className="object-cover" />
-                            </div>
-                          ))}
-                          {variant.images.length > 2 && (
-                            <span className="text-xs text-gray-500">+{variant.images.length - 2}</span>
-                          )}
-                          <button
-                            onClick={() => setShowImageUpload(variant.id)}
-                            className="ml-2 p-1.5 hover:bg-gray-100 rounded transition"
-                            title="Upload Images"
-                          >
-                            <Upload className="w-4 h-4 text-gray-600" />
-                          </button>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm font-mono">{variant.sku}</td>
-                      <td className="px-6 py-4 text-sm font-medium">{variant.size}</td>
-                      <td className="px-6 py-4 text-sm">{variant.color}</td>
-                      <td className="px-6 py-4 text-sm">
-                        <span className={`font-bold ${variant.stock < 20 ? 'text-red-600' : 'text-gray-900'}`}>
-                          {variant.stock}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          variant.stock > 50 ? 'bg-green-100 text-green-700' :
-                          variant.stock > 0 ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-red-100 text-red-700'
-                        }`}>
-                          {variant.stock > 50 ? 'In Stock' : variant.stock > 0 ? 'Low Stock' : 'Out of Stock'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <button
-                          onClick={() => toggleVariantActive(variant.id)}
-                          className="p-2 hover:bg-gray-100 rounded-lg transition"
-                          title={variant.active ? 'Disable variant' : 'Enable variant'}
-                        >
-                          {variant.active ? (
-                            <Eye className="w-5 h-5 text-green-600" />
-                          ) : (
-                            <EyeOff className="w-5 h-5 text-gray-400" />
-                          )}
-                        </button>
+                  {filteredVariants.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                        <Package className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                        <p>No variants found</p>
+                        <p className="text-xs mt-1">Backend may not return variants data yet</p>
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    filteredVariants.map((variant) => {
+                      const stock = variant.total_stock || 0;
+                      const isActive = variant.status === 'active';
+                      const images = variant.images || [];
+                      return (
+                        <tr key={variant.id} className={`hover:bg-gray-50 ${!isActive ? 'opacity-50' : ''}`}>
+                          <td className="px-6 py-4">
+                            <div className="flex gap-1 items-center">
+                              {images.length > 0 ? (
+                                images.slice(0, 2).map((img: any, idx: number) => (
+                                  <div key={idx} className="relative w-10 h-10 bg-gray-100 rounded overflow-hidden border border-gray-200">
+                                    <Image src={img.image_url || img} alt="" fill className="object-cover" />
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="w-10 h-10 bg-gray-100 rounded border border-gray-200 flex items-center justify-center">
+                                  <Package className="w-5 h-5 text-gray-400" />
+                                </div>
+                              )}
+                              {images.length > 2 && (
+                                <span className="text-xs text-gray-500">+{images.length - 2}</span>
+                              )}
+                              <button
+                                onClick={() => setShowImageUpload(String(variant.id))}
+                                className="ml-2 p-1.5 hover:bg-gray-100 rounded transition"
+                                title="Upload Images"
+                              >
+                                <Upload className="w-4 h-4 text-gray-600" />
+                              </button>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm font-mono">{variant.sku}</td>
+                          <td className="px-6 py-4 text-sm font-medium">{variant.size?.name || 'N/A'}</td>
+                          <td className="px-6 py-4 text-sm">
+                            <div className="flex items-center gap-2">
+                              {variant.color?.hex_code && (
+                                <div
+                                  className="w-4 h-4 rounded-full border border-gray-300"
+                                  style={{ backgroundColor: variant.color.hex_code }}
+                                />
+                              )}
+                              <span>{variant.color?.name || 'N/A'}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm">
+                            <span className={`font-bold ${stock < 20 ? 'text-red-600' : 'text-gray-900'}`}>
+                              {stock}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm">
+                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${stock > 50 ? 'bg-green-100 text-green-700' :
+                              stock > 0 ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-red-100 text-red-700'
+                              }`}>
+                              {stock > 50 ? 'In Stock' : stock > 0 ? 'Low Stock' : 'Out of Stock'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <button
+                              onClick={() => toggleVariantActive(String(variant.id))}
+                              className="p-2 hover:bg-gray-100 rounded-lg transition"
+                              title={isActive ? 'Disable variant' : 'Enable variant'}
+                            >
+                              {isActive ? (
+                                <Eye className="w-5 h-5 text-green-600" />
+                              ) : (
+                                <EyeOff className="w-5 h-5 text-gray-400" />
+                              )}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
@@ -370,29 +538,49 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
       {/* Analytics Tab */}
       {activeTab === 'analytics' && (
         <div className="space-y-6">
-          {/* Analytics Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white rounded-xl p-5 border border-gray-200">
-              <p className="text-sm text-gray-600 mb-1">Total Revenue</p>
-              <p className="text-2xl font-bold text-green-600">$34,150</p>
-              <p className="text-xs text-gray-500 mt-1">+12% from last month</p>
+          {loadingAnalytics && !analytics ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
             </div>
-            <div className="bg-white rounded-xl p-5 border border-gray-200">
-              <p className="text-sm text-gray-600 mb-1">Units Sold</p>
-              <p className="text-2xl font-bold">1,234</p>
-              <p className="text-xs text-gray-500 mt-1">+8% from last month</p>
-            </div>
-            <div className="bg-white rounded-xl p-5 border border-gray-200">
-              <p className="text-sm text-gray-600 mb-1">Total Orders</p>
-              <p className="text-2xl font-bold">856</p>
-              <p className="text-xs text-gray-500 mt-1">From 742 customers</p>
-            </div>
-            <div className="bg-white rounded-xl p-5 border border-gray-200">
-              <p className="text-sm text-gray-600 mb-1">Avg. Rating</p>
-              <p className="text-2xl font-bold text-yellow-600">4.7 / 5</p>
-              <p className="text-xs text-gray-500 mt-1">From 156 reviews</p>
-            </div>
-          </div>
+          ) : (
+            <>
+              {/* Analytics Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-white rounded-xl p-5 border border-gray-200">
+                  <p className="text-sm text-gray-600 mb-1">Total Revenue</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {(analytics?.sales?.total_revenue || 0).toLocaleString('vi-VN')} VND
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">All time revenue</p>
+                </div>
+                <div className="bg-white rounded-xl p-5 border border-gray-200">
+                  <p className="text-sm text-gray-600 mb-1">Units Sold</p>
+                  <p className="text-2xl font-bold">
+                    {(analytics?.sales?.total_units_sold || 0).toLocaleString()}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">All time sales</p>
+                </div>
+                <div className="bg-white rounded-xl p-5 border border-gray-200">
+                  <p className="text-sm text-gray-600 mb-1">Total Orders</p>
+                  <p className="text-2xl font-bold">
+                    {(analytics?.sales?.total_orders || 0).toLocaleString()}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Avg {(analytics?.sales?.average_order_value || 0).toLocaleString('vi-VN')} VND
+                  </p>
+                </div>
+                <div className="bg-white rounded-xl p-5 border border-gray-200">
+                  <p className="text-sm text-gray-600 mb-1">Avg. Rating</p>
+                  <p className="text-2xl font-bold text-yellow-600">
+                    {(analytics?.ratings?.average_rating || 0).toFixed(1)} / 5
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    From {analytics?.ratings?.total_reviews || 0} reviews
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Analytics Sub-tabs */}
           <div className="bg-white rounded-xl border border-gray-200">
@@ -402,9 +590,8 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
                   <button
                     key={tab}
                     onClick={() => setAnalyticsTab(tab as any)}
-                    className={`py-4 capitalize ${
-                      analyticsTab === tab ? 'border-b-2 border-[#4880FF] text-[#4880FF] font-semibold' : 'text-gray-600'
-                    }`}
+                    className={`py-4 capitalize ${analyticsTab === tab ? 'border-b-2 border-[#4880FF] text-[#4880FF] font-semibold' : 'text-gray-600'
+                      }`}
                   >
                     {tab}
                   </button>
@@ -416,14 +603,66 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
               {/* Sales Chart Tab */}
               {analyticsTab === 'sales' && (
                 <div>
-                  <h3 className="text-lg font-bold mb-4">Sales Trend (Last 30 Days)</h3>
-                  <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center border border-gray-200">
-                    <div className="text-center text-gray-500">
-                      <TrendingUp className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                      <p className="text-sm">Line chart showing daily sales</p>
-                      <p className="text-xs mt-1">(Mock data - integrate chart library)</p>
-                    </div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold">Sales Trend</h3>
+                    <select
+                      value={salesPeriod}
+                      onChange={(e) => setSalesPeriod(e.target.value as any)}
+                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
+                    >
+                      <option value="7days">Last 7 Days</option>
+                      <option value="30days">Last 30 Days</option>
+                      <option value="3months">Last 3 Months</option>
+                      <option value="1year">Last Year</option>
+                    </select>
                   </div>
+                  {salesTrend?.data?.length > 0 ? (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-3 gap-4 mb-4">
+                        <div className="bg-blue-50 p-4 rounded-lg">
+                          <p className="text-xs text-gray-600 mb-1">Total Revenue</p>
+                          <p className="text-lg font-bold">{(salesTrend.total_revenue || 0).toLocaleString('vi-VN')} VND</p>
+                        </div>
+                        <div className="bg-green-50 p-4 rounded-lg">
+                          <p className="text-xs text-gray-600 mb-1">Total Units</p>
+                          <p className="text-lg font-bold">{(salesTrend.total_units_sold || 0).toLocaleString()}</p>
+                        </div>
+                        <div className="bg-purple-50 p-4 rounded-lg">
+                          <p className="text-xs text-gray-600 mb-1">Avg. Daily</p>
+                          <p className="text-lg font-bold">{Math.round((salesTrend.total_revenue || 0) / (salesTrend.data?.length || 1)).toLocaleString('vi-VN')} VND</p>
+                        </div>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-4 py-2 text-left text-xs font-semibold">Date</th>
+                              <th className="px-4 py-2 text-right text-xs font-semibold">Revenue</th>
+                              <th className="px-4 py-2 text-right text-xs font-semibold">Units</th>
+                              <th className="px-4 py-2 text-right text-xs font-semibold">Orders</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y">
+                            {salesTrend.data.map((item: any, idx: number) => (
+                              <tr key={idx} className="hover:bg-gray-50">
+                                <td className="px-4 py-2 text-sm">{new Date(item.date).toLocaleDateString('vi-VN')}</td>
+                                <td className="px-4 py-2 text-sm text-right font-semibold">{(item.revenue || 0).toLocaleString('vi-VN')} VND</td>
+                                <td className="px-4 py-2 text-sm text-right">{item.units_sold || 0}</td>
+                                <td className="px-4 py-2 text-sm text-right">{item.orders || 0}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center border border-gray-200">
+                      <div className="text-center text-gray-500">
+                        <TrendingUp className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                        <p className="text-sm">No sales data available</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -431,41 +670,45 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
               {analyticsTab === 'variants' && (
                 <div>
                   <h3 className="text-lg font-bold mb-4">Top Selling Variants</h3>
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center border border-gray-200">
-                      <div className="text-center text-gray-500">
-                        <Package className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                        <p className="text-sm">Donut chart showing variant distribution</p>
-                        <p className="text-xs mt-1">(Mock data - integrate chart library)</p>
-                      </div>
-                    </div>
+                  {variantsAnalytics?.variants?.length > 0 ? (
                     <div className="space-y-3">
-                      <h4 className="font-semibold text-sm text-gray-600">Top Variants by Sales</h4>
-                      {[
-                        { variant: 'Large - Black', sales: 340, percentage: 28 },
-                        { variant: 'Medium - Black', sales: 298, percentage: 24 },
-                        { variant: 'Large - White', sales: 245, percentage: 20 },
-                        { variant: 'Medium - White', sales: 186, percentage: 15 },
-                        { variant: 'X-Large - Black', sales: 165, percentage: 13 },
-                      ].map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                        <p className="text-xs text-gray-600">Total Units Sold (All Variants)</p>
+                        <p className="text-2xl font-bold">{(variantsAnalytics.total_sold || 0).toLocaleString()}</p>
+                      </div>
+                      {variantsAnalytics.variants.slice(0, 10).map((item: any, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-500 transition">
                           <div className="flex-1">
-                            <p className="text-sm font-semibold">{item.variant}</p>
-                            <div className="w-full bg-gray-200 h-2 rounded-full mt-2">
-                              <div 
-                                className="bg-[#4880FF] h-2 rounded-full" 
-                                style={{ width: `${item.percentage}%` }}
-                              ></div>
+                            <div className="flex items-center gap-2 mb-2">
+                              <p className="text-sm font-semibold">{item.size} - {item.color}</p>
+                              <span className="text-xs text-gray-500 font-mono">{item.sku}</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="flex-1 bg-gray-200 h-3 rounded-full overflow-hidden">
+                                <div
+                                  className="bg-[#4880FF] h-3 rounded-full"
+                                  style={{ width: `${item.percentage}%` }}
+                                ></div>
+                              </div>
+                              <span className="text-xs text-gray-500 w-12">{item.percentage}%</span>
                             </div>
                           </div>
-                          <div className="ml-4 text-right">
-                            <p className="text-sm font-bold">{item.sales}</p>
-                            <p className="text-xs text-gray-500">{item.percentage}%</p>
+                          <div className="ml-4 text-right space-y-1">
+                            <p className="text-sm font-bold">{item.total_sold} units</p>
+                            <p className="text-xs text-green-600 font-semibold">{(item.revenue || 0).toLocaleString('vi-VN')} VND</p>
+                            <p className="text-xs text-gray-500">Stock: {item.current_stock}</p>
                           </div>
                         </div>
                       ))}
                     </div>
-                  </div>
+                  ) : (
+                    <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center border border-gray-200">
+                      <div className="text-center text-gray-500">
+                        <Package className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                        <p className="text-sm">No sales data available for variants</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -473,30 +716,33 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
               {analyticsTab === 'ratings' && (
                 <div>
                   <h3 className="text-lg font-bold mb-4">Rating Distribution</h3>
-                  <div className="space-y-3">
-                    {[
-                      { stars: 5, count: 98, percentage: 63 },
-                      { stars: 4, count: 42, percentage: 27 },
-                      { stars: 3, count: 12, percentage: 8 },
-                      { stars: 2, count: 3, percentage: 2 },
-                      { stars: 1, count: 1, percentage: 1 },
-                    ].map((item) => (
-                      <div key={item.stars} className="flex items-center gap-4">
-                        <div className="w-20 text-sm font-semibold text-gray-700">
-                          {item.stars} stars
-                        </div>
-                        <div className="flex-1 bg-gray-200 h-8 rounded-lg overflow-hidden">
-                          <div 
-                            className="bg-yellow-400 h-8 flex items-center justify-end pr-3"
-                            style={{ width: `${item.percentage}%` }}
-                          >
-                            <span className="text-xs font-bold text-gray-700">{item.count}</span>
+                  {analytics?.ratings?.rating_distribution ? (
+                    <div className="space-y-3">
+                      {[5, 4, 3, 2, 1].map((stars) => {
+                        const data = analytics.ratings.rating_distribution[stars] || { count: 0, percentage: 0 };
+                        return (
+                          <div key={stars} className="flex items-center gap-4">
+                            <div className="w-20 text-sm font-semibold text-gray-700">
+                              {stars} stars
+                            </div>
+                            <div className="flex-1 bg-gray-200 h-8 rounded-lg overflow-hidden">
+                              <div
+                                className="bg-yellow-400 h-8 flex items-center justify-end pr-3 transition-all"
+                                style={{ width: `${data.percentage || 0}%` }}
+                              >
+                                <span className="text-xs font-bold text-gray-700">{data.count}</span>
+                              </div>
+                            </div>
+                            <div className="w-12 text-sm text-gray-600">{data.percentage}%</div>
                           </div>
-                        </div>
-                        <div className="w-12 text-sm text-gray-600">{item.percentage}%</div>
-                      </div>
-                    ))}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>No ratings data available</p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -506,76 +752,91 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-bold">Customer Reviews</h3>
                     <div className="flex gap-2">
-                      <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4880FF]">
-                        <option>All Ratings</option>
-                        <option>5 Stars</option>
-                        <option>4 Stars</option>
-                        <option>3 Stars</option>
-                        <option>2 Stars</option>
-                        <option>1 Star</option>
+                      <select
+                        value={reviewsFilter.rating}
+                        onChange={(e) => setReviewsFilter({ ...reviewsFilter, rating: e.target.value, page: 1 })}
+                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
+                      >
+                        <option value="all">All Ratings</option>
+                        <option value="5">5 Stars</option>
+                        <option value="4">4 Stars</option>
+                        <option value="3">3 Stars</option>
+                        <option value="2">2 Stars</option>
+                        <option value="1">1 Star</option>
                       </select>
-                      <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4880FF]">
-                        <option>Most Recent</option>
-                        <option>Highest Rating</option>
-                        <option>Lowest Rating</option>
+                      <select
+                        value={reviewsFilter.status}
+                        onChange={(e) => setReviewsFilter({ ...reviewsFilter, status: e.target.value, page: 1 })}
+                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
+                      >
+                        <option value="approved">Approved</option>
+                        <option value="pending">Pending</option>
+                        <option value="rejected">Rejected</option>
+                        <option value="all">All Status</option>
                       </select>
                     </div>
                   </div>
-                  <div className="space-y-4">
-                    {[
-                      { 
-                        id: 1, 
-                        user: 'John Smith', 
-                        rating: 5, 
-                        date: '2024-01-18',
-                        comment: 'Great quality t-shirt! The fabric is soft and the fit is perfect.',
-                        orderId: 'ORD-12345'
-                      },
-                      { 
-                        id: 2, 
-                        user: 'Sarah Johnson', 
-                        rating: 4, 
-                        date: '2024-01-16',
-                        comment: 'Nice design, but sizing runs a bit large. Overall satisfied.',
-                        orderId: 'ORD-12340'
-                      },
-                      { 
-                        id: 3, 
-                        user: 'Mike Davis', 
-                        rating: 5, 
-                        date: '2024-01-15',
-                        comment: 'Exactly as described. Fast shipping and excellent quality!',
-                        orderId: 'ORD-12338'
-                      },
-                    ].map((review) => (
-                      <Link 
-                        key={review.id} 
-                        href={`/admin/orders/${review.orderId}`}
-                        className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-[#4880FF] transition cursor-pointer"
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <p className="font-semibold text-sm">{review.user}</p>
-                            <p className="text-xs text-gray-500">Order: {review.orderId}</p>
-                          </div>
-                          <div className="text-right">
-                            <div className="flex gap-1">
-                              {[...Array(5)].map((_, i) => (
-                                <span key={i} className={i < review.rating ? 'text-yellow-400' : 'text-gray-300'}>★</span>
-                              ))}
+                  {reviews.length > 0 ? (
+                    <>
+                      <div className="space-y-4">
+                        {reviews.map((review: any) => (
+                          <div
+                            key={review.id}
+                            className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+                          >
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <p className="font-semibold text-sm">{review.customer_name}</p>
+                                <p className="text-xs text-gray-500">{review.customer_email}</p>
+                                <p className="text-xs text-gray-500">Order: {review.order_number || review.order_id}</p>
+                                <p className="text-xs text-gray-500">SKU: {review.variant_sku}</p>
+                              </div>
+                              <div className="text-right">
+                                <div className="flex gap-1 mb-1">
+                                  {[...Array(5)].map((_, i) => (
+                                    <span key={i} className={i < review.rating ? 'text-yellow-400' : 'text-gray-300'}>★</span>
+                                  ))}
+                                </div>
+                                <span className={`text-xs px-2 py-1 rounded-full ${review.status === 'approved' ? 'bg-green-100 text-green-700' :
+                                    review.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                      'bg-red-100 text-red-700'
+                                  }`}>
+                                  {review.status}
+                                </span>
+                                <p className="text-xs text-gray-500 mt-1">{new Date(review.created_at).toLocaleDateString('vi-VN')}</p>
+                              </div>
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">{review.date}</p>
+                            <p className="text-sm text-gray-700">{review.comment}</p>
                           </div>
+                        ))}
+                      </div>
+                      {reviewsMeta && reviewsMeta.total_pages > 1 && (
+                        <div className="mt-4 flex justify-center gap-2">
+                          <button
+                            onClick={() => setReviewsFilter({ ...reviewsFilter, page: Math.max(1, reviewsFilter.page - 1) })}
+                            disabled={reviewsFilter.page === 1}
+                            className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition disabled:opacity-50"
+                          >
+                            Previous
+                          </button>
+                          <span className="px-4 py-2 text-sm text-gray-600">
+                            Page {reviewsMeta.page} of {reviewsMeta.total_pages}
+                          </span>
+                          <button
+                            onClick={() => setReviewsFilter({ ...reviewsFilter, page: Math.min(reviewsMeta.total_pages, reviewsFilter.page + 1) })}
+                            disabled={reviewsFilter.page >= reviewsMeta.total_pages}
+                            className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition disabled:opacity-50"
+                          >
+                            Next
+                          </button>
                         </div>
-                        <p className="text-sm text-gray-700">{review.comment}</p>
-                      </Link>
-                    ))}
-                  </div>
-                  <div className="mt-4 flex justify-center">
-                    <button className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition">
-                      Load More Reviews
-                    </button>
-                  </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-center py-12 text-gray-500">
+                      <p>No reviews found</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

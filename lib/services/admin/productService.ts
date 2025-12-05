@@ -189,6 +189,47 @@ const adminProductService = {
             params: { threshold },
         });
     },
+
+    /**
+     * Get product analytics overview
+     * GET /api/v1/admin/products/:id/analytics
+     */
+    getProductAnalytics: async (id: number): Promise<AxiosResponse<any>> => {
+        return apiClient.get(`/api/v1/admin/products/${id}/analytics`);
+    },
+
+    /**
+     * Get product sales trend
+     * GET /api/v1/admin/products/:id/analytics/sales
+     */
+    getProductSalesTrend: async (id: number, period: '7days' | '30days' | '3months' | '1year'): Promise<AxiosResponse<any>> => {
+        return apiClient.get(`/api/v1/admin/products/${id}/analytics/sales`, {
+            params: { period },
+        });
+    },
+
+    /**
+     * Get variants analytics
+     * GET /api/v1/admin/products/:id/analytics/variants
+     */
+    getVariantsAnalytics: async (id: number): Promise<AxiosResponse<any>> => {
+        return apiClient.get(`/api/v1/admin/products/${id}/analytics/variants`);
+    },
+
+    /**
+     * Get product reviews (admin view)
+     * GET /api/v1/admin/products/:id/reviews
+     */
+    getProductReviews: async (id: number, params?: {
+        page?: number;
+        limit?: number;
+        rating?: string;
+        status?: string;
+        sort?: string;
+        order?: 'asc' | 'desc';
+    }): Promise<AxiosResponse<any>> => {
+        return apiClient.get(`/api/v1/admin/products/${id}/reviews`, { params });
+    },
 };
 
 export default adminProductService;
