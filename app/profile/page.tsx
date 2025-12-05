@@ -1,24 +1,99 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { ChevronRight, User, Package, MapPin, Heart, Settings, LogOut, Lock } from 'lucide-react';
+import { ChevronRight, User, Package, MapPin, Heart, Settings, LogOut, Lock, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { showToast } from '@/components/Toast';
+import accountService, { UserProfile } from '@/lib/services/accountService';
+import axios from 'axios';
 
 export default function ProfilePage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('account');
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
+  const [passwordData, setPasswordData] = useState({ old_password: '', new_password: '', confirm_password: '' });
+
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      router.push('/login?redirect=/profile');
+      return;
+    }
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      const response = await accountService.getProfile();
+      console.log('👤 Profile API Response:', response.data);
+
+      // Backend returns: {data: {id, name, email, ...}}
+      const profileData = response.data.data || response.data;
+      console.log('👤 Profile Data:', profileData);
+
+      setProfile(profileData);
+    } catch (err) {
+      console.error('❌ Profile fetch error:', err);
+      if (axios.isAxiosError(err)) {
+        console.error('❌ Profile error response:', err.response?.data);
+        if (err.response?.status === 401) {
+          router.push('/login?redirect=/profile');
+        }
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordData.new_password !== passwordData.confirm_password) {
+      showToast('Passwords do not match', 'error');
+      return;
+    }
+    try {
+      setUpdating(true);
+      await accountService.changePassword({
+        old_password: passwordData.old_password,
+        new_password: passwordData.new_password,
+      });
+      showToast('Password changed successfully', 'success');
+      setPasswordData({ old_password: '', new_password: '', confirm_password: '' });
+    } catch (err: any) {
+      showToast(axios.isAxiosError(err) ? err.response?.data?.message || 'Failed to change password' : 'Failed to change password', 'error');
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   const handleLogout = () => {
     if (confirm('Are you sure you want to logout?')) {
-      // Clear session/localStorage here
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('guest_cart_session');
       showToast('Logged out successfully', 'success');
       router.push('/login');
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center py-20">
+          <Loader2 className="w-12 h-12 animate-spin text-gray-600" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -41,45 +116,40 @@ export default function ProfilePage() {
               <div className="border border-gray-200 rounded-2xl p-4 space-y-2 sticky top-6">
                 <button
                   onClick={() => setActiveTab('account')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-                    activeTab === 'account' ? 'bg-black text-white' : 'hover:bg-gray-100'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${activeTab === 'account' ? 'bg-black text-white' : 'hover:bg-gray-100'
+                    }`}
                 >
                   <User className="w-5 h-5" />
                   <span>Account Details</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('orders')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-                    activeTab === 'orders' ? 'bg-black text-white' : 'hover:bg-gray-100'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${activeTab === 'orders' ? 'bg-black text-white' : 'hover:bg-gray-100'
+                    }`}
                 >
                   <Package className="w-5 h-5" />
                   <span>My Orders</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('addresses')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-                    activeTab === 'addresses' ? 'bg-black text-white' : 'hover:bg-gray-100'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${activeTab === 'addresses' ? 'bg-black text-white' : 'hover:bg-gray-100'
+                    }`}
                 >
                   <MapPin className="w-5 h-5" />
                   <span>Addresses</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('wishlist')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-                    activeTab === 'wishlist' ? 'bg-black text-white' : 'hover:bg-gray-100'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${activeTab === 'wishlist' ? 'bg-black text-white' : 'hover:bg-gray-100'
+                    }`}
                 >
                   <Heart className="w-5 h-5" />
                   <span>Wishlist</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('settings')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-                    activeTab === 'settings' ? 'bg-black text-white' : 'hover:bg-gray-100'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${activeTab === 'settings' ? 'bg-black text-white' : 'hover:bg-gray-100'
+                    }`}
                 >
                   <Settings className="w-5 h-5" />
                   <span>Settings</span>
@@ -98,50 +168,28 @@ export default function ProfilePage() {
             {/* Content */}
             <div className="lg:col-span-3">
               {activeTab === 'account' && (
-                <div className="border border-gray-200 rounded-2xl p-5">
-                  <h2 className="text-xl font-bold mb-5">Account Details</h2>
-                  <form className="space-y-4">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-2">First Name</label>
-                        <input
-                          type="text"
-                          defaultValue="John"
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Last Name</label>
-                        <input
-                          type="text"
-                          defaultValue="Doe"
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                        />
-                      </div>
+                <div className="border border-gray-200 rounded-2xl p-6">
+                  <h2 className="text-xl font-bold mb-6">Account Details</h2>
+                  <div className="space-y-5">
+                    {/* Full Name */}
+                    <div className="pb-4 border-b border-gray-100">
+                      <label className="block text-sm font-medium text-gray-500 mb-2">Full Name</label>
+                      <p className="text-base font-medium text-gray-900">{profile?.name || 'N/A'}</p>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Email</label>
-                      <input
-                        type="email"
-                        defaultValue="john.doe@example.com"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                      />
+
+                    {/* Email */}
+                    <div className="pb-4 border-b border-gray-100">
+                      <label className="block text-sm font-medium text-gray-500 mb-2">Email</label>
+                      <p className="text-base font-medium text-gray-900">{profile?.email || 'N/A'}</p>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Phone</label>
-                      <input
-                        type="tel"
-                        defaultValue="+1 234 567 8900"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                      />
+
+                    {/* Info Note */}
+                    <div className="bg-gray-50 rounded-lg p-4 mt-4">
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium">Note:</span> Account information cannot be modified. Please contact support if you need to update your details.
+                      </p>
                     </div>
-                    <button
-                      type="submit"
-                      className="bg-black text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition"
-                    >
-                      Save Changes
-                    </button>
-                  </form>
+                  </div>
                 </div>
               )}
 
@@ -189,11 +237,14 @@ export default function ProfilePage() {
                       <Lock className="w-5 h-5" />
                       <h2 className="text-xl font-bold">Change Password</h2>
                     </div>
-                    <form className="space-y-4">
+                    <form onSubmit={handleChangePassword} className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium mb-2">Current Password</label>
                         <input
                           type="password"
+                          required
+                          value={passwordData.old_password || ''}
+                          onChange={(e) => setPasswordData({ ...passwordData, old_password: e.target.value })}
                           placeholder="Enter current password"
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                         />
@@ -202,7 +253,11 @@ export default function ProfilePage() {
                         <label className="block text-sm font-medium mb-2">New Password</label>
                         <input
                           type="password"
-                          placeholder="Enter new password"
+                          required
+                          minLength={8}
+                          value={passwordData.new_password || ''}
+                          onChange={(e) => setPasswordData({ ...passwordData, new_password: e.target.value })}
+                          placeholder="Enter new password (min 8 characters)"
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                         />
                       </div>
@@ -210,15 +265,19 @@ export default function ProfilePage() {
                         <label className="block text-sm font-medium mb-2">Confirm New Password</label>
                         <input
                           type="password"
+                          required
+                          value={passwordData.confirm_password || ''}
+                          onChange={(e) => setPasswordData({ ...passwordData, confirm_password: e.target.value })}
                           placeholder="Confirm new password"
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                         />
                       </div>
                       <button
                         type="submit"
-                        className="bg-black text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition"
+                        disabled={updating}
+                        className="bg-black text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition disabled:opacity-50"
                       >
-                        Update Password
+                        {updating ? 'Updating...' : 'Update Password'}
                       </button>
                     </form>
                   </div>

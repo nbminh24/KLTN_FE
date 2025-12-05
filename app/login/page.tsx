@@ -7,6 +7,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import authService from '@/lib/services/authService';
+import cartService from '@/lib/services/cartService';
 import axios from 'axios';
 
 export default function LoginPage() {
@@ -38,8 +39,25 @@ export default function LoginPage() {
       }
       localStorage.setItem('user', JSON.stringify(response.data.user));
 
-      // Success - redirect to home
-      router.push('/');
+      // Merge guest cart if exists
+      const guestSessionId = localStorage.getItem('guest_cart_session');
+      if (guestSessionId) {
+        try {
+          await cartService.mergeCart(guestSessionId);
+          localStorage.removeItem('guest_cart_session');
+          console.log('Cart merged successfully');
+        } catch (mergeErr) {
+          console.error('Failed to merge cart:', mergeErr);
+          // Don't block login flow if merge fails
+        }
+      }
+
+      // Get redirect URL from query params or default to home
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirect = urlParams.get('redirect') || '/';
+
+      // Success - redirect
+      router.push(redirect);
     } catch (err: any) {
       // Handle errors from API
       if (axios.isAxiosError(err)) {

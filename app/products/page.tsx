@@ -315,6 +315,7 @@ export default function ProductsPage() {
                       originalPrice={product.original_price}
                       rating={product.average_rating || 0}
                       discount={product.discount_percentage}
+                      variantId={product.variants?.[0]?.id}
                     />
                   ))}
                 </div>

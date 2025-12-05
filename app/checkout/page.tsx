@@ -1,33 +1,162 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { ChevronRight, CreditCard, Truck, MapPin, Plus, Check, ArrowLeft } from 'lucide-react';
+import { showToast } from '@/components/Toast';
+import { ChevronRight, CreditCard, Truck, MapPin, Plus, Check, ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
+import accountService, { Address } from '@/lib/services/accountService';
+import cartService from '@/lib/services/cartService';
+import checkoutService from '@/lib/services/checkoutService';
+import type { CartResponse } from '@/lib/types/backend';
+import axios from 'axios';
 
 export default function CheckoutPage() {
-  const [selectedAddress, setSelectedAddress] = useState('1');
-  const [shippingMethod, setShippingMethod] = useState('standard');
-  const [paymentMethod, setPaymentMethod] = useState('card');
+  const router = useRouter();
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [cart, setCart] = useState<CartResponse | null>(null);
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'vnpay'>('cod');
+  const [note, setNote] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
-  // Mock addresses
-  const addresses = [
-    { id: '1', label: 'Home', name: 'John Doe', address: '123 Main St, Apt 4B', city: 'New York', postal: '10001', phone: '+1 234 567 8900', isDefault: true },
-    { id: '2', label: 'Work', name: 'John Doe', address: '456 Office Plaza, Suite 200', city: 'New York', postal: '10002', phone: '+1 234 567 8900', isDefault: false },
-  ];
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      router.push('/login?redirect=/checkout');
+      return;
+    }
+    fetchData();
+  }, []);
 
-  // Mock cart items
-  const cartItems = [
-    { id: '1', name: 'Gradient Graphic T-shirt', size: 'Large', color: 'Black', price: 145, quantity: 1, image: '/bmm32410_black_xl.webp' },
-    { id: '2', name: 'Checkered Shirt', size: 'Medium', color: 'Blue', price: 180, quantity: 1, image: '/bmm32410_black_xl.webp' },
-  ];
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [addressesRes, cartRes] = await Promise.all([
+        accountService.getAddresses(),
+        cartService.getCart(),
+      ]);
 
-  const subtotal = 565;
-  const discount = 113;
-  const deliveryFee = shippingMethod === 'express' ? 25 : 15;
-  const total = subtotal - discount + deliveryFee;
+      setAddresses(addressesRes.data.addresses);
+      setCart(cartRes.data);
+
+      // Auto-select default address
+      const defaultAddr = addressesRes.data.addresses.find(a => a.is_default);
+      if (defaultAddr && defaultAddr.id) {
+        setSelectedAddressId(defaultAddr.id);
+      } else if (addressesRes.data.addresses.length > 0 && addressesRes.data.addresses[0].id) {
+        setSelectedAddressId(addressesRes.data.addresses[0].id);
+      }
+    } catch (err: any) {
+      console.error('Error fetching data:', err);
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
+        router.push('/login?redirect=/checkout');
+      } else {
+        setError('Failed to load checkout data');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCheckout = async () => {
+    if (!selectedAddressId) {
+      showToast('Please select a shipping address', 'warning');
+      return;
+    }
+
+    if (!cart || cart.items.length === 0) {
+      showToast('Your cart is empty', 'warning');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const response = await checkoutService.createOrder({
+        customer_address_id: selectedAddressId,
+        payment_method: paymentMethod,
+        shipping_fee: cart.summary.shipping_fee,
+        note: note || undefined,
+      });
+
+      const order = response.data.order;
+
+      // If VNPAY, create payment URL and redirect
+      if (paymentMethod === 'vnpay') {
+        const paymentRes = await checkoutService.createPaymentUrl({
+          order_id: order.id,
+        });
+        window.location.href = paymentRes.data.payment_url;
+      } else {
+        // COD - redirect to order success
+        showToast('Order placed successfully!', 'success');
+        router.push(`/orders/${order.id}`);
+      }
+    } catch (err: any) {
+      console.error('Checkout error:', err);
+      if (axios.isAxiosError(err)) {
+        showToast(err.response?.data?.message || 'Checkout failed', 'error');
+      } else {
+        showToast('Failed to place order', 'error');
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center py-20">
+          <Loader2 className="w-12 h-12 animate-spin text-gray-600" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center py-20">
+          <div className="text-center max-w-md">
+            <AlertCircle className="w-16 h-16 mx-auto mb-4 text-red-500" />
+            <h2 className="text-2xl font-bold mb-2">Error</h2>
+            <p className="text-gray-600 mb-6">{error}</p>
+            <Link href="/cart" className="inline-block bg-black text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition">
+              Back to Cart
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!cart || cart.items.length === 0) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center py-20">
+          <div className="text-center max-w-md">
+            <h2 className="text-2xl font-bold mb-2">Cart is Empty</h2>
+            <p className="text-gray-600 mb-6">Add items to cart before checkout</p>
+            <Link href="/products" className="inline-block bg-black text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition">
+              Continue Shopping
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -73,125 +202,92 @@ export default function CheckoutPage() {
                     Add New
                   </Link>
                 </div>
-                <div className="space-y-3">
-                  {addresses.map((addr) => (
-                    <label
-                      key={addr.id}
-                      className={`flex items-start gap-3 p-4 border-2 rounded-lg cursor-pointer transition ${
-                        selectedAddress === addr.id
+                {addresses.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-600 mb-4">No saved addresses</p>
+                    <Link
+                      href="/addresses"
+                      className="inline-block bg-black text-white px-6 py-2 rounded-full text-sm hover:bg-gray-800 transition"
+                    >
+                      Add Address
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {addresses.map((addr) => (
+                      <label
+                        key={addr.id}
+                        className={`flex items-start gap-3 p-4 border-2 rounded-lg cursor-pointer transition ${selectedAddressId === addr.id
                           ? 'border-black bg-gray-50'
                           : 'border-gray-200 hover:border-gray-400'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="address"
-                        value={addr.id}
-                        checked={selectedAddress === addr.id}
-                        onChange={(e) => setSelectedAddress(e.target.value)}
-                        className="mt-1 w-5 h-5"
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-bold">{addr.label}</span>
-                          {addr.isDefault && (
-                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                              Default
-                            </span>
-                          )}
+                          }`}
+                      >
+                        <input
+                          type="radio"
+                          name="address"
+                          value={addr.id}
+                          checked={selectedAddressId === addr.id}
+                          onChange={(e) => setSelectedAddressId(Number(e.target.value))}
+                          className="mt-1 w-5 h-5"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-bold">{addr.recipient_name}</span>
+                            {addr.is_default && (
+                              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                                Default
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-600">{addr.address_line}</p>
+                          <p className="text-sm text-gray-600">
+                            {addr.ward}, {addr.district}, {addr.city}
+                          </p>
+                          <p className="text-sm text-gray-600">{addr.phone}</p>
                         </div>
-                        <p className="text-sm text-gray-600">{addr.name}</p>
-                        <p className="text-sm text-gray-600">{addr.address}</p>
-                        <p className="text-sm text-gray-600">
-                          {addr.city}, {addr.postal}
-                        </p>
-                        <p className="text-sm text-gray-600">{addr.phone}</p>
-                      </div>
-                    </label>
-                  ))}
-                </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {/* Shipping Method */}
+              {/* Order Note */}
               <div className="border border-gray-200 rounded-2xl p-5">
-                <div className="flex items-center gap-3 mb-5">
-                  <Truck className="w-5 h-5" />
-                  <h2 className="text-lg font-bold">Shipping Method</h2>
-                </div>
-                <div className="space-y-3">
-                  <label
-                    className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition ${
-                      shippingMethod === 'standard'
-                        ? 'border-black bg-gray-50'
-                        : 'border-gray-200 hover:border-gray-400'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        name="shipping"
-                        value="standard"
-                        checked={shippingMethod === 'standard'}
-                        onChange={(e) => setShippingMethod(e.target.value)}
-                        className="w-5 h-5"
-                      />
-                      <div>
-                        <p className="font-bold">Standard Delivery</p>
-                        <p className="text-sm text-gray-600">5-7 business days</p>
-                      </div>
-                    </div>
-                    <span className="font-bold">$15</span>
-                  </label>
-                  <label
-                    className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition ${
-                      shippingMethod === 'express'
-                        ? 'border-black bg-gray-50'
-                        : 'border-gray-200 hover:border-gray-400'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        name="shipping"
-                        value="express"
-                        checked={shippingMethod === 'express'}
-                        onChange={(e) => setShippingMethod(e.target.value)}
-                        className="w-5 h-5"
-                      />
-                      <div>
-                        <p className="font-bold">Express Delivery</p>
-                        <p className="text-sm text-gray-600">2-3 business days</p>
-                      </div>
-                    </div>
-                    <span className="font-bold">$25</span>
-                  </label>
-                </div>
+                <h2 className="text-lg font-bold mb-3">Order Note (Optional)</h2>
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Add delivery instructions or notes..."
+                  rows={3}
+                  maxLength={500}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black resize-none"
+                />
               </div>
 
               {/* Review Order */}
               <div className="border border-gray-200 rounded-2xl p-5">
-                <h2 className="text-lg font-bold mb-5">Review Order</h2>
+                <h2 className="text-lg font-bold mb-5">Review Order ({cart.items.length} items)</h2>
                 <div className="space-y-4">
-                  {cartItems.map((item) => (
+                  {cart.items.map((item) => (
                     <div key={item.id} className="flex gap-4">
                       <div className="relative w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                         <Image
-                          src={item.image}
-                          alt={item.name}
+                          src={item.variant.image_url || item.product.thumbnail_url}
+                          alt={item.product.name}
                           fill
                           className="object-cover"
                         />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-bold text-sm">{item.name}</h3>
+                        <h3 className="font-bold text-sm">{item.product.name}</h3>
                         <div className="text-xs text-gray-600 mt-1">
-                          <span>Size: {item.size}</span>
+                          <span>Size: {item.variant.size}</span>
                           <span className="mx-2">•</span>
-                          <span>Color: {item.color}</span>
+                          <span>Color: {item.variant.color}</span>
                         </div>
                         <div className="flex items-center justify-between mt-2">
                           <span className="text-sm text-gray-600">Qty: {item.quantity}</span>
-                          <span className="font-bold">${item.price}</span>
+                          <span className="font-bold">{item.variant.price.toLocaleString('vi-VN')}₫</span>
                         </div>
                       </div>
                     </div>
@@ -205,63 +301,38 @@ export default function CheckoutPage() {
                   <CreditCard className="w-5 h-5" />
                   <h2 className="text-lg font-bold">Payment Method</h2>
                 </div>
-                <div className="space-y-4">
-                  <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-black transition">
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="card"
-                      checked={paymentMethod === 'card'}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="w-5 h-5"
-                    />
-                    <span className="font-medium">Credit/Debit Card</span>
-                  </label>
-                  <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-black transition">
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="paypal"
-                      checked={paymentMethod === 'paypal'}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="w-5 h-5"
-                    />
-                    <span className="font-medium">PayPal</span>
-                  </label>
-                  <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-black transition">
+                <div className="space-y-3">
+                  <label className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition ${paymentMethod === 'cod' ? 'border-black bg-gray-50' : 'border-gray-200 hover:border-gray-400'
+                    }`}>
                     <input
                       type="radio"
                       name="payment"
                       value="cod"
                       checked={paymentMethod === 'cod'}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      onChange={(e) => setPaymentMethod(e.target.value as 'cod' | 'vnpay')}
                       className="w-5 h-5"
                     />
-                    <span className="font-medium">Cash on Delivery</span>
+                    <div>
+                      <p className="font-medium">Cash on Delivery (COD)</p>
+                      <p className="text-xs text-gray-600">Pay when you receive</p>
+                    </div>
+                  </label>
+                  <label className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition ${paymentMethod === 'vnpay' ? 'border-black bg-gray-50' : 'border-gray-200 hover:border-gray-400'
+                    }`}>
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="vnpay"
+                      checked={paymentMethod === 'vnpay'}
+                      onChange={(e) => setPaymentMethod(e.target.value as 'cod' | 'vnpay')}
+                      className="w-5 h-5"
+                    />
+                    <div>
+                      <p className="font-medium">VNPAY</p>
+                      <p className="text-xs text-gray-600">Pay online via VNPAY gateway</p>
+                    </div>
                   </label>
                 </div>
-
-                {paymentMethod === 'card' && (
-                  <div className="mt-6 space-y-4">
-                    <input
-                      type="text"
-                      placeholder="Card Number"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                    />
-                    <div className="grid grid-cols-2 gap-4">
-                      <input
-                        type="text"
-                        placeholder="MM/YY"
-                        className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                      />
-                      <input
-                        type="text"
-                        placeholder="CVV"
-                        className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                      />
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -272,41 +343,43 @@ export default function CheckoutPage() {
 
                 <div className="space-y-4">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Subtotal</span>
-                    <span className="font-bold">${subtotal}</span>
+                    <span className="text-gray-600">Subtotal ({cart.summary.items_count} items)</span>
+                    <span className="font-bold">{cart.summary.subtotal.toLocaleString('vi-VN')}₫</span>
                   </div>
-                  {discount > 0 && (
+                  {cart.summary.discount > 0 && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Discount</span>
-                      <span className="font-bold text-red-500">-${discount}</span>
+                      <span className="font-bold text-green-600">-{cart.summary.discount.toLocaleString('vi-VN')}₫</span>
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-gray-600">
-                      Delivery Fee ({shippingMethod === 'express' ? 'Express' : 'Standard'})
-                    </span>
-                    <span className="font-bold">${deliveryFee}</span>
+                    <span className="text-gray-600">Shipping Fee</span>
+                    <span className="font-bold">{cart.summary.shipping_fee.toLocaleString('vi-VN')}₫</span>
                   </div>
                   <hr className="border-gray-200" />
                   <div className="flex justify-between text-lg">
                     <span className="font-medium">Total</span>
-                    <span className="font-bold">${total}</span>
+                    <span className="font-bold">{cart.summary.total.toLocaleString('vi-VN')}₫</span>
                   </div>
                 </div>
 
-                <Link
-                  href="/order-confirmation?orderId=ORD-001"
-                  className="w-full bg-black text-white py-4 rounded-full font-medium hover:bg-gray-800 transition block text-center"
+                <button
+                  onClick={handleCheckout}
+                  disabled={submitting || !selectedAddressId}
+                  className="w-full bg-black text-white py-4 rounded-full font-medium hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Place Order
-                </Link>
+                  {submitting ? 'Processing...' : 'Place Order'}
+                </button>
+
+                {cart.unavailable_items > 0 && (
+                  <p className="text-xs text-center text-red-500">
+                    Some items are unavailable. Please update your cart.
+                  </p>
+                )}
               </div>
             </div>
           </div>
         </div>
       </main>
-
       <Footer />
     </div>
-  );
-}

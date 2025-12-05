@@ -1,79 +1,69 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, Filter, Plus, Edit2, Trash2, Download, Upload, Sparkles, Eye } from 'lucide-react';
+import { Search, Filter, Plus, Edit2, Trash2, Download, Upload, Sparkles, Eye, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import adminProductService, { AdminProduct } from '@/lib/services/admin/productService';
+import { showToast } from '@/components/Toast';
 
 export default function ProductsPage() {
   const router = useRouter();
+  const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedStockStatus, setSelectedStockStatus] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
   const [sortBy, setSortBy] = useState('name');
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
 
-  const allProducts = [
-    {
-      id: '1',
-      name: 'Gradient Graphic T-shirt',
-      sku: 'TSH-001',
-      category: 'T-Shirts',
-      price: 145,
-      stock: 245,
-      status: 'Active',
-      images: ['/bmm32410_black_xl.webp', '/bmm32410_black_xl.webp', '/bmm32410_black_xl.webp'],
-    },
-    {
-      id: '2',
-      name: 'Checkered Shirt',
-      sku: 'SHT-002',
-      category: 'Shirts',
-      price: 180,
-      stock: 89,
-      status: 'Active',
-      images: ['/bmm32410_black_xl.webp', '/bmm32410_black_xl.webp'],
-    },
-    {
-      id: '3',
-      name: 'Skinny Fit Jeans',
-      sku: 'JNS-003',
-      category: 'Jeans',
-      price: 240,
-      stock: 0,
-      status: 'Out of Stock',
-      images: ['/bmm32410_black_xl.webp'],
-    },
-  ];
+  useEffect(() => {
+    fetchProducts();
+  }, [currentPage, selectedCategory, selectedStockStatus]);
 
-  // Filter and sort products
-  const products = allProducts
-    .filter((p) => {
-      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                           p.sku.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
-      const matchesStock = selectedStockStatus === 'all' || 
-                          (selectedStockStatus === 'in-stock' && p.stock > 0) ||
-                          (selectedStockStatus === 'out-of-stock' && p.stock === 0) ||
-                          (selectedStockStatus === 'low-stock' && p.stock > 0 && p.stock < 50);
-      return matchesSearch && matchesCategory && matchesStock;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'name') return a.name.localeCompare(b.name);
-      if (sortBy === 'price-asc') return a.price - b.price;
-      if (sortBy === 'price-desc') return b.price - a.price;
-      if (sortBy === 'stock-asc') return a.stock - b.stock;
-      if (sortBy === 'stock-desc') return b.stock - a.stock;
-      return 0;
-    });
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await adminProductService.getProducts({
+        page: currentPage,
+        limit: 20,
+        category_id: selectedCategory !== 'all' ? parseInt(selectedCategory) : undefined,
+        status: selectedStockStatus === 'all' ? undefined : (selectedStockStatus as 'active' | 'inactive'),
+      });
+      setProducts(response.data.products);
+      setTotalPages(response.data.total_pages);
+    } catch (err) {
+      showToast('Failed to load products', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+    try {
+      await adminProductService.deleteProduct(id);
+      showToast('Product deleted successfully', 'success');
+      fetchProducts();
+    } catch (err) {
+      showToast('Failed to delete product', 'error');
+    }
+  };
+
+  const filteredProducts = products.filter((p) => {
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
+  });
 
   const handleSelectAll = (checked: boolean) => {
     setSelectedProducts(checked ? products.map((p) => p.id) : []);
   };
 
-  const handleSelectProduct = (id: string, checked: boolean) => {
-    setSelectedProducts((prev) => 
+  const handleSelectProduct = (id: number, checked: boolean) => {
+    setSelectedProducts((prev) =>
       checked ? [...prev, id] : prev.filter((pid) => pid !== id)
     );
   };
@@ -168,9 +158,9 @@ export default function ProductsPage() {
             <thead>
               <tr className="bg-[#F1F4F9] border-b border-gray-200">
                 <th className="px-6 py-4 text-left">
-                  <input 
-                    type="checkbox" 
-                    className="w-4 h-4 rounded" 
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded"
                     checked={selectedProducts.length === products.length && products.length > 0}
                     onChange={(e) => handleSelectAll(e.target.checked)}
                   />
@@ -185,8 +175,8 @@ export default function ProductsPage() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {products.map((product) => (
-                <tr 
-                  key={product.id} 
+                <tr
+                  key={product.id}
                   className="hover:bg-gray-50 transition cursor-pointer"
                   onClick={(e) => {
                     // Don't navigate if clicking on checkbox or action buttons
@@ -195,30 +185,36 @@ export default function ProductsPage() {
                   }}
                 >
                   <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       className="w-4 h-4 rounded"
                       checked={selectedProducts.includes(product.id)}
                       onChange={(e) => handleSelectProduct(product.id, e.target.checked)}
                     />
                   </td>
                   <td className="px-6 py-4">
-                    <span className="font-semibold text-sm text-[#202224]">{product.name}</span>
+                    <div className="flex items-center gap-3">
+                      {product.thumbnail_url && (
+                        <div className="w-12 h-12 relative rounded-lg overflow-hidden bg-gray-100">
+                          <Image src={product.thumbnail_url} alt={product.name} fill className="object-cover" />
+                        </div>
+                      )}
+                      <span className="font-semibold text-sm text-[#202224]">{product.name}</span>
+                    </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{product.category}</td>
-                  <td className="px-6 py-4 text-sm font-semibold text-[#202224]">${product.price}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{product.category?.name || 'N/A'}</td>
+                  <td className="px-6 py-4 text-sm font-semibold text-[#202224]">{product.selling_price.toLocaleString('vi-VN')}₫</td>
                   <td className="px-6 py-4">
-                    <span className={`text-sm font-semibold ${product.stock > 50 ? 'text-green-600' : product.stock > 0 ? 'text-yellow-600' : 'text-red-600'}`}>
-                      {product.stock}
+                    <span className={`text-sm font-semibold ${product.total_stock > 50 ? 'text-green-600' : product.total_stock > 0 ? 'text-yellow-600' : 'text-red-600'}`}>
+                      {product.total_stock}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        product.status === 'Active'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-red-100 text-red-700'
-                      }`}
+                      className={`px-3 py-1 rounded-full text-xs font-bold ${product.status === 'active'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-red-100 text-red-700'
+                        }`}
                     >
                       {product.status}
                     </span>

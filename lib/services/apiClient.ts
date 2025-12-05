@@ -35,38 +35,108 @@ apiClient.interceptors.request.use(
     }
 );
 
+// Track if we're currently refreshing to avoid multiple refresh attempts
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+    failedQueue.forEach(prom => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+    failedQueue = [];
+};
+
 // Response Interceptor - Global Error Handling
 apiClient.interceptors.response.use(
     (response) => {
         // Return successful response
         return response;
     },
-    (error: AxiosError) => {
+    async (error: AxiosError) => {
+        const originalRequest: any = error.config;
+
         // Handle 401 Unauthorized - Token expired or invalid
-        if (error.response?.status === 401) {
-            // Clear auth data
+        if (error.response?.status === 401 && !originalRequest._retry) {
             if (typeof window !== 'undefined') {
                 const currentPath = window.location.pathname;
                 const isAdminPath = currentPath.startsWith('/admin');
 
-                if (isAdminPath) {
-                    // Clear admin auth data
+                // Don't try to refresh on login/register pages
+                if (currentPath.includes('/login') || currentPath.includes('/register') ||
+                    currentPath.includes('/admin-login')) {
+                    return Promise.reject(error);
+                }
+
+                // Try to refresh token
+                if (!isAdminPath) {
+                    const refreshToken = localStorage.getItem('refresh_token');
+
+                    if (refreshToken && !isRefreshing) {
+                        isRefreshing = true;
+                        originalRequest._retry = true;
+
+                        try {
+                            // Call refresh token endpoint
+                            const response = await axios.post(
+                                `${API_BASE_URL}/api/v1/auth/refresh`,
+                                { refresh_token: refreshToken }
+                            );
+
+                            const newAccessToken = response.data.access_token;
+                            localStorage.setItem('access_token', newAccessToken);
+
+                            // Update authorization header
+                            if (originalRequest.headers) {
+                                originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+                            }
+
+                            isRefreshing = false;
+                            processQueue(null, newAccessToken);
+
+                            // Retry original request
+                            return apiClient(originalRequest);
+                        } catch (refreshError) {
+                            isRefreshing = false;
+                            processQueue(refreshError, null);
+
+                            // Refresh failed - clear auth and redirect
+                            localStorage.removeItem('access_token');
+                            localStorage.removeItem('refresh_token');
+                            localStorage.removeItem('user');
+                            window.location.href = '/login?session_expired=true';
+
+                            return Promise.reject(refreshError);
+                        }
+                    } else if (isRefreshing) {
+                        // Queue requests while refreshing
+                        return new Promise((resolve, reject) => {
+                            failedQueue.push({ resolve, reject });
+                        }).then(token => {
+                            if (originalRequest.headers) {
+                                originalRequest.headers.Authorization = `Bearer ${token}`;
+                            }
+                            return apiClient(originalRequest);
+                        }).catch(err => {
+                            return Promise.reject(err);
+                        });
+                    } else {
+                        // No refresh token - clear and redirect
+                        localStorage.removeItem('access_token');
+                        localStorage.removeItem('refresh_token');
+                        localStorage.removeItem('user');
+                        window.location.href = '/login?session_expired=true';
+                    }
+                } else {
+                    // Admin path - clear admin auth
                     localStorage.removeItem('admin_access_token');
                     localStorage.removeItem('admin');
 
-                    // Redirect to admin login
                     if (!currentPath.includes('/admin-login')) {
                         window.location.href = '/admin-login?session_expired=true';
-                    }
-                } else {
-                    // Clear customer auth data
-                    localStorage.removeItem('access_token');
-                    localStorage.removeItem('refresh_token');
-                    localStorage.removeItem('user');
-
-                    // Redirect to customer login
-                    if (!currentPath.includes('/login') && !currentPath.includes('/register')) {
-                        window.location.href = '/login?session_expired=true';
                     }
                 }
             }

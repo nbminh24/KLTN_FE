@@ -129,6 +129,7 @@ export default function HomePage() {
                     originalPrice={product.original_price}
                     rating={product.average_rating || 0}
                     discount={product.discount_percentage}
+                    variantId={product.variants?.[0]?.id}
                   />
                 ))}
               </div>
@@ -181,6 +182,7 @@ export default function HomePage() {
                     originalPrice={product.original_price}
                     rating={product.average_rating || 0}
                     discount={product.discount_percentage}
+                    variantId={product.variants?.[0]?.id}
                   />
                 ))}
               </div>
@@ -222,6 +224,7 @@ export default function HomePage() {
                     originalPrice={product.original_price}
                     rating={product.average_rating || 0}
                     discount={product.discount_percentage}
+                    variantId={product.variants?.[0]?.id}
                   />
                 ))}
               </div>

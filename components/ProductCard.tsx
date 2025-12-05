@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Star, Heart, ShoppingCart } from 'lucide-react';
-import { toggleWishlist, isInWishlist } from '@/lib/wishlist';
+import wishlistService from '@/lib/services/wishlistService';
 import { showToast } from './Toast';
+import axios from 'axios';
 
 interface ProductCardProps {
   id: string;
@@ -15,6 +16,7 @@ interface ProductCardProps {
   originalPrice?: number;
   rating: number;
   discount?: number;
+  variantId?: number; // Add variant_id prop for API
 }
 
 export default function ProductCard({
@@ -25,38 +27,81 @@ export default function ProductCard({
   originalPrice,
   rating,
   discount,
+  variantId,
 }: ProductCardProps) {
   const [isWished, setIsWished] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
 
+  // Check if in wishlist on mount
   useEffect(() => {
-    setIsWished(isInWishlist(id));
+    checkWishlistStatus();
   }, [id]);
 
-  const handleWishlistToggle = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent navigation to product page
+  const checkWishlistStatus = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) return;
+
+      const response = await wishlistService.getWishlist();
+      // Backend returns: { data: WishlistItem[], count: number }
+      const wishlistData = response.data.data || [];
+
+      // Check if this product's variant is in wishlist
+      const inWishlist = wishlistData.some((item: any) =>
+        item.product?.id === Number(id) || item.variant_id === variantId
+      );
+      setIsWished(inWishlist);
+    } catch (err) {
+      // Silent fail for wishlist check
+    }
+  };
+
+  const handleWishlistToggle = async (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
 
-    const added = toggleWishlist({
-      id,
-      name,
-      image,
-      price,
-      originalPrice,
-      rating,
-      discount,
-    });
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      showToast('Please login to add to wishlist', 'error');
+      return;
+    }
 
-    setIsWished(added);
-    showToast(
-      added ? 'Added to wishlist!' : 'Removed from wishlist',
-      added ? 'success' : 'info'
-    );
+    // Option 2: If no variantId, redirect to product detail page
+    if (!variantId) {
+      showToast('Select size and color on product page', 'info');
+      window.location.href = `/products/${id}`;
+      return;
+    }
+
+    setWishlistLoading(true);
+
+    try {
+      if (isWished) {
+        // Remove from wishlist
+        await wishlistService.removeFromWishlist(variantId);
+        setIsWished(false);
+        showToast('Removed from wishlist', 'info');
+      } else {
+        // Add to wishlist
+        await wishlistService.addToWishlist(variantId);
+        setIsWished(true);
+        showToast('Added to wishlist!', 'success');
+      }
+    } catch (err: any) {
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
+        showToast('Please login to add to wishlist', 'error');
+      } else {
+        showToast('Failed to update wishlist', 'error');
+      }
+    } finally {
+      setWishlistLoading(false);
+    }
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     // Add to cart logic (will integrate with cart context later)
     showToast('Added to cart!', 'success');
   };
@@ -72,15 +117,14 @@ export default function ProductCard({
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
-          
+
           {/* Wishlist Button */}
           <button
             onClick={handleWishlistToggle}
-            className={`absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center transition-all ${
-              isWished
-                ? 'bg-red-500 text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-100'
-            }`}
+            className={`absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center transition-all ${isWished
+              ? 'bg-red-500 text-white'
+              : 'bg-white text-gray-600 hover:bg-gray-100'
+              }`}
             title={isWished ? 'Remove from wishlist' : 'Add to wishlist'}
           >
             <Heart className={`w-5 h-5 ${isWished ? 'fill-current' : ''}`} />
@@ -100,16 +144,15 @@ export default function ProductCard({
         {/* Product Info */}
         <div className="space-y-2">
           <h3 className="font-bold text-sm md:text-base line-clamp-1">{name}</h3>
-          
+
           {/* Rating */}
           <div className="flex items-center gap-2">
             <div className="flex gap-0.5">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`w-3 h-3 md:w-4 md:h-4 ${
-                    i < Math.floor(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
-                  }`}
+                  className={`w-3 h-3 md:w-4 md:h-4 ${i < Math.floor(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+                    }`}
                 />
               ))}
             </div>

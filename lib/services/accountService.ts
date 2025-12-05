@@ -7,12 +7,14 @@ export interface UserProfile {
     id: number;
     email: string;
     name: string;
-    phone?: string;
+    // Note: phone is NOT in customer profile
+    // Phone numbers are stored in customer_addresses table
 }
 
 export interface UpdateProfileData {
     name?: string;
-    phone?: string;
+    // Note: phone is NOT supported in profile update
+    // Phone numbers are managed in addresses, not in customer profile
 }
 
 export interface ChangePasswordData {
@@ -22,12 +24,9 @@ export interface ChangePasswordData {
 
 export interface Address {
     id?: number;
-    recipient_name: string;
-    phone: string;
-    address_line: string;
-    city: string;
-    district: string;
-    ward: string;
+    address_type?: 'Home' | 'Office';
+    detailed_address: string;
+    phone_number: string;
     is_default: boolean;
 }
 
@@ -61,8 +60,9 @@ const accountService = {
     /**
      * Get saved addresses
      * GET /account/addresses
+     * Backend returns: { data: Address[] }
      */
-    getAddresses: async (): Promise<AxiosResponse<{ addresses: Address[] }>> => {
+    getAddresses: async (): Promise<AxiosResponse<{ data: Address[] } | { addresses: Address[] }>> => {
         return apiClient.get('/account/addresses');
     },
 

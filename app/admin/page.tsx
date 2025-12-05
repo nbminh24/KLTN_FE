@@ -1,65 +1,80 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { TrendingUp, DollarSign, ShoppingCart, MessageSquare, AlertTriangle, ArrowUp } from 'lucide-react';
+import { TrendingUp, DollarSign, ShoppingCart, MessageSquare, AlertTriangle, ArrowUp, Loader2, Users } from 'lucide-react';
 import Link from 'next/link';
+import dashboardService, { DashboardStats } from '@/lib/services/admin/dashboardService';
 
 type DateRange = '7' | '30' | '90';
 
 export default function AdminDashboard() {
   const router = useRouter();
   const [dateRange, setDateRange] = useState<DateRange>('30');
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Calculate stats (mock data)
-  const totalRevenue = 150000000;
-  const newOrders = 450;
-  const aov = Math.round(totalRevenue / newOrders);
-  const aiResponseRate = 85; // 1 - (Fallbacks + Escalations) / Total Conversations
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      router.push('/admin/login');
+      return;
+    }
+    fetchStats();
+  }, [dateRange]);
 
-  const stats = [
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+      const response = await dashboardService.getDashboardStats();
+      setStats(response.data);
+    } catch (err) {
+      console.error('Failed to fetch stats:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading || !stats) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-12 h-12 animate-spin text-gray-600" />
+      </div>
+    );
+  }
+
+  const statCards = [
     {
       title: 'Total Revenue',
-      value: `${totalRevenue.toLocaleString('vi-VN')} VND`,
-      change: '+12%',
-      subtitle: 'vs previous period',
+      value: `${stats.total_revenue.toLocaleString('vi-VN')} VND`,
+      subtitle: 'Total earnings',
       icon: <DollarSign className="w-7 h-7" />,
       color: 'bg-green-500',
     },
     {
-      title: 'New Orders',
-      value: newOrders.toString(),
-      change: '+8%',
-      subtitle: 'vs previous period',
+      title: 'Total Orders',
+      value: stats.total_orders.toString(),
+      subtitle: 'All time orders',
       icon: <ShoppingCart className="w-7 h-7" />,
       color: 'bg-blue-500',
     },
     {
-      title: 'Average Order Value',
-      value: `${aov.toLocaleString('vi-VN')} VND`,
-      change: '+5%',
-      subtitle: 'vs previous period',
-      icon: <TrendingUp className="w-7 h-7" />,
+      title: 'Total Customers',
+      value: stats.total_customers.toString(),
+      subtitle: 'Registered users',
+      icon: <Users className="w-7 h-7" />,
       color: 'bg-purple-500',
     },
     {
-      title: 'AI Response Rate',
-      value: `${aiResponseRate}%`,
-      change: '+3%',
-      subtitle: 'vs previous period',
-      icon: <MessageSquare className="w-7 h-7" />,
+      title: 'Pending Orders',
+      value: stats.pending_orders.toString(),
+      subtitle: 'Needs attention',
+      icon: <AlertTriangle className="w-7 h-7" />,
       color: 'bg-orange-500',
     },
   ];
 
-  // Pending orders (latest 5)
-  const pendingOrders = [
-    { id: '#ORD-001', customer: 'Christine Brooks', amount: '500,000 VND', time: '2h ago' },
-    { id: '#ORD-002', customer: 'Rosie Pearson', amount: '750,000 VND', time: '3h ago' },
-    { id: '#ORD-003', customer: 'Darrell Caldwell', amount: '300,000 VND', time: '5h ago' },
-    { id: '#ORD-004', customer: 'Gilbert Johnston', amount: '450,000 VND', time: '6h ago' },
-    { id: '#ORD-005', customer: 'Alan Cain', amount: '600,000 VND', time: '8h ago' },
-  ];
+  const recentOrders = stats.recent_orders || [];
 
   // Sales chart data (daily revenue for last 30 days)
   const salesChartData = [
@@ -86,7 +101,7 @@ export default function AdminDashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
+        {statCards.map((stat, index) => (
           <div
             key={index}
             className="bg-white rounded-xl p-6 shadow-sm border border-gray-200"
@@ -100,13 +115,7 @@ export default function AdminDashboard() {
                 {stat.icon}
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <ArrowUp className="w-4 h-4 text-green-600" />
-              <span className="text-sm font-semibold text-green-600">
-                {stat.change}
-              </span>
-              <span className="text-sm text-gray-600">{stat.subtitle}</span>
-            </div>
+            <div className="text-sm text-gray-600">{stat.subtitle}</div>
           </div>
         ))}
       </div>
@@ -142,11 +151,11 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Pending Orders Widget */}
+      {/* Recent Orders Widget */}
       <div className="bg-white rounded-xl p-6 border border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-[#202224]">
-            ⚠️ Pending Orders ({pendingOrders.length})
+            Recent Orders ({recentOrders.length})
           </h2>
           <Link
             href="/admin/orders"
@@ -156,21 +165,29 @@ export default function AdminDashboard() {
           </Link>
         </div>
         <div className="space-y-3">
-          {pendingOrders.map((order) => (
-            <div
-              key={order.id}
-              className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
-            >
-              <div className="flex items-center gap-4 flex-1">
-                <span className="font-mono text-sm font-semibold text-[#4880FF]">{order.id}</span>
-                <span className="text-sm font-semibold text-[#202224]">{order.customer}</span>
+          {recentOrders.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">No recent orders</p>
+          ) : (
+            recentOrders.map((order) => (
+              <div
+                key={order.id}
+                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
+              >
+                <div className="flex items-center gap-4 flex-1">
+                  <Link href={`/admin/orders/${order.id}`} className="font-mono text-sm font-semibold text-[#4880FF] hover:underline">
+                    #{order.id}
+                  </Link>
+                  <span className="text-sm font-semibold text-[#202224]">{order.customer_name}</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-bold text-[#202224]">{order.total_amount.toLocaleString('vi-VN')} VND</span>
+                  <span className={`text-xs px-2 py-1 rounded-full ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
+                    {order.status}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-4">
-                <span className="text-sm font-bold text-[#202224]">{order.amount}</span>
-                <span className="text-sm text-gray-500">{order.time}</span>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 

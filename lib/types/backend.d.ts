@@ -76,12 +76,22 @@ export interface ProductVariant {
     created_at: string;
     updated_at: string;
     deleted_at?: string;
-    // Extended fields from JOIN
+    // Extended fields from JOIN (flat structure)
     size_name?: string;
     color_name?: string;
     color_hex?: string;
     available_stock?: number;
     images?: string[];
+    // Nested object structure (from API)
+    size?: {
+        id: number;
+        name: string;
+    };
+    color?: {
+        id: number;
+        name: string;
+        hex_code: string;
+    };
 }
 
 export interface Product {
@@ -340,13 +350,44 @@ export interface ProductsResponse {
 }
 
 export interface CartResponse {
-    cart: Cart;
-    items: CartItem[];
-    subtotal: number;
-    discount: number;
-    shipping_fee: number;
-    total: number;
-    applied_promotions?: Promotion[];
+    cart_id: number;
+    customer_id?: number;
+    items: Array<{
+        id: number;
+        cart_id: number;
+        variant_id: number;
+        quantity: number;
+        product: {
+            id: number;
+            name: string;
+            slug: string;
+            thumbnail_url: string;
+        };
+        variant: {
+            id: number;
+            sku: string;
+            size: string;
+            color: string;
+            color_hex: string;
+            price: number;
+            available_stock: number;
+            status: string;
+            image_url?: string;
+        };
+        subtotal: number;
+        is_available: boolean;
+        stock_message?: string | null;
+    }>;
+    summary: {
+        items_count: number;
+        subtotal: number;
+        shipping_fee: number;
+        discount: number;
+        total: number;
+    };
+    unavailable_items: number;
+    created_at: string;
+    updated_at: string;
 }
 
 export interface CreateOrderResponse {

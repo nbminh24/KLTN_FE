@@ -1,18 +1,46 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, Loader2 } from 'lucide-react';
+import adminCustomerService, { AdminCustomer } from '@/lib/services/admin/customerService';
+import { showToast } from '@/components/Toast';
 
 export default function CustomersPage() {
   const router = useRouter();
+  const [customers, setCustomers] = useState<AdminCustomer[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [sortField, setSortField] = useState('joined');
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [sortField, setSortField] = useState('created_at');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const customers = [
+  useEffect(() => {
+    fetchCustomers();
+  }, [currentPage, statusFilter]);
+
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+      const response = await adminCustomerService.getCustomers({
+        page: currentPage,
+        limit: 20,
+        search: searchQuery,
+        status: statusFilter === 'all' ? undefined : statusFilter,
+      });
+      setCustomers(response.data.customers);
+      setTotalPages(response.data.total_pages);
+    } catch (err) {
+      showToast('Failed to load customers', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const mockCustomers = [
     {
       id: '1',
       name: 'Christine Brooks',
@@ -77,16 +105,16 @@ export default function CustomersPage() {
     .filter((customer) => {
       // Search filter
       const matchesSearch = customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           customer.email.toLowerCase().includes(searchQuery.toLowerCase());
-      
+        customer.email.toLowerCase().includes(searchQuery.toLowerCase());
+
       // Status filter
       const matchesStatus = statusFilter === 'all' || customer.status.toLowerCase() === statusFilter.toLowerCase();
-      
+
       return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
       let comparison = 0;
-      
+
       switch (sortField) {
         case 'orders':
           comparison = a.orders - b.orders;
@@ -100,7 +128,7 @@ export default function CustomersPage() {
         default:
           return 0;
       }
-      
+
       return sortOrder === 'asc' ? comparison : -comparison;
     });
 
@@ -137,7 +165,7 @@ export default function CustomersPage() {
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
             />
           </div>
-          <select 
+          <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
@@ -183,8 +211,8 @@ export default function CustomersPage() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredCustomers.map((customer) => (
-                <tr 
-                  key={customer.id} 
+                <tr
+                  key={customer.id}
                   onClick={() => router.push(`/admin/customers/${customer.id}`)}
                   className="hover:bg-gray-50 transition cursor-pointer"
                 >
@@ -203,11 +231,10 @@ export default function CustomersPage() {
                   <td className="px-6 py-4 text-sm text-gray-600">{customer.joined}</td>
                   <td className="px-6 py-4">
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        customer.status === 'Active'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-red-100 text-red-700'
-                      }`}
+                      className={`px-3 py-1 rounded-full text-xs font-bold ${customer.status === 'Active'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-red-100 text-red-700'
+                        }`}
                     >
                       {customer.status}
                     </span>
