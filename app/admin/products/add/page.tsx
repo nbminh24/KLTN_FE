@@ -60,16 +60,33 @@ export default function AddProductPage() {
   const loadData = async () => {
     try {
       setLoadingData(true);
+      console.log('📐 Loading sizes, colors, categories...');
+
       const [sizesRes, colorsRes, categoriesRes] = await Promise.all([
         adminSizeService.getSizes(),
         adminColorService.getColors(),
         adminCategoryService.getCategories()
       ]);
-      setSizes(Array.isArray(sizesRes.data) ? sizesRes.data : []);
-      setColors(Array.isArray(colorsRes.data) ? colorsRes.data : []);
-      setCategories(Array.isArray(categoriesRes.data) ? categoriesRes.data : []);
-    } catch (error) {
-      console.error('Failed to load data:', error);
+
+      console.log('📐 Sizes response:', sizesRes.data);
+      console.log('🎨 Colors response:', colorsRes.data);
+      console.log('📁 Categories response:', categoriesRes.data);
+
+      // Handle different response structures
+      const sizesData = (sizesRes.data as any)?.data || sizesRes.data || [];
+      const colorsData = (colorsRes.data as any)?.data || colorsRes.data || [];
+      const categoriesData = (categoriesRes.data as any)?.data || categoriesRes.data || [];
+
+      console.log('📐 Sizes list:', sizesData.length, 'items');
+      console.log('🎨 Colors list:', colorsData.length, 'items');
+      console.log('📁 Categories list:', categoriesData.length, 'items');
+
+      setSizes(Array.isArray(sizesData) ? sizesData : []);
+      setColors(Array.isArray(colorsData) ? colorsData : []);
+      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+    } catch (error: any) {
+      console.error('❌ Failed to load data:', error);
+      console.error('❌ Error response:', error.response?.data);
       showToast('Failed to load sizes, colors, and categories', 'error');
     } finally {
       setLoadingData(false);
@@ -146,34 +163,41 @@ export default function AddProductPage() {
 
       const productData = {
         name: productName,
-        slug: slug || generateSlug(productName),
         description,
         full_description: fullDescription,
         category_id: categoryId,
         cost_price: parseFloat(costPrice),
         selling_price: parseFloat(sellingPrice),
-        thumbnail_url: thumbnailUrl,
         status,
+        sku: slug || generateSlug(productName),
         variants: variants
           .filter(v => v.status === 'active')
           .map(v => ({
-            size_id: v.size_id,
-            color_id: v.color_id,
-            name: v.name,
+            size_id: v.size_id,      // Backend wants ID (number)
+            color_id: v.color_id,    // Backend wants ID (number)
             sku: v.sku,
-            total_stock: v.total_stock,
-            reserved_stock: v.reserved_stock,
-            reorder_point: v.reorder_point,
+            stock: v.total_stock || 0,
             status: v.status
           }))
       };
 
+      console.log('📦 Creating product with data:', productData);
+      console.log('📦 Variants count:', productData.variants.length);
+
       await adminProductService.createProduct(productData);
+
+      console.log('✅ Product created successfully!');
       showToast('Product created successfully!', 'success');
       router.push('/admin/products');
     } catch (error: any) {
-      console.error('Failed to create product:', error);
-      showToast(error.response?.data?.message || 'Failed to create product', 'error');
+      console.error('❌ Failed to create product:', error);
+      console.error('❌ Error response:', error.response?.data);
+      console.error('❌ Error status:', error.response?.status);
+      console.error('❌ Error message:', error.response?.data?.message);
+      console.error('❌ Validation errors:', error.response?.data?.errors);
+
+      const errorMsg = error.response?.data?.message || 'Failed to create product';
+      showToast(errorMsg, 'error');
     } finally {
       setLoading(false);
     }

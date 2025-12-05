@@ -27,16 +27,30 @@ export default function ProductsPage() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
+      console.log('📦 Fetching products...');
       const response = await adminProductService.getProducts({
         page: currentPage,
         limit: 20,
         category_id: selectedCategory !== 'all' ? parseInt(selectedCategory) : undefined,
         status: selectedStockStatus === 'all' ? undefined : (selectedStockStatus as 'active' | 'inactive'),
       });
-      setProducts(response.data.products);
-      setTotalPages(response.data.total_pages);
-    } catch (err) {
+      console.log('📦 Products response:', response.data);
+
+      // Backend returns: { data: [...], metadata: { total_pages: ... } }
+      const backendData: any = response.data;
+      const productsList = backendData.data || backendData.products || [];
+      const pages = backendData.metadata?.total_pages || backendData.total_pages || 1;
+
+      console.log('📦 Products list:', productsList.length, 'items');
+      console.log('📦 Total pages:', pages);
+
+      setProducts(productsList);
+      setTotalPages(pages);
+    } catch (err: any) {
+      console.error('❌ Failed to load products:', err);
+      console.error('❌ Error response:', err.response?.data);
       showToast('Failed to load products', 'error');
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -53,13 +67,13 @@ export default function ProductsPage() {
     }
   };
 
-  const filteredProducts = products.filter((p) => {
+  const filteredProducts = (products || []).filter((p) => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
 
   const handleSelectAll = (checked: boolean) => {
-    setSelectedProducts(checked ? products.map((p) => p.id) : []);
+    setSelectedProducts(checked ? (products || []).map((p) => p.id) : []);
   };
 
   const handleSelectProduct = (id: number, checked: boolean) => {

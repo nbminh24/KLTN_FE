@@ -26,10 +26,44 @@ export default function AdminDashboard() {
   const fetchStats = async () => {
     try {
       setLoading(true);
-      const response = await dashboardService.getDashboardStats();
-      setStats(response.data);
-    } catch (err) {
-      console.error('Failed to fetch stats:', err);
+      const daysParam = parseInt(dateRange);
+      console.log('📊 Fetching dashboard stats for', daysParam, 'days...');
+      console.log('📊 API params:', { days: daysParam });
+
+      const response = await dashboardService.getDashboardStats({
+        days: daysParam
+      });
+      console.log('📊 Dashboard stats response:', response.data);
+      console.log('📊 Request URL:', response.config?.url);
+
+      // Transform backend camelCase to frontend snake_case
+      const backendData: any = response.data;
+      const transformedData: DashboardStats = {
+        total_orders: backendData.stats?.totalOrders || 0,
+        total_customers: backendData.stats?.totalCustomers || 0,
+        total_products: backendData.stats?.totalProducts || 0,
+        total_revenue: backendData.stats?.totalRevenue || 0,
+        pending_orders: backendData.stats?.pendingOrders || 0,
+        recent_orders: backendData.recentOrders || []
+      };
+
+      console.log('📊 Transformed stats:', transformedData);
+      setStats(transformedData);
+    } catch (err: any) {
+      console.error('❌ Failed to fetch dashboard stats:', err);
+      console.error('❌ Error response:', err.response?.data);
+      console.error('❌ Error status:', err.response?.status);
+
+      // Use fallback mock data if API fails
+      console.log('⚠️ Using fallback mock data for dashboard');
+      setStats({
+        total_orders: 0,
+        total_customers: 0,
+        total_products: 0,
+        total_revenue: 0,
+        pending_orders: 0,
+        recent_orders: []
+      });
     } finally {
       setLoading(false);
     }
@@ -46,35 +80,35 @@ export default function AdminDashboard() {
   const statCards = [
     {
       title: 'Total Revenue',
-      value: `${stats.total_revenue.toLocaleString('vi-VN')} VND`,
+      value: `${(stats?.total_revenue || 0).toLocaleString('vi-VN')} VND`,
       subtitle: 'Total earnings',
       icon: <DollarSign className="w-7 h-7" />,
       color: 'bg-green-500',
     },
     {
       title: 'Total Orders',
-      value: stats.total_orders.toString(),
+      value: (stats?.total_orders || 0).toString(),
       subtitle: 'All time orders',
       icon: <ShoppingCart className="w-7 h-7" />,
       color: 'bg-blue-500',
     },
     {
       title: 'Total Customers',
-      value: stats.total_customers.toString(),
+      value: (stats?.total_customers || 0).toString(),
       subtitle: 'Registered users',
       icon: <Users className="w-7 h-7" />,
       color: 'bg-purple-500',
     },
     {
       title: 'Pending Orders',
-      value: stats.pending_orders.toString(),
+      value: (stats?.pending_orders || 0).toString(),
       subtitle: 'Needs attention',
       icon: <AlertTriangle className="w-7 h-7" />,
       color: 'bg-orange-500',
     },
   ];
 
-  const recentOrders = stats.recent_orders || [];
+  const recentOrders = stats?.recent_orders || [];
 
   // Sales chart data (daily revenue for last 30 days)
   const salesChartData = [

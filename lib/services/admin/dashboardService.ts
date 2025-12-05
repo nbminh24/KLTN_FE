@@ -49,8 +49,10 @@ const dashboardService = {
      * Get dashboard statistics
      * GET /admin/dashboard/stats
      */
-    getDashboardStats: async (): Promise<AxiosResponse<DashboardStats>> => {
-        return apiClient.get('/admin/dashboard/stats');
+    getDashboardStats: async (params?: {
+        days?: number;
+    }): Promise<AxiosResponse<DashboardStats>> => {
+        return apiClient.get('/admin/dashboard/stats', { params });
     },
 
     /**

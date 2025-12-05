@@ -47,22 +47,18 @@ export interface ProductVariant {
 
 export interface CreateProductData {
     name: string;
-    slug?: string;
+    sku: string;
     description?: string;
     full_description?: string;
     category_id: number;
     selling_price: number;
     cost_price: number;
-    thumbnail_url?: string;
     status?: 'active' | 'inactive';
     variants?: Array<{
-        size_id: number;
-        color_id: number;
-        name?: string;
+        size_id: number;  // Foreign key to sizes table
+        color_id: number;  // Foreign key to colors table
         sku: string;
-        total_stock: number;
-        reserved_stock?: number;
-        reorder_point?: number;
+        stock: number;
         status?: 'active' | 'inactive';
     }>;
 }
