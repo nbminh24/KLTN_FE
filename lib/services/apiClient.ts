@@ -17,7 +17,11 @@ apiClient.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
         // Get token from localStorage (only in browser)
         if (typeof window !== 'undefined') {
-            const token = localStorage.getItem('access_token');
+            // Check if request is for admin API
+            const isAdminRequest = config.url?.includes('/admin/');
+            const token = isAdminRequest
+                ? localStorage.getItem('admin_access_token')
+                : localStorage.getItem('access_token');
 
             if (token && config.headers) {
                 config.headers.Authorization = `Bearer ${token}`;
@@ -42,15 +46,28 @@ apiClient.interceptors.response.use(
         if (error.response?.status === 401) {
             // Clear auth data
             if (typeof window !== 'undefined') {
-                localStorage.removeItem('access_token');
-                localStorage.removeItem('refresh_token');
-                localStorage.removeItem('user');
-
-                // Redirect to login page
-                // Only redirect if not already on auth pages
                 const currentPath = window.location.pathname;
-                if (!currentPath.includes('/login') && !currentPath.includes('/register')) {
-                    window.location.href = '/login?session_expired=true';
+                const isAdminPath = currentPath.startsWith('/admin');
+
+                if (isAdminPath) {
+                    // Clear admin auth data
+                    localStorage.removeItem('admin_access_token');
+                    localStorage.removeItem('admin');
+
+                    // Redirect to admin login
+                    if (!currentPath.includes('/admin-login')) {
+                        window.location.href = '/admin-login?session_expired=true';
+                    }
+                } else {
+                    // Clear customer auth data
+                    localStorage.removeItem('access_token');
+                    localStorage.removeItem('refresh_token');
+                    localStorage.removeItem('user');
+
+                    // Redirect to customer login
+                    if (!currentPath.includes('/login') && !currentPath.includes('/register')) {
+                        window.location.href = '/login?session_expired=true';
+                    }
                 }
             }
         }
@@ -91,7 +108,10 @@ export const createFormDataClient = (): AxiosInstance => {
     formDataClient.interceptors.request.use(
         (config: InternalAxiosRequestConfig) => {
             if (typeof window !== 'undefined') {
-                const token = localStorage.getItem('access_token');
+                const isAdminRequest = config.url?.includes('/admin/');
+                const token = isAdminRequest
+                    ? localStorage.getItem('admin_access_token')
+                    : localStorage.getItem('access_token');
                 if (token && config.headers) {
                     config.headers.Authorization = `Bearer ${token}`;
                 }
@@ -105,12 +125,22 @@ export const createFormDataClient = (): AxiosInstance => {
         (response) => response,
         (error: AxiosError) => {
             if (error.response?.status === 401 && typeof window !== 'undefined') {
-                localStorage.removeItem('access_token');
-                localStorage.removeItem('refresh_token');
-                localStorage.removeItem('user');
                 const currentPath = window.location.pathname;
-                if (!currentPath.includes('/login') && !currentPath.includes('/register')) {
-                    window.location.href = '/login?session_expired=true';
+                const isAdminPath = currentPath.startsWith('/admin');
+
+                if (isAdminPath) {
+                    localStorage.removeItem('admin_access_token');
+                    localStorage.removeItem('admin');
+                    if (!currentPath.includes('/admin-login')) {
+                        window.location.href = '/admin-login?session_expired=true';
+                    }
+                } else {
+                    localStorage.removeItem('access_token');
+                    localStorage.removeItem('refresh_token');
+                    localStorage.removeItem('user');
+                    if (!currentPath.includes('/login') && !currentPath.includes('/register')) {
+                        window.location.href = '/login?session_expired=true';
+                    }
                 }
             }
             return Promise.reject(error);

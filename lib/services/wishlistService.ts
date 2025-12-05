@@ -40,7 +40,7 @@ const wishlistService = {
      * Requires authentication.
      */
     getWishlist: async (): Promise<AxiosResponse<WishlistResponse>> => {
-        return apiClient.get('/api/v1/wishlist');
+        return apiClient.get('/wishlist');
     },
 
     /**
@@ -50,7 +50,7 @@ const wishlistService = {
      * If variant exists in wishlist, it will be removed. Otherwise, it will be added.
      */
     toggleWishlist: async (data: ToggleWishlistPayload): Promise<AxiosResponse<ToggleWishlistResponse>> => {
-        return apiClient.post('/api/v1/wishlist/toggle', data);
+        return apiClient.post('/wishlist/toggle', data);
     },
 
     /**
@@ -58,7 +58,7 @@ const wishlistService = {
      * DELETE /api/v1/wishlist/:variantId
      */
     removeFromWishlist: async (variantId: number): Promise<AxiosResponse<{ message: string }>> => {
-        return apiClient.delete(`/api/v1/wishlist/${variantId}`);
+        return apiClient.delete(`/wishlist/${variantId}`);
     },
 };
 

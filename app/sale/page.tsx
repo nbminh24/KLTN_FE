@@ -7,7 +7,8 @@ import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 import Pagination from '@/components/Pagination';
 import { ChevronRight, Loader2 } from 'lucide-react';
-import productService, { Product } from '@/lib/services/productService';
+import productService from '@/lib/services/productService';
+import type { Product } from '@/lib/types/backend';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -34,7 +35,12 @@ export default function SalePage() {
       const response = await productService.getOnSale(currentPage, ITEMS_PER_PAGE);
 
       setProducts(response.data.data);
-      setTotalPages(response.data.metadata.total_pages);
+
+      // Calculate totalPages if not provided by API
+      const pages = response.data.metadata.total_pages ||
+        Math.ceil(response.data.metadata.total / ITEMS_PER_PAGE);
+
+      setTotalPages(pages);
       setTotalProducts(response.data.metadata.total);
     } catch (err: any) {
       console.error('Error fetching on-sale products:', err);

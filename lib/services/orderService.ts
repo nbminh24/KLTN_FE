@@ -28,7 +28,7 @@ const orderService = {
             if (params.search) queryParams.append('search', params.search);
         }
 
-        return apiClient.get(`/api/v1/orders?${queryParams.toString()}`);
+        return apiClient.get(`/orders?${queryParams.toString()}`);
     },
 
     /**
@@ -38,7 +38,7 @@ const orderService = {
      * Requires authentication. Customer can only view their own orders.
      */
     getOrderDetail: async (id: number): Promise<AxiosResponse<OrderDetailResponse>> => {
-        return apiClient.get(`/api/v1/orders/${id}`);
+        return apiClient.get(`/orders/${id}`);
     },
 
     /**
@@ -46,7 +46,7 @@ const orderService = {
      * GET /api/v1/orders/:id/status-history
      */
     getOrderStatusHistory: async (id: number): Promise<AxiosResponse<OrderDetailResponse>> => {
-        return apiClient.get(`/api/v1/orders/${id}/status-history`);
+        return apiClient.get(`/orders/${id}/status-history`);
     },
 
     /**
@@ -56,7 +56,7 @@ const orderService = {
      * Requires authentication.
      */
     cancelOrder: async (id: number): Promise<AxiosResponse<{ message: string }>> => {
-        return apiClient.post(`/api/v1/orders/${id}/cancel`);
+        return apiClient.post(`/orders/${id}/cancel`);
     },
 
     /**
@@ -66,7 +66,7 @@ const orderService = {
      * No authentication required. For guest tracking via chatbot or public page.
      */
     trackOrderById: async (orderId: number): Promise<AxiosResponse<TrackOrderResponse>> => {
-        return apiClient.get('/api/v1/orders/track', {
+        return apiClient.get('/orders/track', {
             params: { order_id: orderId },
         });
     },
@@ -78,7 +78,7 @@ const orderService = {
      * No authentication required. For guest tracking.
      */
     trackOrderByContact: async (phone: string, email: string): Promise<AxiosResponse<TrackOrderResponse>> => {
-        return apiClient.get('/api/v1/orders/track', {
+        return apiClient.get('/orders/track', {
             params: { phone, email },
         });
     },

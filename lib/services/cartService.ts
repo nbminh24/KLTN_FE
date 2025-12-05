@@ -12,50 +12,58 @@ import type {
 const cartService = {
     /**
      * Get shopping cart with all items and calculations
-     * GET /api/v1/cart
+     * GET /cart
      */
     getCart: async (): Promise<AxiosResponse<CartResponse>> => {
-        return apiClient.get('/api/v1/cart');
+        return apiClient.get('/cart');
     },
 
     /**
      * Add product variant to cart (or increase quantity if exists)
-     * POST /api/v1/cart/items
+     * POST /cart/items
      */
     addToCart: async (data: AddToCartPayload): Promise<AxiosResponse<{ message: string }>> => {
-        return apiClient.post('/api/v1/cart/items', data);
+        return apiClient.post('/cart/items', data);
     },
 
     /**
      * Update cart item quantity
-     * PUT /api/v1/cart/items/:id
+     * PUT /cart/items/:id
      */
     updateCartItem: async (itemId: number, data: UpdateCartItemPayload): Promise<AxiosResponse<{ message: string }>> => {
-        return apiClient.put(`/api/v1/cart/items/${itemId}`, data);
+        return apiClient.put(`/cart/items/${itemId}`, data);
     },
 
     /**
      * Remove item from cart
-     * DELETE /api/v1/cart/items/:id
+     * DELETE /cart/items/:id
      */
     removeCartItem: async (itemId: number): Promise<AxiosResponse<{ message: string }>> => {
-        return apiClient.delete(`/api/v1/cart/items/${itemId}`);
+        return apiClient.delete(`/cart/items/${itemId}`);
+    },
+
+    /**
+     * Clear all items from cart
+     * DELETE /cart/clear
+     */
+    clearCart: async (): Promise<AxiosResponse<{ message: string }>> => {
+        return apiClient.delete('/cart/clear');
     },
 
     /**
      * Apply coupon/promotion code to cart
-     * POST /api/v1/cart/apply-coupon
+     * POST /cart/apply-coupon
      */
     applyCoupon: async (data: ApplyCouponPayload): Promise<AxiosResponse<CartResponse>> => {
-        return apiClient.post('/api/v1/cart/apply-coupon', data);
+        return apiClient.post('/cart/apply-coupon', data);
     },
 
     /**
-     * Remove applied coupon from cart
-     * DELETE /api/v1/cart/remove-coupon
+     * Merge guest cart to customer cart after login
+     * POST /cart/merge
      */
-    removeCoupon: async (): Promise<AxiosResponse<CartResponse>> => {
-        return apiClient.delete('/api/v1/cart/remove-coupon');
+    mergeCart: async (sessionId: string): Promise<AxiosResponse<{ message: string }>> => {
+        return apiClient.post('/cart/merge', { session_id: sessionId });
     },
 };
 

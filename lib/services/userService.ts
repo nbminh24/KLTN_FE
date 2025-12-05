@@ -18,90 +18,90 @@ const userService = {
 
     /**
      * Get customer profile information
-     * GET /api/v1/account/profile
+     * GET /account/profile
      * 
      * Requires authentication.
      */
     getProfile: async (): Promise<AxiosResponse<ProfileResponse>> => {
-        return apiClient.get('/api/v1/account/profile');
+        return apiClient.get('/account/profile');
     },
 
     /**
      * Update customer profile
-     * PUT /api/v1/account/profile
+     * PUT /account/profile
      * 
      * Updatable fields: full_name, phone, gender, date_of_birth, avatar_url
      */
     updateProfile: async (data: UpdateProfilePayload): Promise<AxiosResponse<{ customer: Customer }>> => {
-        return apiClient.put('/api/v1/account/profile', data);
+        return apiClient.put('/account/profile', data);
     },
 
     /**
      * Change password
-     * PUT /api/v1/account/password
+     * PUT /account/password
      * 
      * Requires current password for verification.
      */
     changePassword: async (data: ChangePasswordPayload): Promise<AxiosResponse<{ message: string }>> => {
-        return apiClient.put('/api/v1/account/password', data);
+        return apiClient.put('/account/password', data);
     },
 
     // ===== ADDRESS MANAGEMENT =====
 
     /**
      * Get all customer addresses
-     * GET /api/v1/account/addresses
+     * GET /account/addresses
      * 
      * Returns list of saved addresses with default flag.
      */
     getAddresses: async (): Promise<AxiosResponse<AddressesResponse>> => {
-        return apiClient.get('/api/v1/account/addresses');
+        return apiClient.get('/account/addresses');
     },
 
     /**
      * Get single address by ID
-     * GET /api/v1/account/addresses/:id
+     * GET /account/addresses/:id
      */
     getAddressById: async (id: number): Promise<AxiosResponse<{ address: CustomerAddress }>> => {
-        return apiClient.get(`/api/v1/account/addresses/${id}`);
+        return apiClient.get(`/account/addresses/${id}`);
     },
 
     /**
      * Add new address
-     * POST /api/v1/account/addresses
+     * POST /account/addresses
      * 
      * If is_default=true, will unset other default addresses.
      */
     addAddress: async (data: AddAddressPayload): Promise<AxiosResponse<{ address: CustomerAddress }>> => {
-        return apiClient.post('/api/v1/account/addresses', data);
+        return apiClient.post('/account/addresses', data);
     },
 
     /**
      * Update existing address
-     * PUT /api/v1/account/addresses/:id
+     * PUT /account/addresses/:id
      */
     updateAddress: async (id: number, data: UpdateAddressPayload): Promise<AxiosResponse<{ address: CustomerAddress }>> => {
-        return apiClient.put(`/api/v1/account/addresses/${id}`, data);
+        return apiClient.put(`/account/addresses/${id}`, data);
     },
 
     /**
      * Delete address
-     * DELETE /api/v1/account/addresses/:id
+     * DELETE /account/addresses/:id
      * 
      * Cannot delete if it's the only address.
      */
     deleteAddress: async (id: number): Promise<AxiosResponse<{ message: string }>> => {
-        return apiClient.delete(`/api/v1/account/addresses/${id}`);
+        return apiClient.delete(`/account/addresses/${id}`);
     },
 
     /**
      * Set address as default
-     * PATCH /api/v1/account/addresses/:id/set-default
+     * PATCH /account/addresses/:id/set-default
      * 
      * Will unset other default addresses automatically.
      */
     setDefaultAddress: async (id: number): Promise<AxiosResponse<{ message: string }>> => {
-        return apiClient.patch(`/api/v1/account/addresses/${id}/set-default`);
+        return apiClient.patch(`/account/addresses/${id}/set-default`);
     },
 };
 

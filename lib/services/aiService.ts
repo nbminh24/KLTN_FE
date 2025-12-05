@@ -1,18 +1,7 @@
-import apiClient, { createFormDataClient } from './apiClient';
+import { createFormDataClient } from './apiClient';
 import { AxiosResponse } from 'axios';
 
 // ========== INTERFACES ==========
-
-export interface ChatbotMessageData {
-    message: string;
-    session_id: string;
-}
-
-export interface ChatbotResponse {
-    responses: Array<{
-        text: string;
-    }>;
-}
 
 export interface ImageSearchResult {
     product_id: number;
@@ -29,19 +18,14 @@ export interface ImageSearchResponse {
 }
 
 // ========== AI SERVICE ==========
+// Note: Chat APIs have been moved to chatService.ts
 
 const aiService = {
     /**
-     * Send message to Rasa AI chatbot
-     * POST /ai/chatbot
-     */
-    sendChatbotMessage: async (data: ChatbotMessageData): Promise<AxiosResponse<ChatbotResponse>> => {
-        return apiClient.post('/ai/chatbot', data);
-    },
-
-    /**
      * AI-powered image search - upload image to find similar products
      * POST /ai/search/image
+     * 
+     * Uses computer vision to find similar products based on uploaded image.
      */
     imageSearch: async (imageFile: File): Promise<AxiosResponse<ImageSearchResponse>> => {
         const formData = new FormData();

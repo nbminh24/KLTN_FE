@@ -11,7 +11,7 @@ import type {
 const reviewService = {
     /**
      * Submit product review
-     * POST /api/v1/reviews
+     * POST /reviews
      * 
      * Requires authentication. Customer can only review purchased products.
      * Must provide order_item_id to verify purchase.
@@ -20,17 +20,27 @@ const reviewService = {
         message: string;
         review: ProductReview;
     }>> => {
-        return apiClient.post('/api/v1/reviews', data);
+        return apiClient.post('/reviews', data);
     },
 
     /**
      * Get list of products customer can review
-     * GET /api/v1/reviews/account/reviewable-items
+     * GET /reviews/account/reviewable-items
      * 
      * Returns delivered orders that haven't been reviewed yet.
      */
     getReviewableItems: async (): Promise<AxiosResponse<ReviewableItemsResponse>> => {
-        return apiClient.get('/api/v1/reviews/account/reviewable-items');
+        return apiClient.get('/reviews/account/reviewable-items');
+    },
+
+    /**
+     * Get my submitted reviews
+     * GET /reviews/customers/me/reviews
+     * 
+     * Requires authentication.
+     */
+    getMyReviews: async (): Promise<AxiosResponse<{ reviews: ProductReview[] }>> => {
+        return apiClient.get('/reviews/customers/me/reviews');
     },
 };
 

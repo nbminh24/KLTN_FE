@@ -27,20 +27,17 @@ const checkoutService = {
 
     /**
      * Generate VNPAY payment URL for order (Step 2 of checkout)
-     * POST /api/v1/payment/create_url
-     * 
-     * FIXED: Changed from /api/v1/checkout/create-payment-url to /api/v1/payment/create_url
-     * according to API_TECHNICAL_SPECIFICATION.md
+     * POST /api/v1/checkout/create-payment-url
      * 
      * Returns payment URL with signed checksum for VNPAY gateway
      */
     createPaymentUrl: async (data: CreatePaymentUrlPayload): Promise<AxiosResponse<CreatePaymentUrlResponse>> => {
-        return apiClient.post('/api/v1/payment/create_url', data);
+        return apiClient.post('/api/v1/checkout/create-payment-url', data);
     },
 
     /**
      * VNPAY return URL callback (Step 3)
-     * GET /api/v1/payment/vnpay_return
+     * GET /payment/vnpay_return
      * 
      * This endpoint is typically called by VNPAY redirect after payment.
      * Frontend should extract query params from URL and pass them here.
@@ -53,7 +50,7 @@ const checkoutService = {
         message: string;
     }>> => {
         const params = new URLSearchParams(queryParams);
-        return apiClient.get(`/api/v1/payment/vnpay_return?${params.toString()}`);
+        return apiClient.get(`/payment/vnpay_return?${params.toString()}`);
     },
 };
 

@@ -43,7 +43,7 @@ const productService = {
             }
         }
 
-        return apiClient.get(`/api/v1/products?${queryParams.toString()}`);
+        return apiClient.get(`/products?${queryParams.toString()}`);
     },
 
     /**
@@ -51,27 +51,105 @@ const productService = {
      * GET /api/v1/products/new-arrivals
      */
     getNewArrivals: async (page: number = 1, limit: number = 12): Promise<AxiosResponse<ProductsResponse>> => {
-        return apiClient.get('/api/v1/products/new-arrivals', {
+        return apiClient.get('/products/new-arrivals', {
             params: { page, limit },
         });
     },
 
     /**
      * Get products on sale (has active promotion)
-     * GET /api/v1/products/on-sale
+     * GET /products/on-sale
      */
     getOnSale: async (page: number = 1, limit: number = 12): Promise<AxiosResponse<ProductsResponse>> => {
-        return apiClient.get('/api/v1/products/on-sale', {
+        return apiClient.get('/products/on-sale', {
             params: { page, limit },
         });
     },
 
     /**
+     * Get featured products (top rated)
+     * GET /products/featured
+     */
+    getFeatured: async (limit: number = 12): Promise<AxiosResponse<ProductsResponse>> => {
+        return apiClient.get('/products/featured', {
+            params: { limit },
+        });
+    },
+
+    /**
+     * Get filter options for products
+     * GET /products/filters
+     */
+    getFilters: async (categoryId?: number): Promise<AxiosResponse<{
+        sizes: any[];
+        colors: any[];
+        price_range: { min: number; max: number };
+    }>> => {
+        const params = categoryId ? { category_id: categoryId } : {};
+        return apiClient.get('/products/filters', { params });
+    },
+
+    /**
+     * Get list of product attributes
+     * GET /products/attributes
+     */
+    getAttributes: async (): Promise<AxiosResponse<string[]>> => {
+        return apiClient.get('/products/attributes');
+    },
+
+    /**
+     * Get product details by ID
+     * GET /products/id/:id
+     */
+    getProductById: async (id: number): Promise<AxiosResponse<{ product: Product }>> => {
+        return apiClient.get(`/products/id/${id}`);
+    },
+
+    /**
      * Get product details by slug
-     * GET /api/v1/products/:slug
+     * GET /products/:slug
      */
     getProductBySlug: async (slug: string): Promise<AxiosResponse<{ product: Product }>> => {
-        return apiClient.get(`/api/v1/products/${slug}`);
+        return apiClient.get(`/products/${slug}`);
+    },
+
+    /**
+     * Get product reviews with pagination
+     * GET /products/:productId/reviews
+     */
+    getProductReviews: async (
+        productId: number,
+        params?: {
+            page?: number;
+            limit?: number;
+            sort?: 'created_at' | 'rating';
+            order?: 'asc' | 'desc';
+        }
+    ): Promise<AxiosResponse> => {
+        const queryParams = new URLSearchParams();
+        if (params) {
+            if (params.page) queryParams.append('page', params.page.toString());
+            if (params.limit) queryParams.append('limit', params.limit.toString());
+            if (params.sort) queryParams.append('sort', params.sort);
+            if (params.order) queryParams.append('order', params.order);
+        }
+        return apiClient.get(`/products/${productId}/reviews?${queryParams.toString()}`);
+    },
+
+    /**
+     * Check product availability (for chatbot)
+     * GET /products/availability
+     */
+    checkAvailability: async (params: {
+        name: string;
+        size?: string;
+        color?: string;
+    }): Promise<AxiosResponse> => {
+        const queryParams = new URLSearchParams();
+        queryParams.append('name', params.name);
+        if (params.size) queryParams.append('size', params.size);
+        if (params.color) queryParams.append('color', params.color);
+        return apiClient.get(`/products/availability?${queryParams.toString()}`);
     },
 
     /**
@@ -79,17 +157,27 @@ const productService = {
      * GET /api/v1/products/:id/related
      */
     getRelatedProducts: async (id: number, limit: number = 4): Promise<AxiosResponse<{ products: Product[] }>> => {
-        return apiClient.get(`/api/v1/products/${id}/related`, {
+        return apiClient.get(`/products/${id}/related`, {
             params: { limit },
         });
     },
 
     /**
+     * Subscribe to product notifications (restock/price drop)
+     * POST /products/id/:id/notify
+     */
+    subscribeNotification: async (productId: number, notificationType: 'restock' | 'price_drop'): Promise<AxiosResponse> => {
+        return apiClient.post(`/products/id/${productId}/notify`, {
+            notification_type: notificationType,
+        });
+    },
+
+    /**
      * Get all categories
-     * GET /api/v1/categories
+     * GET /categories
      */
     getCategories: async (): Promise<AxiosResponse<{ categories: Category[] }>> => {
-        return apiClient.get('/api/v1/categories');
+        return apiClient.get('/categories');
     },
 
     /**
@@ -101,7 +189,7 @@ const productService = {
         page: number = 1,
         limit: number = 12
     ): Promise<AxiosResponse<ProductsResponse>> => {
-        return apiClient.get(`/api/v1/categories/${slug}/products`, {
+        return apiClient.get(`/categories/${slug}/products`, {
             params: { page, limit },
         });
     },

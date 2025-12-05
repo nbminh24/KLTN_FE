@@ -20,6 +20,9 @@ export { default as promotionService } from './promotionService';
 export { default as supportService } from './supportService';
 export { default as pageService } from './pageService';
 export { default as aiService } from './aiService';
+export { default as chatService } from './chatService';
+export { default as consultantService } from './consultantService';
+export { default as filterService } from './filterService';
 
 // Admin Services
 export { default as adminAuthService } from './adminAuthService';
@@ -41,7 +44,7 @@ export { default as adminChatbotService } from './adminChatbotService';
 // Internal/Rasa Services
 export { default as internalService } from './internalService';
 
-// Re-export specific types to avoid conflicts
+// Re-export specific types from services that export them
 export type {
     // Auth types
     RegisterData,
@@ -56,37 +59,42 @@ export type {
 } from './authService';
 
 export type {
-    // Product types
-    Product,
-    ProductVariant,
-    ProductsResponse,
-    ProductFilters,
-} from './productService';
+    // Chat types
+    CreateSessionPayload,
+    ChatSession,
+    CreateSessionResponse,
+    ChatMessage,
+    ChatHistoryResponse,
+    SendMessagePayload,
+    SendMessageResponse,
+    MergeSessionPayload,
+    MergeSessionResponse,
+} from './chatService';
 
 export type {
-    // Cart types
-    CartItem,
-    CartResponse,
-    AddToCartData,
-    UpdateCartItemData,
-    ApplyCouponData,
-} from './cartService';
+    // Consultant types
+    StylingConsultPayload,
+    ProductRecommendation,
+    StylingConsultResponse,
+    SizingConsultPayload,
+    SizingConsultResponse,
+    CompareProductsPayload,
+    ComparedProduct,
+    CompareProductsResponse,
+} from './consultantService';
 
 export type {
-    // Order types
-    Order,
-    OrderItem,
-    OrdersResponse,
-    OrderFilters,
-    OrderStatusHistory,
-} from './orderService';
+    // Filter types
+    Color,
+    Size,
+    Category,
+} from './filterService';
 
 export type {
-    // Checkout types
-    CreateOrderData,
-    CreateOrderResponse,
-    CreatePaymentUrlData,
-    CreatePaymentUrlResponse,
-} from './checkoutService';
+    // AI types
+    ImageSearchResult,
+    ImageSearchResponse,
+} from './aiService';
 
-// Note: Import specific types from service files when needed to avoid conflicts
+// Note: Most types are imported from @/lib/types/backend
+// Import specific types from service files only when they are exported
