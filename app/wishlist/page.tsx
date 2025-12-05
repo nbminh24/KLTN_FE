@@ -253,10 +253,16 @@ export default function WishlistPage() {
                                         {/* Variant Info */}
                                         <div className="text-xs text-gray-600 space-y-1">
                                             <p>
-                                                <span className="font-medium">Size:</span> {item.variant.size}
+                                                <span className="font-medium">Size:</span>{' '}
+                                                {typeof item.variant.size === 'object' && item.variant.size?.name
+                                                    ? item.variant.size.name
+                                                    : item.variant.size || 'N/A'}
                                             </p>
                                             <p>
-                                                <span className="font-medium">Color:</span> {item.variant.color}
+                                                <span className="font-medium">Color:</span>{' '}
+                                                {typeof item.variant.color === 'object' && item.variant.color?.name
+                                                    ? item.variant.color.name
+                                                    : item.variant.color || 'N/A'}
                                             </p>
                                         </div>
 

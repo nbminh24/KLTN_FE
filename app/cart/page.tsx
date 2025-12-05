@@ -36,13 +36,69 @@ export default function CartPage() {
         try {
             setLoading(true);
             setError('');
+
+            const token = localStorage.getItem('access_token');
+            console.log('🛒 Fetching cart...');
+            console.log('🛒 Token exists:', !!token);
+
             const response = await cartService.getCart();
-            setCart(response.data);
+            console.log('🛒 Cart API Response:', response);
+            console.log('🛒 Response data:', response.data);
+            console.log('🛒 Cart items:', response.data?.items);
+
+            // Backend returns: { items, subtotal, totalItems }
+            // Frontend expects: { items, summary, unavailable_items }
+            // Backend has nested product object in variant
+            const transformedItems = (response.data?.items || []).map((item: any) => {
+                const variant = item.variant || {};
+                const product = variant.product || {};
+
+                return {
+                    ...item,
+                    product: {
+                        id: product.id || variant.product_id || 0,
+                        name: product.name || 'Product',
+                        thumbnail_url: product.thumbnail_url || variant.image_url || '/bmm32410_black_xl.webp',
+                        selling_price: Number(product.selling_price || 0)
+                    },
+                    variant: {
+                        ...variant,
+                        price: Number(product.selling_price || variant.price || 0)
+                    }
+                };
+            });
+
+            const cartData = {
+                items: transformedItems,
+                summary: {
+                    subtotal: response.data?.subtotal || 0,
+                    items_count: response.data?.totalItems || 0,
+                    discount: response.data?.discount || 0,
+                    shipping_fee: response.data?.shipping_fee || 0,
+                    total: response.data?.total || response.data?.subtotal || 0
+                },
+                unavailable_items: response.data?.unavailable_items || 0
+            };
+
+            console.log('🛒 Transformed cart data:', cartData);
+            setCart(cartData as any);
         } catch (err: any) {
-            console.error('Error fetching cart:', err);
-            if (axios.isAxiosError(err) && err.response?.status === 401) {
-                setError('Session expired. Please login again.');
-                setIsAuthenticated(false);
+            console.error('❌ Error fetching cart:', err);
+            if (axios.isAxiosError(err)) {
+                console.error('❌ Error status:', err.response?.status);
+                console.error('❌ Error data:', err.response?.data);
+                console.error('❌ Request headers:', err.config?.headers);
+
+                if (err.response?.status === 401) {
+                    console.error('❌ 401 Unauthorized - Token expired or invalid');
+                    setError('Session expired. Please login again.');
+                    setIsAuthenticated(false);
+                    // Clear invalid token
+                    localStorage.removeItem('access_token');
+                    localStorage.removeItem('refresh_token');
+                } else {
+                    setError('Failed to load cart. Please try again.');
+                }
             } else {
                 setError('Failed to load cart. Please try again.');
             }
@@ -175,7 +231,7 @@ export default function CartPage() {
     }
 
     // Empty cart state
-    if (!cart || cart.items.length === 0) {
+    if (!cart || !cart.items || cart.items.length === 0) {
         return (
             <div className="min-h-screen flex flex-col">
                 <Header />
@@ -229,10 +285,10 @@ export default function CartPage() {
                     </div>
 
                     {/* Unavailable items warning */}
-                    {cart.unavailable_items > 0 && (
+                    {(cart.unavailable_items || 0) > 0 && (
                         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
                             <p className="text-sm text-yellow-800">
-                                <strong>{cart.unavailable_items}</strong> item(s) in your cart are currently unavailable or out of stock.
+                                <strong>{cart.unavailable_items || 0}</strong> item(s) in your cart are currently unavailable or out of stock.
                             </p>
                         </div>
                     )}
@@ -241,13 +297,13 @@ export default function CartPage() {
                         {/* Cart Items */}
                         <div className="lg:col-span-2">
                             <div className="border border-gray-200 rounded-2xl divide-y">
-                                {cart.items.map((item) => (
+                                {cart.items?.map((item) => (
                                     <div key={item.id} className={`p-4 md:p-6 flex gap-4 ${!item.is_available ? 'bg-gray-50' : ''}`}>
                                         {/* Product Image */}
-                                        <Link href={`/products/${item.product.id}`} className="relative w-24 h-24 md:w-32 md:h-32 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                                        <Link href={`/products/${item.product?.id || '#'}`} className="relative w-24 h-24 md:w-32 md:h-32 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                                             <Image
-                                                src={item.variant.image_url || item.product.thumbnail_url}
-                                                alt={item.product.name}
+                                                src={item.variant?.image_url || item.product?.thumbnail_url || '/bmm32410_black_xl.webp'}
+                                                alt={item.product?.name || 'Product'}
                                                 fill
                                                 className="object-cover"
                                             />
@@ -256,24 +312,32 @@ export default function CartPage() {
                                         {/* Product Info */}
                                         <div className="flex-1 flex flex-col md:flex-row justify-between gap-4">
                                             <div className="space-y-2">
-                                                <Link href={`/products/${item.product.id}`} className="font-bold text-base hover:underline">
-                                                    {item.product.name}
+                                                <Link href={`/products/${item.product?.id || '#'}`} className="font-bold text-base hover:underline">
+                                                    {item.product?.name || 'Product'}
                                                 </Link>
                                                 <div className="text-xs space-y-1">
                                                     <p>
                                                         <span className="font-medium">Size:</span>{' '}
-                                                        <span className="text-gray-600">{item.variant.size}</span>
+                                                        <span className="text-gray-600">
+                                                            {typeof item.variant?.size === 'object' && item.variant?.size?.name
+                                                                ? item.variant.size.name
+                                                                : item.variant?.size || 'N/A'}
+                                                        </span>
                                                     </p>
                                                     <p>
                                                         <span className="font-medium">Color:</span>{' '}
-                                                        <span className="text-gray-600">{item.variant.color}</span>
+                                                        <span className="text-gray-600">
+                                                            {typeof item.variant?.color === 'object' && item.variant?.color?.name
+                                                                ? item.variant.color.name
+                                                                : item.variant?.color || 'N/A'}
+                                                        </span>
                                                     </p>
                                                     <p>
                                                         <span className="font-medium">SKU:</span>{' '}
-                                                        <span className="text-gray-600">{item.variant.sku}</span>
+                                                        <span className="text-gray-600">{item.variant?.sku || 'N/A'}</span>
                                                     </p>
                                                 </div>
-                                                <p className="text-xl font-bold">{item.variant.price.toLocaleString('vi-VN')}₫</p>
+                                                <p className="text-xl font-bold">{Number(item.variant?.price || 0).toLocaleString('vi-VN')}₫</p>
 
                                                 {/* Stock message */}
                                                 {!item.is_available && item.stock_message && (
@@ -294,15 +358,15 @@ export default function CartPage() {
                                                 {/* Quantity Controls */}
                                                 <div className="flex items-center bg-gray-100 rounded-full px-4 py-2">
                                                     <button
-                                                        onClick={() => updateQuantity(item.id, -1, item.quantity, item.variant.available_stock)}
+                                                        onClick={() => updateQuantity(item.id, -1, item.quantity || 1, item.variant?.available_stock || 0)}
                                                         className="p-1 hover:bg-gray-200 rounded-full transition"
                                                         disabled={!item.is_available}
                                                     >
                                                         <Minus className="w-4 h-4" />
                                                     </button>
-                                                    <span className="px-4 font-medium min-w-[40px] text-center">{item.quantity}</span>
+                                                    <span className="px-4 font-medium min-w-[40px] text-center">{item.quantity || 1}</span>
                                                     <button
-                                                        onClick={() => updateQuantity(item.id, 1, item.quantity, item.variant.available_stock)}
+                                                        onClick={() => updateQuantity(item.id, 1, item.quantity || 1, item.variant?.available_stock || 0)}
                                                         className="p-1 hover:bg-gray-200 rounded-full transition"
                                                         disabled={!item.is_available}
                                                     >
@@ -313,7 +377,7 @@ export default function CartPage() {
                                                 {/* Stock info */}
                                                 {item.is_available && (
                                                     <p className="text-xs text-gray-500">
-                                                        {item.variant.available_stock} in stock
+                                                        {item.variant?.available_stock || 0} in stock
                                                     </p>
                                                 )}
                                             </div>
@@ -330,27 +394,27 @@ export default function CartPage() {
 
                                 <div className="space-y-4">
                                     <div className="flex justify-between">
-                                        <span className="text-gray-600">Subtotal ({summary.items_count} items)</span>
-                                        <span className="font-bold">{summary.subtotal.toLocaleString('vi-VN')}₫</span>
+                                        <span className="text-gray-600">Subtotal ({summary?.items_count || 0} items)</span>
+                                        <span className="font-bold">{Number(summary?.subtotal || 0).toLocaleString('vi-VN')}₫</span>
                                     </div>
 
-                                    {summary.discount > 0 && (
+                                    {Number(summary?.discount || 0) > 0 && (
                                         <div className="flex justify-between">
                                             <span className="text-gray-600">Discount</span>
-                                            <span className="font-bold text-green-600">-{summary.discount.toLocaleString('vi-VN')}₫</span>
+                                            <span className="font-bold text-green-600">-{Number(summary?.discount || 0).toLocaleString('vi-VN')}₫</span>
                                         </div>
                                     )}
 
                                     <div className="flex justify-between">
                                         <span className="text-gray-600">Shipping Fee</span>
-                                        <span className="font-bold">{summary.shipping_fee.toLocaleString('vi-VN')}₫</span>
+                                        <span className="font-bold">{Number(summary?.shipping_fee || 0).toLocaleString('vi-VN')}₫</span>
                                     </div>
 
                                     <hr className="border-gray-200" />
 
                                     <div className="flex justify-between text-lg">
                                         <span className="font-medium">Total</span>
-                                        <span className="font-bold">{summary.total.toLocaleString('vi-VN')}₫</span>
+                                        <span className="font-bold">{Number(summary?.total || 0).toLocaleString('vi-VN')}₫</span>
                                     </div>
                                 </div>
 
@@ -381,9 +445,9 @@ export default function CartPage() {
                                 {/* Checkout Button */}
                                 <Link
                                     href="/checkout"
-                                    className={`w-full bg-black text-white py-4 rounded-full font-medium hover:bg-gray-800 transition flex items-center justify-center gap-2 group ${cart.unavailable_items > 0 ? 'opacity-50 pointer-events-none' : ''}`}
+                                    className={`w-full bg-black text-white py-4 rounded-full font-medium hover:bg-gray-800 transition flex items-center justify-center gap-2 group ${(cart.unavailable_items || 0) > 0 ? 'opacity-50 pointer-events-none' : ''}`}
                                     onClick={(e) => {
-                                        if (cart.unavailable_items > 0) {
+                                        if ((cart.unavailable_items || 0) > 0) {
                                             e.preventDefault();
                                             showToast('Please remove unavailable items before checkout', 'warning');
                                         }
@@ -393,7 +457,7 @@ export default function CartPage() {
                                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                 </Link>
 
-                                {cart.unavailable_items > 0 && (
+                                {(cart.unavailable_items || 0) > 0 && (
                                     <p className="text-xs text-center text-red-500">
                                         Remove unavailable items to proceed
                                     </p>

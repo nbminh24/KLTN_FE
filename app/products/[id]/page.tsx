@@ -9,7 +9,7 @@ import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 import ReviewForm from '@/components/ReviewForm';
 import { showToast } from '@/components/Toast';
-import { addToCart } from '@/lib/cart';
+import cartService from '@/lib/services/cartService';
 import { ChevronRight, Minus, Plus, Star, Check, X, Share2, Facebook, Twitter, Link as LinkIcon, Instagram, Loader2, Heart } from 'lucide-react';
 import productService from '@/lib/services/productService';
 import wishlistService from '@/lib/services/wishlistService';
@@ -129,7 +129,7 @@ export default function ProductDetailPage() {
     }
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product) return;
 
     if (!selectedVariant) {
@@ -142,28 +142,24 @@ export default function ProductDetailPage() {
       return;
     }
 
-    const success = addToCart(
-      {
-        id: product.id.toString(),
-        name: product.name,
-        image: product.thumbnail_url || '/bmm32410_black_xl.webp',
-        price: product.selling_price,
-        originalPrice: product.cost_price,
-        size: selectedSize,
-        color: selectedColor,
-        maxStock: selectedVariant.available_stock,
-      },
-      quantity
-    );
-
-    if (success) {
+    try {
+      await cartService.addToCart({
+        variant_id: selectedVariant.id,
+        quantity: quantity
+      });
       showToast(`Added ${quantity} item(s) to cart!`, 'success');
-    } else {
-      showToast('Cannot add more than available stock', 'error');
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        showToast('Please login to add to cart', 'warning');
+      } else if (err.response?.data?.message) {
+        showToast(err.response.data.message, 'error');
+      } else {
+        showToast('Failed to add to cart', 'error');
+      }
     }
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
     if (!product) return;
 
     if (!selectedVariant) {
@@ -176,24 +172,21 @@ export default function ProductDetailPage() {
       return;
     }
 
-    const success = addToCart(
-      {
-        id: product.id.toString(),
-        name: product.name,
-        image: product.thumbnail_url || '/bmm32410_black_xl.webp',
-        price: product.selling_price,
-        originalPrice: product.cost_price,
-        size: selectedSize,
-        color: selectedColor,
-        maxStock: selectedVariant.available_stock,
-      },
-      quantity
-    );
-
-    if (success) {
-      router.push('/checkout');
-    } else {
-      showToast('Cannot add more than available stock', 'error');
+    try {
+      await cartService.addToCart({
+        variant_id: selectedVariant.id,
+        quantity: quantity
+      });
+      router.push('/cart');
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        showToast('Please login to continue', 'warning');
+        router.push('/login?redirect=/cart');
+      } else if (err.response?.data?.message) {
+        showToast(err.response.data.message, 'error');
+      } else {
+        showToast('Failed to add to cart', 'error');
+      }
     }
   };
 
