@@ -1,25 +1,95 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { ChevronRight, Mail, Phone, MessageCircle, Send } from 'lucide-react';
+import { showToast } from '@/components/Toast';
+import supportService from '@/lib/services/supportService';
+import accountService from '@/lib/services/accountService';
+import { ChevronRight, Mail, Phone, MessageCircle, Send, Loader2 } from 'lucide-react';
 
 export default function SupportPage() {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
     subject: '',
     message: '',
-    triedAI: false,
   });
+  const [submitting, setSubmitting] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Check if user is logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          await accountService.getProfile();
+          setIsLoggedIn(true);
+        }
+      } catch (err) {
+        console.log('User not logged in');
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    alert('Your message has been sent! We\'ll get back to you soon.');
-    setFormData({ name: '', email: '', subject: '', message: '', triedAI: false });
+
+    try {
+      setSubmitting(true);
+      console.log('🎫 Creating support ticket:', formData);
+
+      // Backend auto-fills email from token
+      const payload = {
+        subject: formData.subject,
+        message: formData.message,
+      };
+
+      console.log('🎫 Sending payload to backend:', payload);
+      console.log('🎫 User authenticated - email auto-filled by backend from token');
+
+      const response = await supportService.createTicket(payload);
+
+      console.log('🎫 Ticket created:', response.data);
+
+      showToast(
+        `Support ticket created! Tracking code: ${response.data.ticket_code}`,
+        'success'
+      );
+
+      // Reset form
+      setFormData({
+        subject: '',
+        message: ''
+      });
+    } catch (err: any) {
+      console.error('❌ Error creating ticket:', err);
+      console.error('❌ Error response:', err.response);
+      console.error('❌ Error data:', err.response?.data);
+      console.error('❌ Error message:', err.response?.data?.message);
+      console.error('❌ Validation errors:', err.response?.data?.errors);
+
+      // Show detailed error message
+      let errorMessage = 'Failed to create support ticket. Please try again.';
+
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.response?.data?.errors) {
+        const errors = err.response.data.errors;
+        errorMessage = Array.isArray(errors)
+          ? errors.join(', ')
+          : JSON.stringify(errors);
+      }
+
+      showToast(errorMessage, 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -43,28 +113,6 @@ export default function SupportPage() {
             <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-6">
               Our support team is here to assist you 24/7
             </p>
-            
-            {/* AI Chatbot Notice */}
-            <div className="max-w-2xl mx-auto bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-6">
-              <div className="flex items-start gap-4">
-                <MessageCircle className="w-8 h-8 text-purple-600 flex-shrink-0 mt-1" />
-                <div className="text-left">
-                  <h3 className="font-bold text-purple-900 text-lg mb-2">Try Our AI Chatbot First! 🤖</h3>
-                  <p className="text-sm text-purple-800 mb-3">
-                    Our AI assistant can instantly help you with:
-                  </p>
-                  <ul className="text-sm text-purple-800 space-y-1 mb-4">
-                    <li>✓ Order tracking & status updates</li>
-                    <li>✓ Product information & recommendations</li>
-                    <li>✓ Return & refund policies</li>
-                    <li>✓ Size guides & fitting advice</li>
-                  </ul>
-                  <p className="text-xs text-purple-700 font-medium">
-                    💡 The AI chatbot resolves 80% of inquiries instantly! If it can't help, you'll be guided to fill this form.
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Contact Options */}
@@ -104,31 +152,8 @@ export default function SupportPage() {
           <div className="max-w-3xl mx-auto">
             <div className="border border-gray-200 rounded-2xl p-8">
               <h2 className="text-2xl font-bold mb-6">Send Us a Message</h2>
+
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Name</label>
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                      placeholder="Your name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Email</label>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                      placeholder="your@email.com"
-                    />
-                  </div>
-                </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Subject</label>
                   <input
@@ -151,25 +176,22 @@ export default function SupportPage() {
                     placeholder="Tell us more about your inquiry..."
                   />
                 </div>
-                <div className="flex items-start gap-3 bg-purple-50 border border-purple-200 rounded-lg p-4">
-                  <input
-                    type="checkbox"
-                    id="triedAI"
-                    checked={formData.triedAI}
-                    onChange={(e) => setFormData({ ...formData, triedAI: e.target.checked })}
-                    className="w-5 h-5 mt-0.5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                    required
-                  />
-                  <label htmlFor="triedAI" className="text-sm text-purple-900">
-                    <span className="font-bold">I tried the AI chatbot first</span> and it couldn't help
-                  </label>
-                </div>
                 <button
                   type="submit"
-                  className="w-full bg-black text-white py-3 rounded-full font-medium hover:bg-gray-800 transition flex items-center justify-center gap-2"
+                  disabled={submitting}
+                  className="w-full bg-black text-white py-3 rounded-full font-medium hover:bg-gray-800 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Send className="w-5 h-5" />
-                  Send Message
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-5 h-5" />
+                      Send Message
+                    </>
+                  )}
                 </button>
               </form>
             </div>

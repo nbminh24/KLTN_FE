@@ -4,9 +4,7 @@ import { AxiosResponse } from 'axios';
 // ========== INTERFACES ==========
 
 export interface CreateSupportTicketPayload {
-    name: string;
-    email: string;
-    phone?: string;
+    customer_email?: string;  // Optional - auto-filled by backend if authenticated
     subject: string;
     message: string;
 }
