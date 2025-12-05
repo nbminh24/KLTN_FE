@@ -15,6 +15,14 @@ const apiClient: AxiosInstance = axios.create({
 // Request Interceptor - Attach Authorization Token
 apiClient.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
+        // Debug log
+        console.log('🌐 API Request:', {
+            baseURL: config.baseURL,
+            url: config.url,
+            fullURL: `${config.baseURL}${config.url}`,
+            method: config.method
+        });
+
         // Get token from localStorage (only in browser)
         if (typeof window !== 'undefined') {
             // Check if request is for admin API
@@ -25,6 +33,9 @@ apiClient.interceptors.request.use(
 
             if (token && config.headers) {
                 config.headers.Authorization = `Bearer ${token}`;
+                console.log('🔐 Token attached:', token.substring(0, 20) + '...');
+            } else {
+                console.log('⚠️ No token found');
             }
         }
 

@@ -42,20 +42,68 @@ export default function CheckoutPage() {
         cartService.getCart(),
       ]);
 
-      setAddresses(addressesRes.data.addresses);
-      setCart(cartRes.data);
+      console.log('📦 Checkout - Addresses Response:', addressesRes.data);
+      console.log('📦 Checkout - Cart Response:', cartRes.data);
+
+      // Transform addresses (handle different response formats)
+      const addressesData = addressesRes.data.addresses || addressesRes.data.data || addressesRes.data || [];
+      console.log('📍 Addresses Data:', addressesData);
+      setAddresses(Array.isArray(addressesData) ? addressesData : []);
+
+      // Transform cart (same as cart page)
+      const transformedItems = (cartRes.data?.items || []).map((item: any) => {
+        const variant = item.variant || {};
+        const product = variant.product || {};
+
+        return {
+          ...item,
+          product: {
+            id: product.id || variant.product_id || 0,
+            name: product.name || 'Product',
+            thumbnail_url: product.thumbnail_url || variant.image_url || '/bmm32410_black_xl.webp',
+            selling_price: Number(product.selling_price || 0)
+          },
+          variant: {
+            ...variant,
+            price: Number(product.selling_price || variant.price || 0)
+          }
+        };
+      });
+
+      const cartData = {
+        items: transformedItems,
+        summary: {
+          subtotal: cartRes.data?.subtotal || 0,
+          items_count: cartRes.data?.totalItems || 0,
+          discount: cartRes.data?.discount || 0,
+          shipping_fee: cartRes.data?.shipping_fee || 0,
+          total: cartRes.data?.total || cartRes.data?.subtotal || 0
+        },
+        unavailable_items: cartRes.data?.unavailable_items || 0
+      };
+
+      setCart(cartData as any);
 
       // Auto-select default address
-      const defaultAddr = addressesRes.data.addresses.find(a => a.is_default);
+      const defaultAddr = addressesData.find((a: any) => a.is_default);
       if (defaultAddr && defaultAddr.id) {
-        setSelectedAddressId(defaultAddr.id);
-      } else if (addressesRes.data.addresses.length > 0 && addressesRes.data.addresses[0].id) {
-        setSelectedAddressId(addressesRes.data.addresses[0].id);
+        console.log('📍 Auto-selecting default address:', defaultAddr.id);
+        setSelectedAddressId(Number(defaultAddr.id));
+      } else if (addressesData.length > 0 && addressesData[0].id) {
+        console.log('📍 Auto-selecting first address:', addressesData[0].id);
+        setSelectedAddressId(Number(addressesData[0].id));
       }
     } catch (err: any) {
-      console.error('Error fetching data:', err);
-      if (axios.isAxiosError(err) && err.response?.status === 401) {
-        router.push('/login?redirect=/checkout');
+      console.error('❌ Error fetching checkout data:', err);
+      if (axios.isAxiosError(err)) {
+        console.error('❌ Error status:', err.response?.status);
+        console.error('❌ Error data:', err.response?.data);
+
+        if (err.response?.status === 401) {
+          router.push('/login?redirect=/checkout');
+        } else {
+          setError('Failed to load checkout data');
+        }
       } else {
         setError('Failed to load checkout data');
       }
@@ -70,7 +118,7 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (!cart || cart.items.length === 0) {
+    if (!cart || !cart.items || cart.items.length === 0) {
       showToast('Your cart is empty', 'warning');
       return;
     }
@@ -80,7 +128,7 @@ export default function CheckoutPage() {
       const response = await checkoutService.createOrder({
         customer_address_id: selectedAddressId,
         payment_method: paymentMethod,
-        shipping_fee: cart.summary.shipping_fee,
+        shipping_fee: cart.summary?.shipping_fee || 0,
         note: note || undefined,
       });
 
@@ -88,10 +136,27 @@ export default function CheckoutPage() {
 
       // If VNPAY, create payment URL and redirect
       if (paymentMethod === 'vnpay') {
+        console.log('🔐 Requesting VNPAY payment URL for order:', order.id);
         const paymentRes = await checkoutService.createPaymentUrl({
           order_id: order.id,
         });
-        window.location.href = paymentRes.data.payment_url;
+
+        console.log('🔐 VNPAY Response Full:', paymentRes);
+        console.log('🔐 VNPAY Response Data:', paymentRes.data);
+        console.log('🔐 Payment URL:', paymentRes.data.payment_url);
+        console.log('🔐 Payment URL (alternative):', paymentRes.data.paymentUrl);
+        console.log('🔐 Payment URL (url):', paymentRes.data.url);
+
+        const paymentUrl = paymentRes.data.payment_url || paymentRes.data.paymentUrl || paymentRes.data.url;
+
+        if (!paymentUrl) {
+          console.error('❌ VNPAY payment URL is undefined!', paymentRes.data);
+          showToast('Payment URL not received. Please contact support.', 'error');
+          return;
+        }
+
+        console.log('✅ Redirecting to:', paymentUrl);
+        window.location.href = paymentUrl;
       } else {
         // COD - redirect to order success
         showToast('Order placed successfully!', 'success');
@@ -140,7 +205,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if (!cart || cart.items.length === 0) {
+  if (!cart || !cart.items || cart.items.length === 0) {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
@@ -217,7 +282,7 @@ export default function CheckoutPage() {
                     {addresses.map((addr) => (
                       <label
                         key={addr.id}
-                        className={`flex items-start gap-3 p-4 border-2 rounded-lg cursor-pointer transition ${selectedAddressId === addr.id
+                        className={`flex items-start gap-3 p-4 border-2 rounded-lg cursor-pointer transition ${selectedAddressId === Number(addr.id)
                           ? 'border-black bg-gray-50'
                           : 'border-gray-200 hover:border-gray-400'
                           }`}
@@ -226,24 +291,21 @@ export default function CheckoutPage() {
                           type="radio"
                           name="address"
                           value={addr.id}
-                          checked={selectedAddressId === addr.id}
+                          checked={selectedAddressId === Number(addr.id)}
                           onChange={(e) => setSelectedAddressId(Number(e.target.value))}
                           className="mt-1 w-5 h-5"
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-bold">{addr.recipient_name}</span>
+                            <span className="font-bold">{addr.address_type || 'Address'}</span>
                             {addr.is_default && (
                               <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
                                 Default
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-gray-600">{addr.address_line}</p>
-                          <p className="text-sm text-gray-600">
-                            {addr.ward}, {addr.district}, {addr.city}
-                          </p>
-                          <p className="text-sm text-gray-600">{addr.phone}</p>
+                          <p className="text-sm text-gray-600">{addr.detailed_address}</p>
+                          <p className="text-sm text-gray-600">{addr.phone_number}</p>
                         </div>
                       </label>
                     ))}
@@ -266,28 +328,36 @@ export default function CheckoutPage() {
 
               {/* Review Order */}
               <div className="border border-gray-200 rounded-2xl p-5">
-                <h2 className="text-lg font-bold mb-5">Review Order ({cart.items.length} items)</h2>
+                <h2 className="text-lg font-bold mb-5">Review Order ({cart.items?.length || 0} items)</h2>
                 <div className="space-y-4">
-                  {cart.items.map((item) => (
+                  {(cart.items || []).map((item) => (
                     <div key={item.id} className="flex gap-4">
                       <div className="relative w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                         <Image
-                          src={item.variant.image_url || item.product.thumbnail_url}
-                          alt={item.product.name}
+                          src={item.variant?.image_url || item.product?.thumbnail_url || '/bmm32410_black_xl.webp'}
+                          alt={item.product?.name || 'Product'}
                           fill
                           className="object-cover"
                         />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-bold text-sm">{item.product.name}</h3>
+                        <h3 className="font-bold text-sm">{item.product?.name || 'Product'}</h3>
                         <div className="text-xs text-gray-600 mt-1">
-                          <span>Size: {item.variant.size}</span>
+                          <span>Size: {
+                            typeof item.variant?.size === 'object' && item.variant?.size?.name
+                              ? item.variant.size.name
+                              : item.variant?.size || 'N/A'
+                          }</span>
                           <span className="mx-2">•</span>
-                          <span>Color: {item.variant.color}</span>
+                          <span>Color: {
+                            typeof item.variant?.color === 'object' && item.variant?.color?.name
+                              ? item.variant.color.name
+                              : item.variant?.color || 'N/A'
+                          }</span>
                         </div>
                         <div className="flex items-center justify-between mt-2">
-                          <span className="text-sm text-gray-600">Qty: {item.quantity}</span>
-                          <span className="font-bold">{item.variant.price.toLocaleString('vi-VN')}₫</span>
+                          <span className="text-sm text-gray-600">Qty: {item.quantity || 1}</span>
+                          <span className="font-bold">{Number(item.variant?.price || 0).toLocaleString('vi-VN')}₫</span>
                         </div>
                       </div>
                     </div>
@@ -343,23 +413,23 @@ export default function CheckoutPage() {
 
                 <div className="space-y-4">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Subtotal ({cart.summary.items_count} items)</span>
-                    <span className="font-bold">{cart.summary.subtotal.toLocaleString('vi-VN')}₫</span>
+                    <span className="text-gray-600">Subtotal ({cart.summary?.items_count || 0} items)</span>
+                    <span className="font-bold">{Number(cart.summary?.subtotal || 0).toLocaleString('vi-VN')}₫</span>
                   </div>
-                  {cart.summary.discount > 0 && (
+                  {(cart.summary?.discount || 0) > 0 && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Discount</span>
-                      <span className="font-bold text-green-600">-{cart.summary.discount.toLocaleString('vi-VN')}₫</span>
+                      <span className="font-bold text-green-600">-{Number(cart.summary?.discount || 0).toLocaleString('vi-VN')}₫</span>
                     </div>
                   )}
                   <div className="flex justify-between">
                     <span className="text-gray-600">Shipping Fee</span>
-                    <span className="font-bold">{cart.summary.shipping_fee.toLocaleString('vi-VN')}₫</span>
+                    <span className="font-bold">{Number(cart.summary?.shipping_fee || 0).toLocaleString('vi-VN')}₫</span>
                   </div>
                   <hr className="border-gray-200" />
                   <div className="flex justify-between text-lg">
                     <span className="font-medium">Total</span>
-                    <span className="font-bold">{cart.summary.total.toLocaleString('vi-VN')}₫</span>
+                    <span className="font-bold">{Number(cart.summary?.total || 0).toLocaleString('vi-VN')}₫</span>
                   </div>
                 </div>
 
@@ -371,7 +441,7 @@ export default function CheckoutPage() {
                   {submitting ? 'Processing...' : 'Place Order'}
                 </button>
 
-                {cart.unavailable_items > 0 && (
+                {(cart.unavailable_items || 0) > 0 && (
                   <p className="text-xs text-center text-red-500">
                     Some items are unavailable. Please update your cart.
                   </p>
@@ -383,3 +453,5 @@ export default function CheckoutPage() {
       </main>
       <Footer />
     </div>
+  );
+}

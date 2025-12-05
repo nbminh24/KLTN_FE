@@ -50,7 +50,57 @@ export default function OrderDetailPage() {
       setLoading(true);
       setError('');
       const response = await orderService.getOrderDetail(Number(orderId));
-      setOrder(response.data);
+      console.log('📦 Order Detail Response:', response.data);
+
+      // Transform order data to ensure items array exists
+      const orderData = response.data.order || response.data;
+      console.log('📦 Order Data:', orderData);
+      console.log('📦 Order Items:', orderData.items);
+
+      // Transform order items to extract product info from variant
+      if (orderData.items && Array.isArray(orderData.items)) {
+        orderData.items = orderData.items.map((item: any) => {
+          const variant = item.variant || {};
+          const product = variant.product || {};
+
+          return {
+            ...item,
+            product_id: product.id || item.product_id || variant.product_id,
+            product_name: product.name || item.product_name || variant.name || 'Product',
+            thumbnail_url: product.thumbnail_url || item.thumbnail_url || variant.image_url || '/bmm32410_black_xl.webp',
+            // Keep existing fields if they exist
+            size: item.size || variant.size,
+            color: item.color || variant.color,
+            variant_sku: item.variant_sku || item.sku || variant.sku,
+            price_at_purchase: item.price_at_purchase || item.price || variant.price || product.selling_price || 0,
+            subtotal: item.subtotal || (item.quantity || 1) * (item.price || variant.price || 0)
+          };
+        });
+      }
+
+      console.log('📦 Transformed Items:', orderData.items);
+      console.log('📦 Shipping Address Fields:', {
+        address_type: orderData.address_type,
+        shipping_address_type: orderData.shipping_address_type,
+        customer_name: orderData.customer_name,
+        shipping_name: orderData.shipping_name,
+        customer_phone: orderData.customer_phone,
+        shipping_phone: orderData.shipping_phone,
+        shipping_address: orderData.shipping_address,
+        detailed_address: orderData.detailed_address,
+        address_object: orderData.address,
+        customer_address: orderData.customer_address
+      });
+
+      // Extract address info from nested address object if exists
+      if (orderData.address || orderData.customer_address) {
+        const addr = orderData.address || orderData.customer_address;
+        orderData.address_type = orderData.address_type || addr.address_type;
+        orderData.detailed_address = orderData.detailed_address || addr.detailed_address;
+        orderData.phone_number = orderData.phone_number || addr.phone_number;
+      }
+
+      setOrder(orderData);
     } catch (err: any) {
       console.error('Error fetching order:', err);
       if (axios.isAxiosError(err) && err.response?.status === 404) {
@@ -170,30 +220,38 @@ export default function OrderDetailPage() {
               <div className="border border-gray-200 rounded-2xl p-6">
                 <h2 className="text-xl font-bold mb-5">Order Items</h2>
                 <div className="divide-y">
-                  {order.items.map((item: any) => (
+                  {(order.items || []).map((item: any) => (
                     <div key={item.id} className="py-4 flex gap-4">
-                      <Link href={`/products/${item.product_id}`} className="relative w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                      <Link href={`/products/${item.product_id || '#'}`} className="relative w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                         <Image
                           src={item.thumbnail_url || '/bmm32410_black_xl.webp'}
-                          alt={item.product_name}
+                          alt={item.product_name || 'Product Image'}
                           fill
                           className="object-cover"
                         />
                       </Link>
                       <div className="flex-1">
-                        <Link href={`/products/${item.product_id}`} className="font-bold hover:underline">
-                          {item.product_name}
+                        <Link href={`/products/${item.product_id || '#'}`} className="font-bold hover:underline">
+                          {item.product_name || 'Product'}
                         </Link>
                         <div className="text-sm text-gray-600 mt-1 space-y-0.5">
-                          <p>Size: {item.size} | Color: {item.color}</p>
-                          <p>SKU: {item.variant_sku}</p>
-                          <p>Quantity: {item.quantity}</p>
+                          <p>Size: {
+                            typeof item.size === 'object' && item.size?.name
+                              ? item.size.name
+                              : item.size || 'N/A'
+                          } | Color: {
+                              typeof item.color === 'object' && item.color?.name
+                                ? item.color.name
+                                : item.color || 'N/A'
+                            }</p>
+                          <p>SKU: {item.variant_sku || item.sku || 'N/A'}</p>
+                          <p>Quantity: {item.quantity || 1}</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold">{item.price_at_purchase.toLocaleString('vi-VN')}₫</p>
-                        <p className="text-sm text-gray-600">× {item.quantity}</p>
-                        <p className="font-bold text-lg mt-1">{item.subtotal.toLocaleString('vi-VN')}₫</p>
+                        <p className="font-bold">{Number(item.price_at_purchase || 0).toLocaleString('vi-VN')}₫</p>
+                        <p className="text-sm text-gray-600">× {item.quantity || 1}</p>
+                        <p className="font-bold text-lg mt-1">{Number(item.subtotal || 0).toLocaleString('vi-VN')}₫</p>
                       </div>
                     </div>
                   ))}
@@ -207,11 +265,19 @@ export default function OrderDetailPage() {
                   <h2 className="text-xl font-bold">Shipping Address</h2>
                 </div>
                 <div className="space-y-2 text-gray-600">
-                  <p className="font-medium text-black">{order.customer_name}</p>
-                  <p>{order.customer_phone}</p>
-                  <p>{order.shipping_address}</p>
-                  {order.shipping_ward && <p>{order.shipping_ward}, {order.shipping_district}</p>}
-                  <p>{order.shipping_city}</p>
+                  {/* Address Type */}
+                  {(order.address_type || order.shipping_address_type) && (
+                    <p className="font-bold text-black">{order.address_type || order.shipping_address_type}</p>
+                  )}
+
+                  {/* Customer Name & Phone */}
+                  <p className="font-medium text-black">{order.customer_name || order.shipping_name || 'N/A'}</p>
+                  <p>{order.customer_phone || order.shipping_phone || order.phone_number || 'N/A'}</p>
+
+                  {/* Full Address */}
+                  <p>{order.shipping_address || order.detailed_address || 'N/A'}</p>
+
+                  {/* Order Note */}
                   {order.note && (
                     <div className="mt-3 pt-3 border-t">
                       <p className="font-medium text-black">Note:</p>
@@ -263,22 +329,22 @@ export default function OrderDetailPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium">{order.subtotal.toLocaleString('vi-VN')}₫</span>
+                    <span className="font-medium">{Number(order.subtotal || 0).toLocaleString('vi-VN')}₫</span>
                   </div>
-                  {order.discount > 0 && (
+                  {(order.discount || 0) > 0 && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Discount</span>
-                      <span className="font-medium text-green-600">-{order.discount.toLocaleString('vi-VN')}₫</span>
+                      <span className="font-medium text-green-600">-{Number(order.discount || 0).toLocaleString('vi-VN')}₫</span>
                     </div>
                   )}
                   <div className="flex justify-between">
                     <span className="text-gray-600">Shipping Fee</span>
-                    <span className="font-medium">{order.shipping_fee.toLocaleString('vi-VN')}₫</span>
+                    <span className="font-medium">{Number(order.shipping_fee || 0).toLocaleString('vi-VN')}₫</span>
                   </div>
                   <hr />
                   <div className="flex justify-between text-lg">
                     <span className="font-bold">Total</span>
-                    <span className="font-bold">{order.total_amount.toLocaleString('vi-VN')}₫</span>
+                    <span className="font-bold">{Number(order.total_amount || order.total || 0).toLocaleString('vi-VN')}₫</span>
                   </div>
                 </div>
 

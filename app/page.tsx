@@ -278,33 +278,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Browse by Style */}
-        <section className="container mx-auto px-6 md:px-12 py-10 md:py-14">
-          <div className="bg-gray-100 rounded-3xl p-6 md:p-12">
-            <h2 className="text-2xl md:text-4xl font-integral font-bold text-center mb-6 md:mb-10">
-              BROWSE BY DRESS STYLE
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Link href="/products?style=casual" className="relative h-48 md:h-56 bg-white rounded-2xl overflow-hidden group">
-                <Image src="https://placehold.co/973x649" alt="Casual" fill className="object-cover group-hover:scale-105 transition" />
-                <span className="absolute top-4 left-4 text-xl md:text-2xl font-bold">Casual</span>
-              </Link>
-              <Link href="/products?style=formal" className="relative h-48 md:h-56 md:col-span-2 bg-white rounded-2xl overflow-hidden group">
-                <Image src="https://placehold.co/1306x870" alt="Formal" fill className="object-cover group-hover:scale-105 transition" />
-                <span className="absolute top-4 left-4 text-xl md:text-2xl font-bold">Formal</span>
-              </Link>
-              <Link href="/products?style=party" className="relative h-48 md:h-56 md:col-span-2 bg-white rounded-2xl overflow-hidden group">
-                <Image src="https://placehold.co/770x616" alt="Party" fill className="object-cover group-hover:scale-105 transition" />
-                <span className="absolute top-4 left-4 text-xl md:text-2xl font-bold">Party</span>
-              </Link>
-              <Link href="/products?style=gym" className="relative h-48 md:h-56 bg-white rounded-2xl overflow-hidden group">
-                <Image src="https://placehold.co/452x677" alt="Gym" fill className="object-cover group-hover:scale-105 transition" />
-                <span className="absolute top-4 left-4 text-xl md:text-2xl font-bold">Gym</span>
-              </Link>
-            </div>
-          </div>
-        </section>
-
         {/* Customer Reviews */}
         <section className="container mx-auto px-6 md:px-12 py-10 md:py-14">
           <h2 className="text-2xl md:text-4xl font-integral font-bold mb-6 md:mb-10">
