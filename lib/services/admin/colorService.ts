@@ -9,11 +9,11 @@ export interface Color {
 
 const adminColorService = {
     /**
-     * Get all colors
-     * GET /api/v1/admin/colors
+     * Get all colors (Public API)
+     * GET /api/v1/colors
      */
-    getColors: async (): Promise<AxiosResponse<Color[]>> => {
-        return apiClient.get('/api/v1/admin/colors');
+    getColors: async (): Promise<AxiosResponse<{ colors: Color[] }>> => {
+        return apiClient.get('/api/v1/colors');
     },
 
     /**

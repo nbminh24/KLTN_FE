@@ -16,7 +16,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
   const handleStatusChange = (newStatus: string) => {
     const newOrderStatus = newStatus as OrderStatus;
-    
+
     if (!canTransitionTo(orderStatus, newOrderStatus)) {
       showToast(`Cannot change status from ${orderStatus} to ${newStatus}`, 'error');
       return;
@@ -109,7 +109,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             <span className="font-semibold text-sm">Download Invoice</span>
           </button>
           {allowedStatuses.length > 0 ? (
-            <select 
+            <select
               onChange={(e) => handleStatusChange(e.target.value)}
               value=""
               className="px-4 py-2.5 bg-[#4880FF] text-white rounded-lg font-semibold cursor-pointer"

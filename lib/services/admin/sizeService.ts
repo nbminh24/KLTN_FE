@@ -9,11 +9,11 @@ export interface Size {
 
 const adminSizeService = {
     /**
-     * Get all sizes
-     * GET /api/v1/admin/sizes
+     * Get all sizes (Public API)
+     * GET /api/v1/sizes
      */
-    getSizes: async (): Promise<AxiosResponse<Size[]>> => {
-        return apiClient.get('/api/v1/admin/sizes');
+    getSizes: async (): Promise<AxiosResponse<{ sizes: Size[] }>> => {
+        return apiClient.get('/api/v1/sizes');
     },
 
     /**

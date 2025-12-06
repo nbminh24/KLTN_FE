@@ -1,16 +1,24 @@
 'use client';
 
-import { useState, use } from 'react';
+import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, Upload, X, Trash2, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Upload, X, Trash2, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import adminProductService from '@/lib/services/admin/productService';
+import adminSizeService, { Size } from '@/lib/services/admin/sizeService';
+import adminColorService, { Color } from '@/lib/services/admin/colorService';
+import adminCategoryService, { AdminCategory } from '@/lib/services/admin/categoryService';
 
 interface Variant {
   id: string;
+  dbId?: number; // Database ID for existing variants
+  sizeId: number;
+  colorId: number;
   size: string;
   color: string;
   sku: string;
+  stock: number;
   enabled: boolean;
   mainImage: string | null;
   secondaryImages: string[];
@@ -22,117 +30,280 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [showImageUpload, setShowImageUpload] = useState<string | null>(null);
-  
-  // Mock existing product data
-  const existingProduct = {
-    name: 'Gradient Graphic T-shirt',
-    description: 'This graphic t-shirt which is perfect for any occasion.',
-    detailedDescription: 'Crafted from a soft and breathable fabric, it offers superior comfort and style.',
-    category: 'T-Shirts',
-    costPrice: 80,
-    sellingPrice: 145,
-    isActive: true,
-    existingSizes: ['S', 'M', 'L', 'XL'],
-    existingColors: ['Black', 'White'],
-  };
-  
-  // Step 1 data
-  const [productName, setProductName] = useState(existingProduct.name);
-  const [description, setDescription] = useState(existingProduct.description);
-  const [detailedDescription, setDetailedDescription] = useState(existingProduct.detailedDescription);
-  const [category, setCategory] = useState(existingProduct.category);
-  const [costPrice, setCostPrice] = useState(existingProduct.costPrice.toString());
-  const [sellingPrice, setSellingPrice] = useState(existingProduct.sellingPrice.toString());
-  const [selectedSizes, setSelectedSizes] = useState<string[]>(existingProduct.existingSizes);
-  const [selectedColors, setSelectedColors] = useState<string[]>(existingProduct.existingColors);
-  const [isActive, setIsActive] = useState(existingProduct.isActive);
-  
+
+  // Loading and error states
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Master data
+  const [availableSizes, setAvailableSizes] = useState<Size[]>([]);
+  const [availableColors, setAvailableColors] = useState<Color[]>([]);
+  const [categories, setCategories] = useState<AdminCategory[]>([]);
+
+  // Product data
+  const [productData, setProductData] = useState<any>(null);
+  const [productName, setProductName] = useState('');
+  const [description, setDescription] = useState('');
+  const [detailedDescription, setDetailedDescription] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+  const [costPrice, setCostPrice] = useState('');
+  const [sellingPrice, setSellingPrice] = useState('');
+  const [selectedSizeIds, setSelectedSizeIds] = useState<string[]>([]);
+  const [selectedColorIds, setSelectedColorIds] = useState<string[]>([]);
+  const [isActive, setIsActive] = useState(true);
+
   // Step 2 data
   const [variants, setVariants] = useState<Variant[]>([]);
 
-  const availableSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL'];
-  const availableColors = [
-    { name: 'Black', hex: '#000000' },
-    { name: 'White', hex: '#FFFFFF' },
-    { name: 'Red', hex: '#EF4444' },
-    { name: 'Blue', hex: '#3B82F6' },
-    { name: 'Green', hex: '#10B981' },
-    { name: 'Yellow', hex: '#F59E0B' },
-    { name: 'Pink', hex: '#EC4899' },
-    { name: 'Purple', hex: '#8B5CF6' },
-  ];
+  // Fetch master data and product details
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        console.log('📦 Fetching product edit data for ID:', id);
 
-  const generateSKU = (size: string, color: string) => {
+        // Fetch all data in parallel
+        const [sizesRes, colorsRes, categoriesRes, productRes] = await Promise.all([
+          adminSizeService.getSizes(),
+          adminColorService.getColors(),
+          adminCategoryService.getCategories(),
+          adminProductService.getProductById(Number(id)),
+        ]);
+
+        console.log('✅ Sizes:', sizesRes.data);
+        console.log('✅ Colors:', colorsRes.data);
+        console.log('✅ Categories:', categoriesRes.data);
+        console.log('✅ Product:', productRes.data);
+
+        const sizesData: any = sizesRes.data;
+        const colorsData: any = colorsRes.data;
+        const categoriesData: any = categoriesRes.data;
+
+        setAvailableSizes(sizesData.data || sizesData.sizes || []);
+        setAvailableColors(colorsData.data || colorsData.colors || []);
+        setCategories(categoriesData.data || categoriesData.categories || []);
+
+        const product: any = productRes.data;
+        setProductData(product);
+        setProductName(product.name || '');
+        setDescription(product.description || '');
+        setDetailedDescription(product.full_description || '');
+        setCategoryId(product.category_id?.toString() || '');
+        setCostPrice(product.cost_price?.toString() || '');
+        setSellingPrice(product.selling_price?.toString() || '');
+        setIsActive(product.status === 'active');
+
+        // Set selected size and color IDs from product
+        setSelectedSizeIds(product.selected_size_ids?.map((id: any) => id.toString()) || []);
+        setSelectedColorIds(product.selected_color_ids?.map((id: any) => id.toString()) || []);
+
+        setLoading(false);
+      } catch (err: any) {
+        console.error('❌ Failed to fetch product data:', err);
+        setError(err.response?.data?.message || 'Failed to load product data');
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id]);
+
+  const generateSKU = (sizeName: string, colorName: string) => {
     const productPrefix = productName.substring(0, 3).toUpperCase() || 'PRD';
-    return `${productPrefix}-${size}-${color.substring(0, 3).toUpperCase()}`;
+    return `${productPrefix}-${sizeName}-${colorName.substring(0, 3).toUpperCase()}`;
   };
 
   const handleStep1Next = () => {
-    if (!productName || !category || !costPrice || !sellingPrice || selectedSizes.length === 0 || selectedColors.length === 0) {
+    if (!productName || !categoryId || !costPrice || !sellingPrice || selectedSizeIds.length === 0 || selectedColorIds.length === 0) {
       alert('Please fill all required fields and select at least one size and color');
       return;
     }
-    
-    // Generate variants matrix with special logic for existing variants
+
+    // Generate variants matrix
     const newVariants: Variant[] = [];
-    selectedSizes.forEach((size) => {
-      selectedColors.forEach((color) => {
-        const variantId = `${size}-${color}`;
-        const existsInDb = existingProduct.existingSizes.includes(size) && existingProduct.existingColors.includes(color);
+    const existingVariants = productData?.variants || [];
+
+    selectedSizeIds.forEach((sizeId) => {
+      selectedColorIds.forEach((colorId) => {
+        const size = availableSizes.find(s => s.id.toString() === sizeId);
+        const color = availableColors.find(c => c.id.toString() === colorId);
+
+        if (!size || !color) return;
+
+        const variantId = `${sizeId}-${colorId}`;
+        const existingVariant = existingVariants.find(
+          (v: any) => v.size_id?.toString() === sizeId && v.color_id?.toString() === colorId
+        );
+
         newVariants.push({
           id: variantId,
-          size,
-          color,
-          sku: generateSKU(size, color),
+          dbId: existingVariant?.id,
+          sizeId: Number(sizeId),
+          colorId: Number(colorId),
+          size: size.name,
+          color: color.name,
+          sku: existingVariant?.sku || generateSKU(size.name, color.name),
+          stock: existingVariant?.total_stock || 0,
           enabled: true,
-          mainImage: existsInDb ? '/bmm32410_black_xl.webp' : null,
-          secondaryImages: [],
-          existsInDb,
+          mainImage: existingVariant?.images?.[0] || null,
+          secondaryImages: existingVariant?.images?.slice(1) || [],
+          existsInDb: !!existingVariant,
         });
       });
     });
-    
+
     // Add disabled variants for previously existing combinations that were unchecked
-    existingProduct.existingSizes.forEach((size) => {
-      existingProduct.existingColors.forEach((color) => {
-        const variantId = `${size}-${color}`;
-        if (!newVariants.find(v => v.id === variantId)) {
+    existingVariants.forEach((variant: any) => {
+      const variantId = `${variant.size_id}-${variant.color_id}`;
+      if (!newVariants.find(v => v.id === variantId)) {
+        const size = availableSizes.find(s => s.id === variant.size_id);
+        const color = availableColors.find(c => c.id === variant.color_id);
+
+        if (size && color) {
           newVariants.push({
             id: variantId,
-            size,
-            color,
-            sku: generateSKU(size, color),
-            enabled: false, // Auto-disable if unchecked
-            mainImage: '/bmm32410_black_xl.webp',
-            secondaryImages: [],
+            dbId: variant.id,
+            sizeId: variant.size_id,
+            colorId: variant.color_id,
+            size: size.name,
+            color: color.name,
+            sku: variant.sku,
+            stock: variant.total_stock || 0,
+            enabled: false,
+            mainImage: variant.images?.[0] || null,
+            secondaryImages: variant.images?.slice(1) || [],
             existsInDb: true,
           });
         }
-      });
+      }
     });
-    
+
     setVariants(newVariants);
     setStep(2);
   };
 
   const toggleVariantEnabled = (id: string) => {
-    const variant = variants.find(v => v.id === id);
-    // Only allow toggling for new variants or manually via this button
-    // Variants that were disabled due to unchecking in Step 1 cannot be re-enabled here
     setVariants(variants.map(v => v.id === id ? { ...v, enabled: !v.enabled } : v));
   };
 
-  const handleSubmit = () => {
-    alert('Product updated successfully with ' + variants.filter(v => v.enabled).length + ' active variants!');
-    router.push('/admin/products');
+  const updateVariantStock = (id: string, stock: number) => {
+    setVariants(variants.map(v => v.id === id ? { ...v, stock } : v));
   };
 
-  const handleDelete = () => {
-    if (confirm('Are you sure you want to delete this product?')) {
-      alert('Product deleted!');
+  const handleSubmit = async () => {
+    try {
+      setSubmitting(true);
+      console.log('💾 Updating product and variants...');
+
+      // Step 1: Update product basic info
+      await adminProductService.updateProduct(Number(id), {
+        name: productName,
+        description: description,
+        full_description: detailedDescription,
+        category_id: Number(categoryId),
+        cost_price: Number(costPrice),
+        selling_price: Number(sellingPrice),
+        status: isActive ? 'active' : 'inactive',
+      });
+      console.log('✅ Product updated');
+
+      // Step 2: Handle variants (both update existing and create new)
+      const productId = Number(id);
+      const variantPromises = [];
+      let updateErrors: { sku: string; error: string }[] = [];
+
+      for (const variant of variants) {
+        if (variant.existsInDb && variant.dbId) {
+          // Update existing variant (status and stock)
+          console.log(`📝 Updating variant ${variant.sku}...`);
+          variantPromises.push(
+            adminProductService.updateVariant(productId, variant.dbId, {
+              total_stock: variant.stock,
+              status: variant.enabled ? 'active' : 'inactive',
+            }).catch((err: any) => {
+              updateErrors.push({ sku: variant.sku, error: err.message });
+              return null;
+            })
+          );
+        } else if (variant.enabled) {
+          // Create new variant
+          console.log(`➕ Creating variant ${variant.sku}...`);
+          variantPromises.push(
+            adminProductService.createVariant(productId, {
+              size_id: variant.sizeId,
+              color_id: variant.colorId,
+              sku: variant.sku,
+              total_stock: variant.stock,
+              status: 'active',
+            }).catch((err: any) => {
+              updateErrors.push({ sku: variant.sku, error: err.message });
+              return null;
+            })
+          );
+        }
+      }
+
+      // Execute all variant operations in parallel
+      await Promise.all(variantPromises);
+
+      if (updateErrors.length > 0) {
+        console.error('❌ Variant update errors:', updateErrors);
+        console.error('📋 See BACKEND_BUG_VARIANT_UPDATE_404.md for details');
+        alert(`Product updated successfully!\n\n⚠️ Warning: ${updateErrors.length} variant(s) failed to update.\nBackend API issue - see console for details.`);
+      } else {
+        console.log('✅ All variants updated');
+        alert('Product and variants updated successfully!');
+      }
+
       router.push('/admin/products');
+    } catch (err: any) {
+      console.error('❌ Failed to update:', err);
+      alert(err.response?.data?.message || 'Failed to update product');
+      setSubmitting(false);
     }
   };
+
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      console.log('🗑️ Deleting product...');
+
+      await adminProductService.deleteProduct(Number(id));
+
+      console.log('✅ Product deleted successfully');
+      alert('Product deleted successfully!');
+      router.push('/admin/products');
+    } catch (err: any) {
+      console.error('❌ Failed to delete product:', err);
+      alert(err.response?.data?.message || 'Failed to delete product');
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-[#4880FF]" />
+        <p className="ml-3 text-gray-600">Loading product data...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <p className="text-red-600 mb-4">{error}</p>
+        <Link href="/admin/products" className="text-[#4880FF] hover:underline">
+          Back to Products
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -149,9 +320,10 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         <button
           type="button"
           onClick={handleDelete}
-          className="flex items-center gap-2 px-4 py-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+          disabled={submitting}
+          className="flex items-center gap-2 px-4 py-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Trash2 className="w-4 h-4" />
+          {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
           <span className="font-semibold text-sm">Delete Product</span>
         </button>
       </div>
@@ -238,16 +410,16 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             <h2 className="text-xl font-bold mb-4">Category</h2>
             <select
               required
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
             >
               <option value="">Select Category</option>
-              <option>T-Shirts</option>
-              <option>Shirts</option>
-              <option>Jeans</option>
-              <option>Hoodies</option>
-              <option>Shorts</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -261,26 +433,26 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 <div className="flex flex-wrap gap-2">
                   {availableSizes.map((size) => (
                     <label
-                      key={size}
-                      className={`flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer transition ${
-                        selectedSizes.includes(size) 
-                          ? 'border-[#4880FF] bg-blue-50' 
-                          : 'border-gray-300 hover:border-[#4880FF] hover:bg-blue-50'
-                      }`}
+                      key={size.id}
+                      className={`flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer transition ${selectedSizeIds.includes(size.id.toString())
+                        ? 'border-[#4880FF] bg-blue-50'
+                        : 'border-gray-300 hover:border-[#4880FF] hover:bg-blue-50'
+                        }`}
                     >
-                      <input 
-                        type="checkbox" 
+                      <input
+                        type="checkbox"
                         className="w-4 h-4"
-                        checked={selectedSizes.includes(size)}
+                        checked={selectedSizeIds.includes(size.id.toString())}
                         onChange={(e) => {
+                          const sizeId = size.id.toString();
                           if (e.target.checked) {
-                            setSelectedSizes([...selectedSizes, size]);
+                            setSelectedSizeIds([...selectedSizeIds, sizeId]);
                           } else {
-                            setSelectedSizes(selectedSizes.filter(s => s !== size));
+                            setSelectedSizeIds(selectedSizeIds.filter(s => s !== sizeId));
                           }
                         }}
                       />
-                      <span className="text-sm font-semibold">{size}</span>
+                      <span className="text-sm font-semibold">{size.name}</span>
                     </label>
                   ))}
                 </div>
@@ -290,28 +462,28 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 <div className="flex flex-wrap gap-2">
                   {availableColors.map((color) => (
                     <label
-                      key={color.name}
-                      className={`flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer transition ${
-                        selectedColors.includes(color.name)
-                          ? 'border-[#4880FF] bg-blue-50'
-                          : 'border-gray-300 hover:border-[#4880FF] hover:bg-blue-50'
-                      }`}
+                      key={color.id}
+                      className={`flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer transition ${selectedColorIds.includes(color.id.toString())
+                        ? 'border-[#4880FF] bg-blue-50'
+                        : 'border-gray-300 hover:border-[#4880FF] hover:bg-blue-50'
+                        }`}
                     >
-                      <input 
-                        type="checkbox" 
+                      <input
+                        type="checkbox"
                         className="w-4 h-4"
-                        checked={selectedColors.includes(color.name)}
+                        checked={selectedColorIds.includes(color.id.toString())}
                         onChange={(e) => {
+                          const colorId = color.id.toString();
                           if (e.target.checked) {
-                            setSelectedColors([...selectedColors, color.name]);
+                            setSelectedColorIds([...selectedColorIds, colorId]);
                           } else {
-                            setSelectedColors(selectedColors.filter(c => c !== color.name));
+                            setSelectedColorIds(selectedColorIds.filter(c => c !== colorId));
                           }
                         }}
                       />
                       <div
                         className="w-5 h-5 rounded-full border border-gray-300"
-                        style={{ backgroundColor: color.hex }}
+                        style={{ backgroundColor: color.hex_code || '#ccc' }}
                       ></div>
                       <span className="text-sm font-semibold">{color.name}</span>
                     </label>
@@ -325,12 +497,12 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           <div className="bg-white rounded-xl p-6 border border-gray-200">
             <h2 className="text-xl font-bold mb-4">Product Status</h2>
             <div className="flex items-center gap-3">
-              <input 
-                type="checkbox" 
-                id="active" 
+              <input
+                type="checkbox"
+                id="active"
                 checked={isActive}
                 onChange={(e) => setIsActive(e.target.checked)}
-                className="w-5 h-5" 
+                className="w-5 h-5"
               />
               <label htmlFor="active" className="text-sm font-semibold">
                 Active (Product will be visible on store)
@@ -379,6 +551,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">SKU</th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Size</th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Color</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Stock</th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Images</th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Status</th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Active</th>
@@ -391,12 +564,23 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                       <td className="px-6 py-4 text-sm font-semibold">{variant.size}</td>
                       <td className="px-6 py-4 text-sm">{variant.color}</td>
                       <td className="px-6 py-4">
+                        <input
+                          type="number"
+                          min="0"
+                          value={variant.stock}
+                          onChange={(e) => updateVariantStock(variant.id, Number(e.target.value))}
+                          disabled={!variant.enabled}
+                          className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4880FF] disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        />
+                      </td>
+                      <td className="px-6 py-4">
                         <button
                           onClick={() => setShowImageUpload(variant.id)}
-                          className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm"
+                          disabled={!variant.enabled}
+                          className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Upload className="w-4 h-4" />
-                          {variant.mainImage ? 'Change Images' : 'Upload Images'}
+                          {variant.mainImage ? 'Change' : 'Upload'}
                         </button>
                       </td>
                       <td className="px-6 py-4 text-xs">
@@ -460,8 +644,10 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           <div className="flex gap-3">
             <button
               onClick={handleSubmit}
-              className="px-8 py-3 bg-[#4880FF] text-white rounded-lg font-semibold hover:bg-blue-600 transition"
+              disabled={submitting}
+              className="flex items-center gap-2 px-8 py-3 bg-[#4880FF] text-white rounded-lg font-semibold hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
+              {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
               Update Product
             </button>
             <button

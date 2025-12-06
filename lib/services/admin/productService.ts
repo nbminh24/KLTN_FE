@@ -230,6 +230,40 @@ const adminProductService = {
     }): Promise<AxiosResponse<any>> => {
         return apiClient.get(`/api/v1/admin/products/${id}/reviews`, { params });
     },
+
+    /**
+     * Create new variant
+     * POST /api/v1/admin/products/:productId/variants
+     */
+    createVariant: async (productId: number, data: {
+        size_id: number;
+        color_id: number;
+        sku: string;
+        name?: string;
+        total_stock: number;
+        status?: 'active' | 'inactive';
+    }): Promise<AxiosResponse<any>> => {
+        return apiClient.post(`/api/v1/admin/products/${productId}/variants`, data);
+    },
+
+    /**
+     * Update variant
+     * PUT /api/v1/admin/products/:productId/variants/:id
+     */
+    updateVariant: async (productId: number, variantId: number, data: {
+        total_stock?: number;
+        status?: 'active' | 'inactive';
+    }): Promise<AxiosResponse<any>> => {
+        return apiClient.put(`/api/v1/admin/products/${productId}/variants/${variantId}`, data);
+    },
+
+    /**
+     * Delete variant
+     * DELETE /api/v1/admin/products/:productId/variants/:id
+     */
+    deleteVariant: async (productId: number, variantId: number): Promise<AxiosResponse<any>> => {
+        return apiClient.delete(`/api/v1/admin/products/${productId}/variants/${variantId}`);
+    },
 };
 
 export default adminProductService;

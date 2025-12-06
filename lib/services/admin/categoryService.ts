@@ -17,10 +17,10 @@ export interface CreateCategoryData {
 
 const adminCategoryService = {
     /**
-     * Get all categories
+     * Get all categories (Admin API - includes inactive)
      * GET /api/v1/admin/categories
      */
-    getCategories: async (): Promise<AxiosResponse<AdminCategory[]>> => {
+    getCategories: async (): Promise<AxiosResponse<{ categories: AdminCategory[] }>> => {
         return apiClient.get('/api/v1/admin/categories');
     },
 
