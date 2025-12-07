@@ -43,7 +43,7 @@ function SupportInboxContent() {
                 page: 1,
                 limit: 100
             });
-            setTickets(response.data || []);
+            setTickets(response.data.data || []);
         } catch (error) {
             console.error('Failed to fetch tickets:', error);
             showToast('Failed to load tickets', 'error');
@@ -109,17 +109,19 @@ function SupportInboxContent() {
         return badges[source as keyof typeof badges] || { color: 'bg-gray-100 text-gray-700', label: source };
     };
 
-    const filteredTickets = tickets.filter(ticket =>
+    const ticketsArray = Array.isArray(tickets) ? tickets : [];
+
+    const filteredTickets = ticketsArray.filter(ticket =>
         ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ticket.customer_email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ticket.customer_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         ticket.ticket_code.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const stats = {
-        pending: tickets.filter(t => t.status === 'pending').length,
-        in_progress: tickets.filter(t => t.status === 'in_progress').length,
-        resolved: tickets.filter(t => t.status === 'resolved').length,
-        total: tickets.length
+        pending: ticketsArray.filter(t => t.status === 'pending').length,
+        in_progress: ticketsArray.filter(t => t.status === 'in_progress').length,
+        resolved: ticketsArray.filter(t => t.status === 'resolved').length,
+        total: ticketsArray.length
     };
 
     return (
@@ -156,8 +158,8 @@ function SupportInboxContent() {
                     <button
                         onClick={() => handleTabChange('pending')}
                         className={`px-4 py-3 font-semibold transition ${filterStatus === 'pending'
-                                ? 'text-[#4880FF] border-b-2 border-[#4880FF]'
-                                : 'text-gray-600 hover:text-gray-800'
+                            ? 'text-[#4880FF] border-b-2 border-[#4880FF]'
+                            : 'text-gray-600 hover:text-gray-800'
                             }`}
                     >
                         Pending
@@ -165,8 +167,8 @@ function SupportInboxContent() {
                     <button
                         onClick={() => handleTabChange('in_progress')}
                         className={`px-4 py-3 font-semibold transition ${filterStatus === 'in_progress'
-                                ? 'text-[#4880FF] border-b-2 border-[#4880FF]'
-                                : 'text-gray-600 hover:text-gray-800'
+                            ? 'text-[#4880FF] border-b-2 border-[#4880FF]'
+                            : 'text-gray-600 hover:text-gray-800'
                             }`}
                     >
                         In Progress
@@ -174,8 +176,8 @@ function SupportInboxContent() {
                     <button
                         onClick={() => handleTabChange('resolved')}
                         className={`px-4 py-3 font-semibold transition ${filterStatus === 'resolved'
-                                ? 'text-[#4880FF] border-b-2 border-[#4880FF]'
-                                : 'text-gray-600 hover:text-gray-800'
+                            ? 'text-[#4880FF] border-b-2 border-[#4880FF]'
+                            : 'text-gray-600 hover:text-gray-800'
                             }`}
                     >
                         Resolved

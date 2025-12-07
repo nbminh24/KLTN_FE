@@ -23,11 +23,18 @@ export interface CustomerDetail extends AdminCustomer {
 }
 
 export interface CustomersListResponse {
-    customers: AdminCustomer[];
-    total: number;
-    page: number;
-    limit: number;
-    total_pages: number;
+    customers?: AdminCustomer[];
+    data?: AdminCustomer[];
+    total?: number;
+    page?: number;
+    limit?: number;
+    total_pages?: number;
+    meta?: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    };
 }
 
 const adminCustomerService = {

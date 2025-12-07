@@ -45,10 +45,29 @@ export interface CreateRestockBatchData {
 }
 
 export interface InventoryListResponse {
-    items: InventoryItem[];
-    total: number;
-    page: number;
-    limit: number;
+    items?: InventoryItem[];
+    data?: InventoryItem[];
+    total?: number;
+    page?: number;
+    limit?: number;
+    summary?: {
+        total_variants: number;
+        in_stock: number;
+        low_stock_variants: number;
+        out_of_stock_variants: number;
+    };
+    meta?: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages?: number;
+        summary?: {
+            total_variants: number;
+            in_stock: number;
+            low_stock_variants: number;
+            out_of_stock_variants: number;
+        };
+    };
 }
 
 export interface InventoryHistoryResponse {
@@ -101,7 +120,7 @@ const adminInventoryService = {
 
     /**
      * Batch restock - Creates a restock batch with items
-     * POST /admin/inventory/restock/batch
+     * POST /admin/inventory/restock-batch
      */
     createRestockBatch: async (data: CreateRestockBatchData): Promise<AxiosResponse<{
         batch_id: number;
@@ -109,12 +128,12 @@ const adminInventoryService = {
         error_count: number;
         errors?: Array<{ variant_id: number; message: string }>;
     }>> => {
-        return apiClient.post('/admin/inventory/restock/batch', data);
+        return apiClient.post('/admin/inventory/restock-batch', data);
     },
 
     /**
      * Get restock history/batches
-     * GET /admin/inventory/restock/history
+     * GET /admin/inventory/restock-history
      */
     getRestockHistory: async (params?: {
         page?: number;
@@ -135,7 +154,7 @@ const adminInventoryService = {
         page: number;
         limit: number;
     }>> => {
-        return apiClient.get('/admin/inventory/restock/history', { params });
+        return apiClient.get('/admin/inventory/restock-history', { params });
     },
 };
 

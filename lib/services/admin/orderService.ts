@@ -40,11 +40,18 @@ export interface StatusHistory {
 }
 
 export interface OrdersListResponse {
-    orders: AdminOrder[];
-    total: number;
-    page: number;
-    limit: number;
-    total_pages: number;
+    orders?: AdminOrder[];
+    data?: AdminOrder[];
+    total?: number;
+    page?: number;
+    limit?: number;
+    total_pages?: number;
+    meta?: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    };
 }
 
 export interface UpdateOrderStatusData {

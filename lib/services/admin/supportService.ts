@@ -30,10 +30,13 @@ export interface TicketReply {
 }
 
 export interface TicketsListResponse {
-    tickets: SupportTicket[];
-    total: number;
-    page: number;
-    limit: number;
+    data: SupportTicket[];
+    pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+    };
 }
 
 export interface ReplyTicketData {

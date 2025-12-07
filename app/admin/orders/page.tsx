@@ -18,39 +18,83 @@ export default function OrdersPage() {
   const [showBulkUpdateModal, setShowBulkUpdateModal] = useState(false);
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalOrders, setTotalOrders] = useState(0);
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
     processing: 0,
     shipped: 0,
-    delivered: 0
+    delivered: 0,
+    cancelled: 0
   });
 
   useEffect(() => {
+    fetchStatistics();
+  }, []);
+
+  useEffect(() => {
     fetchOrders();
-  }, [activeTab]);
+  }, [activeTab, currentPage, sortOrder]);
+
+  const fetchStatistics = async () => {
+    try {
+      const response = await adminOrderService.getOrderStatistics();
+      console.log('📊 Order statistics:', response.data);
+      setStats({
+        total: response.data.total_orders || 0,
+        pending: response.data.pending_orders || 0,
+        processing: response.data.processing_orders || 0,
+        shipped: 0, // Not in API response
+        delivered: response.data.completed_orders || 0,
+        cancelled: response.data.cancelled_orders || 0,
+      });
+    } catch (error: any) {
+      // Silently handle statistics API errors
+      if (error?.response?.status === 500) {
+        console.warn('⚠️ Order statistics API unavailable (500). Stats set to 0.');
+      } else {
+        console.error('❌ Failed to fetch statistics:', error);
+      }
+    }
+  };
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
+      console.log('📦 Fetching orders...', { status: activeTab, page: currentPage });
+
       const response = await adminOrderService.getOrders({
         status: activeTab,
-        page: 1,
-        limit: 100,
-        search: searchQuery
+        page: currentPage,
+        limit: 20,
+        search: searchQuery || undefined,
+        order: sortOrder,
       });
-      setOrders(response.data.orders || []);
-      // Stats will be calculated from orders or fetched separately
-      // if (response.data.statistics) {
-      //   setStats(response.data.statistics);
-      // }
+      console.log('✅ Orders response:', response.data);
+
+      // Backend returns { data: [], meta: { total, page, limit, totalPages } }
+      const ordersData = response.data.data || response.data.orders || response.data;
+      const ordersArray = Array.isArray(ordersData) ? ordersData : [];
+
+      console.log('📦 Parsed orders:', ordersArray.length, 'items');
+
+      setOrders(ordersArray);
+      setTotalPages(response.data.meta?.totalPages || response.data.total_pages || 1);
+      setTotalOrders(response.data.meta?.total || response.data.total || 0);
     } catch (error) {
-      console.error('Failed to fetch orders:', error);
+      console.error('❌ Failed to fetch orders:', error);
       showToast('Failed to load orders', 'error');
       setOrders([]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = () => {
+    setCurrentPage(1);
+    fetchOrders();
   };
 
   const getPaymentStatusColor = (status: PaymentStatus) => {
@@ -76,17 +120,8 @@ export default function OrdersPage() {
     }
   };
 
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch =
-      order.id.toString().includes(searchQuery.toLowerCase()) ||
-      order.customer_email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (order.customer_name && order.customer_name.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesSearch;
-  }).sort((a, b) => {
-    const dateA = new Date(a.created_at).getTime();
-    const dateB = new Date(b.created_at).getTime();
-    return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
-  });
+  // No client-side filtering - backend handles it
+  const filteredOrders = orders;
 
   // Checkbox handlers
   const handleSelectAll = () => {
@@ -171,12 +206,22 @@ export default function OrdersPage() {
               placeholder="Search by Order ID or Customer name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
             />
           </div>
+          <button
+            onClick={handleSearch}
+            className="px-4 py-2 bg-[#4880FF] text-white rounded-lg hover:bg-blue-600 transition font-semibold text-sm"
+          >
+            Search
+          </button>
           <select
             value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
+            onChange={(e) => {
+              setSortOrder(e.target.value as 'asc' | 'desc');
+              setCurrentPage(1);
+            }}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
           >
             <option value="desc">Date: Newest</option>
@@ -278,15 +323,31 @@ export default function OrdersPage() {
 
         {/* Pagination */}
         <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-          <p className="text-sm text-gray-600">Showing 1-5 of 10,293</p>
+          <p className="text-sm text-gray-600">
+            Showing {orders.length > 0 ? ((currentPage - 1) * 20 + 1) : 0}-{Math.min(currentPage * 20, totalOrders)} of {totalOrders}
+          </p>
           <div className="flex gap-2">
-            <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Previous
             </button>
-            <button className="px-4 py-2 bg-[#4880FF] text-white rounded-lg">1</button>
-            <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">2</button>
-            <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">3</button>
-            <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+            <button className="px-4 py-2 bg-[#4880FF] text-white rounded-lg">{currentPage}</button>
+            {currentPage < totalPages && (
+              <button
+                onClick={() => setCurrentPage(currentPage + 1)}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+              >
+                {currentPage + 1}
+              </button>
+            )}
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Next
             </button>
           </div>

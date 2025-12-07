@@ -24,9 +24,18 @@ export default function CategoriesPage() {
   const fetchCategories = async () => {
     try {
       setLoading(true);
+      console.log('📁 Fetching categories...');
       const response = await adminCategoryService.getCategories();
-      setCategories(Array.isArray(response.data) ? response.data : []);
+      console.log('✅ Categories response:', response.data);
+
+      // Backend returns { categories: [] } or { data: [] }
+      const categoriesData = response.data.categories || response.data.data || response.data;
+      const categoriesArray = Array.isArray(categoriesData) ? categoriesData : [];
+
+      console.log('📁 Parsed categories:', categoriesArray.length, 'items');
+      setCategories(categoriesArray);
     } catch (error: any) {
+      console.error('❌ Failed to fetch categories:', error);
       if (error?.message === 'Network Error') {
         // Silently handle network errors
       } else {
@@ -68,10 +77,13 @@ export default function CategoriesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Backend auto-generates slug, don't send it
       const dataToSend = {
-        ...formData,
-        slug: formData.slug || generateSlug(formData.name),
+        name: formData.name,
+        status: formData.status,
       };
+
+      console.log('📝 Submitting category data:', dataToSend);
 
       if (editMode && selectedCategory) {
         await adminCategoryService.updateCategory(selectedCategory.id, dataToSend);
@@ -83,9 +95,15 @@ export default function CategoriesPage() {
       setShowModal(false);
       setFormData({ name: '', slug: '', status: 'active' });
       fetchCategories();
-    } catch (error) {
-      console.error('Error saving category:', error);
-      showToast('Failed to save category', 'error');
+    } catch (error: any) {
+      console.error('❌ Error saving category:', error);
+      console.error('❌ Response data:', error?.response?.data);
+      console.error('❌ Status:', error?.response?.status);
+
+      const errorMessage = error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        'Failed to save category';
+      showToast(errorMessage, 'error');
     }
   };
 

@@ -29,15 +29,30 @@ export default function PromotionsPage() {
   const fetchPromotions = async () => {
     try {
       setLoading(true);
+      console.log('🎁 Fetching promotions...', { status: activeTab });
+
       const response = await adminPromotionService.getPromotions({
         status: activeTab,
         page: 1,
         limit: 100,
       });
-      setPromotions(response.data.promotions || []);
-    } catch (error) {
-      console.error('Error fetching promotions:', error);
-      showToast('Failed to load promotions', 'error');
+      console.log('✅ Promotions response:', response.data);
+
+      const promotionsData = response.data.data || response.data.promotions || response.data;
+      const promotionsArray = Array.isArray(promotionsData) ? promotionsData : [];
+
+      console.log('🎁 Parsed promotions:', promotionsArray.length, 'items');
+      setPromotions(promotionsArray);
+    } catch (error: any) {
+      console.error('❌ Error fetching promotions:', error);
+
+      // Handle backend 500 error gracefully
+      if (error?.response?.status === 500) {
+        console.warn('⚠️ Promotions API unavailable (500). Showing empty list.');
+        showToast('Promotions API temporarily unavailable', 'warning');
+      } else {
+        showToast('Failed to load promotions', 'error');
+      }
       setPromotions([]);
     } finally {
       setLoading(false);

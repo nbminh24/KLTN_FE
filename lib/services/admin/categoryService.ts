@@ -20,7 +20,7 @@ const adminCategoryService = {
      * Get all categories (Admin API - includes inactive)
      * GET /api/v1/admin/categories
      */
-    getCategories: async (): Promise<AxiosResponse<{ categories: AdminCategory[] }>> => {
+    getCategories: async (): Promise<AxiosResponse<{ categories?: AdminCategory[]; data?: AdminCategory[] }>> => {
         return apiClient.get('/api/v1/admin/categories');
     },
 

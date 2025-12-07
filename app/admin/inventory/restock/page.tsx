@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Plus, X, Check, Loader2, Package } from 'lucide-react';
-import adminInventoryService, { RestockBatchData } from '@/lib/services/admin/inventoryService';
+import adminInventoryService, { CreateRestockBatchData } from '@/lib/services/admin/inventoryService';
 import adminProductService from '@/lib/services/admin/productService';
 import { showToast } from '@/components/Toast';
 
@@ -76,7 +76,7 @@ export default function RestockPage() {
         try {
             setLoading(true);
 
-            const batchData: RestockBatchData = {
+            const batchData: CreateRestockBatchData = {
                 admin_id: 1, // TODO: Get from auth context
                 type: batchType,
                 items: validItems.map(item => ({
@@ -85,12 +85,21 @@ export default function RestockPage() {
                 }))
             };
 
-            await adminInventoryService.createRestockBatch(batchData);
+            console.log('📦 Creating restock batch...', batchData);
+
+            const response = await adminInventoryService.createRestockBatch(batchData);
+            console.log('✅ Restock batch created:', response.data);
+
             showToast(`Restock batch created successfully! ${validItems.length} items added to inventory.`, 'success');
             setItems([]);
         } catch (error: any) {
-            console.error('Failed to create restock batch:', error);
-            showToast(error.response?.data?.message || 'Failed to create restock batch', 'error');
+            console.error('❌ Failed to create restock batch:', error);
+            console.error('Response:', error?.response?.data);
+
+            const errorMessage = error?.response?.data?.message ||
+                error?.response?.data?.error ||
+                'Failed to create restock batch';
+            showToast(errorMessage, 'error');
         } finally {
             setLoading(false);
         }
