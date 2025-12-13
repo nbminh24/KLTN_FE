@@ -21,7 +21,7 @@ interface ChatStore {
     setCurrentProduct: (productId: number | null) => void;
 
     initSession: () => Promise<void>;
-    loadHistory: () => Promise<void>;
+    loadHistory: (sessionId?: number) => Promise<void>;
     sendMessage: (text: string, image?: string, metadata?: Record<string, any>) => Promise<void>;
     disableButtonsInMessage: (messageId: string) => void;
     addMessage: (message: ChatMessage) => void;
@@ -62,17 +62,26 @@ const useChatStore = create<ChatStore>()(
                 try {
                     set({ isLoading: true });
 
-                    // Get or create visitor ID
-                    let visitorId = get().visitorId;
-                    if (!visitorId) {
-                        visitorId = crypto.randomUUID();
-                        set({ visitorId });
+                    // Check if user is logged in
+                    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+
+                    let sessionPayload: any = {};
+
+                    if (token) {
+                        // Logged-in user: Send empty payload, backend will use JWT
+                        console.log('[ChatStore] Creating session for logged-in user (JWT auth)');
+                    } else {
+                        // Guest user: Create and send visitor_id
+                        let visitorId = get().visitorId;
+                        if (!visitorId) {
+                            visitorId = crypto.randomUUID();
+                            set({ visitorId });
+                        }
+                        sessionPayload.visitor_id = visitorId;
+                        console.log('[ChatStore] Creating session for guest user:', visitorId);
                     }
 
-                    // Create or get session
-                    const response = await chatService.createOrGetSession({
-                        visitor_id: visitorId,
-                    });
+                    const response = await chatService.createOrGetSession(sessionPayload);
 
                     // Debug log - detailed (serialize to see full structure)
                     console.log('[ChatStore] === DEBUGGING SESSION RESPONSE ===');
@@ -123,12 +132,10 @@ const useChatStore = create<ChatStore>()(
                         throw new Error('FALLBACK_MODE');
                     }
 
-                    const sessionData = {
+                    set({
                         sessionId,
                         isLoading: false,
-                    };
-
-                    set(sessionData);
+                    });
 
                     console.log('[ChatStore] Session initialized:', sessionId);
 
@@ -176,8 +183,8 @@ const useChatStore = create<ChatStore>()(
             },
 
             // Load chat history
-            loadHistory: async () => {
-                const sessionId = get().sessionId;
+            loadHistory: async (providedSessionId?: number) => {
+                const sessionId = providedSessionId || get().sessionId;
                 if (!sessionId) return;
 
                 try {
@@ -194,7 +201,12 @@ const useChatStore = create<ChatStore>()(
                         custom: msg.custom || undefined,
                     }));
 
-                    set({ messages: historyMessages });
+                    // If loading a different session, update sessionId
+                    if (providedSessionId && providedSessionId !== get().sessionId) {
+                        set({ sessionId: providedSessionId, messages: historyMessages });
+                    } else {
+                        set({ messages: historyMessages });
+                    }
                 } catch (error) {
                     console.error('Failed to load history:', error);
                 }

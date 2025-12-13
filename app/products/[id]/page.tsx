@@ -35,6 +35,7 @@ export default function ProductDetailPage() {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState('');
+  const [allProductImages, setAllProductImages] = useState<string[]>([]);
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
 
@@ -62,7 +63,29 @@ export default function ProductDetailPage() {
 
       setProduct(productData);
       setRelatedProducts(relatedRes.data.products);
-      setSelectedImage(productData.thumbnail_url || '/bmm32410_black_xl.webp');
+
+      // Collect all images from variants
+      const allImages: string[] = [];
+      if (productData.variants && productData.variants.length > 0) {
+        productData.variants.forEach((variant: any) => {
+          if (variant.images && Array.isArray(variant.images)) {
+            variant.images.forEach((img: any) => {
+              if (img.image_url && !allImages.includes(img.image_url)) {
+                allImages.push(img.image_url);
+              }
+            });
+          }
+        });
+      }
+
+      // Add thumbnail if not already included
+      if (productData.thumbnail_url && !allImages.includes(productData.thumbnail_url)) {
+        allImages.unshift(productData.thumbnail_url);
+      }
+
+      console.log('📸 All collected images:', allImages);
+      setAllProductImages(allImages);
+      setSelectedImage(allImages[0] || productData.thumbnail_url || '/bmm32410_black_xl.webp');
 
       // Try to fetch reviews
       try {
@@ -359,11 +382,11 @@ export default function ProductDetailPage() {
                   Click to zoom
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-4">
-                {(product.images && product.images.length > 0 ? product.images : [product.thumbnail_url || '/bmm32410_black_xl.webp']).map((img, i) => (
+              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                {(allProductImages.length > 0 ? allProductImages : [product.thumbnail_url || '/bmm32410_black_xl.webp']).map((img, i) => (
                   <div
                     key={i}
-                    className={`relative aspect-square rounded-xl overflow-hidden cursor-pointer border-2 transition ${selectedImage === img ? 'border-black' : 'border-transparent hover:border-gray-400'}`}
+                    className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden cursor-pointer border-2 transition ${selectedImage === img ? 'border-black' : 'border-transparent hover:border-gray-400'}`}
                     style={{ backgroundColor: '#dadee3' }}
                     onClick={() => setSelectedImage(img)}
                   >
@@ -400,10 +423,10 @@ export default function ProductDetailPage() {
                   <span className="text-sm text-gray-500">({product.total_reviews || 0} reviews)</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl font-bold">{product.selling_price.toLocaleString('vi-VN')}₫</span>
+                  <span className="text-2xl font-bold">${Number(product.selling_price).toFixed(2)}</span>
                   {discountPercentage > 0 && (
                     <>
-                      <span className="text-2xl font-bold text-gray-400 line-through">{product.cost_price.toLocaleString('vi-VN')}₫</span>
+                      <span className="text-2xl font-bold text-gray-400 line-through">${Number(product.cost_price).toFixed(2)}</span>
                       <span className="bg-red-100 text-red-600 text-xs font-medium px-2.5 py-1 rounded-full">
                         -{discountPercentage}%
                       </span>

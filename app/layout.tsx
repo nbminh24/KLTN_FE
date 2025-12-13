@@ -3,14 +3,15 @@ import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 import Chatbot from "@/components/Chatbot";
 import { ToastContainer } from "@/components/Toast";
+import TokenRefreshProvider from "@/components/TokenRefreshProvider";
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
 });
 
-const poppins = Poppins({ 
+const poppins = Poppins({
   weight: ["400", "500", "600", "700", "800", "900"],
   subsets: ["latin"],
   variable: "--font-poppins",
@@ -30,6 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${poppins.variable}`}>
       <body className="antialiased">
+        <TokenRefreshProvider />
         {children}
         <Chatbot />
         <ToastContainer />

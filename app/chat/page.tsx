@@ -1,23 +1,34 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Plus, Trash2, Menu, X, Camera, Bot } from 'lucide-react';
+import { Send, Plus, Trash2, Menu, X, Camera, Bot, MessageSquare } from 'lucide-react';
+import Image from 'next/image';
 import Header from '@/components/Header';
 import useChatStore from '@/lib/stores/useChatStore';
 import MessageRenderer from '@/components/chatbot/MessageRenderer';
 import TypingIndicator from '@/components/chatbot/TypingIndicator';
-import chatService from '@/lib/services/chatService';
+import chatService, { SessionItem } from '@/lib/services/chatService';
 
 export default function ChatPage() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [sessionsHistory, setSessionsHistory] = useState<{
+        today: SessionItem[];
+        yesterday: SessionItem[];
+        last_7_days: SessionItem[];
+        older: SessionItem[];
+    }>({ today: [], yesterday: [], last_7_days: [], older: [] });
+    const [loadingHistory, setLoadingHistory] = useState(false);
+    const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
     // Zustand store
     const {
         messages,
         isTyping,
+        sessionId,
         initSession,
         sendMessage,
         clearMessages,
+        loadHistory,
     } = useChatStore();
 
     const [inputValue, setInputValue] = useState('');
@@ -26,10 +37,41 @@ export default function ChatPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    // Initialize session on mount
+    // Initialize session and load history on mount
     useEffect(() => {
         initSession();
+        loadSessionsHistory();
     }, [initSession]);
+
+    // Update active session when sessionId changes
+    useEffect(() => {
+        if (sessionId) {
+            setActiveSessionId(sessionId.toString());
+        }
+    }, [sessionId]);
+
+    const loadSessionsHistory = async () => {
+        try {
+            setLoadingHistory(true);
+            const token = localStorage.getItem('access_token');
+            const visitorId = localStorage.getItem('visitor_id');
+
+            const params: any = { limit: 50 };
+
+            // Only send visitor_id if NOT logged in
+            if (!token && visitorId) {
+                params.visitor_id = visitorId;
+            }
+            // If logged in (has token), send empty params - backend will use JWT
+
+            const response = await chatService.getSessionsHistory(params);
+            setSessionsHistory(response.data.sessions);
+        } catch (error) {
+            console.error('Failed to load sessions history:', error);
+        } finally {
+            setLoadingHistory(false);
+        }
+    };
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -81,8 +123,113 @@ export default function ChatPage() {
     };
 
     const handleNewChat = async () => {
-        clearMessages();
-        await initSession();
+        try {
+            console.log('[Chat] Creating new chat session...');
+
+            // Clear current messages
+            clearMessages();
+
+            // Create brand new session using force_new parameter
+            const response = await chatService.createNewSession();
+
+            // Parse response and set new session
+            const data = response.data as any;
+            const newSessionId = data?.session?.id
+                ? (typeof data.session.id === 'string' ? parseInt(data.session.id, 10) : data.session.id)
+                : null;
+
+            if (newSessionId) {
+                console.log('[Chat] New session created:', newSessionId);
+                setActiveSessionId(newSessionId.toString());
+
+                // Refresh store with new session
+                await initSession();
+
+                // Refresh sidebar to show new session
+                await loadSessionsHistory();
+            } else {
+                console.warn('[Chat] Failed to get new session ID from response');
+                throw new Error('No session ID in response');
+            }
+        } catch (error) {
+            console.error('[Chat] Failed to create new chat:', error);
+
+            // Fallback: init session normally
+            clearMessages();
+            await initSession();
+            await loadSessionsHistory();
+        }
+    };
+
+    const handleSessionClick = async (session: SessionItem) => {
+        try {
+            setActiveSessionId(session.id);
+            await loadHistory(Number(session.id));
+        } catch (error) {
+            console.error('Failed to load session history:', error);
+        }
+    };
+
+    const handleDeleteSession = async (sessionId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!confirm('Delete this chat session?')) return;
+
+        try {
+            await chatService.deleteSession(Number(sessionId));
+            loadSessionsHistory();
+            if (activeSessionId === sessionId) {
+                handleNewChat();
+            }
+        } catch (error) {
+            console.error('Failed to delete session:', error);
+        }
+    };
+
+    const formatSessionTime = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    };
+
+    const renderSessionGroup = (title: string, sessions: SessionItem[]) => {
+        if (sessions.length === 0) return null;
+
+        return (
+            <div className="mb-4">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase px-2 mb-2">{title}</h3>
+                <div className="space-y-1">
+                    {sessions.map((session) => (
+                        <div
+                            key={session.id}
+                            onClick={() => handleSessionClick(session)}
+                            className={`group flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition ${activeSessionId === session.id
+                                ? 'bg-black text-white'
+                                : 'hover:bg-gray-100'
+                                }`}
+                        >
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <MessageSquare className="w-4 h-4 flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium truncate">
+                                        Chat {session.id}
+                                    </p>
+                                    <p className={`text-xs ${activeSessionId === session.id ? 'text-gray-300' : 'text-gray-500'
+                                        }`}>
+                                        {formatSessionTime(session.updated_at)}
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={(e) => handleDeleteSession(session.id, e)}
+                                className={`opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-100 transition ${activeSessionId === session.id ? 'text-white hover:text-red-600' : 'text-gray-400 hover:text-red-600'
+                                    }`}
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
     };
 
     // Handlers for rich content
@@ -130,11 +277,23 @@ export default function ChatPage() {
                         </button>
                     </div>
 
-                    {/* Chat History - TODO: Implement session history */}
+                    {/* Chat History */}
                     <div className="flex-1 overflow-y-auto p-3">
-                        <p className="text-xs text-gray-500 text-center py-4">
-                            Session history coming soon
-                        </p>
+                        {loadingHistory ? (
+                            <p className="text-xs text-gray-500 text-center py-4">Loading...</p>
+                        ) : (
+                            <>
+                                {renderSessionGroup('Today', sessionsHistory.today)}
+                                {renderSessionGroup('Yesterday', sessionsHistory.yesterday)}
+                                {renderSessionGroup('Last 7 Days', sessionsHistory.last_7_days)}
+                                {renderSessionGroup('Older', sessionsHistory.older)}
+                                {Object.values(sessionsHistory).flat().length === 0 && (
+                                    <p className="text-xs text-gray-500 text-center py-4">
+                                        No chat history yet
+                                    </p>
+                                )}
+                            </>
+                        )}
                     </div>
 
                     {/* Sidebar Footer */}
@@ -184,6 +343,7 @@ export default function ChatPage() {
                                     onSizeSelect={handleSizeSelect}
                                     onColorSelect={handleColorSelect}
                                     onButtonClick={handleButtonClick}
+                                    onRasaButtonClick={handleButtonClick}
                                 />
                             ))}
                             {isTyping && <TypingIndicator />}
