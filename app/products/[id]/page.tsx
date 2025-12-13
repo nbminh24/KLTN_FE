@@ -337,9 +337,7 @@ export default function ProductDetailPage() {
             <ChevronRight className="w-4 h-4 text-gray-500" />
             <Link href="/products" className="text-gray-500">Shop</Link>
             <ChevronRight className="w-4 h-4 text-gray-500" />
-            <Link href="/products?category=men" className="text-gray-500">Men</Link>
-            <ChevronRight className="w-4 h-4 text-gray-500" />
-            <span className="font-medium">{product.category?.name || 'Product'}</span>
+            <span className="font-medium">{product.name}</span>
           </div>
 
           {/* Product Section */}
@@ -413,10 +411,6 @@ export default function ProductDetailPage() {
                   )}
                 </div>
               </div>
-
-              <p className="text-gray-600 text-sm">
-                {product.description || 'No description available.'}
-              </p>
 
               <hr className="border-gray-200" />
 
@@ -585,13 +579,41 @@ export default function ProductDetailPage() {
                 Rating & Reviews
               </button>
               <button
-                onClick={() => setSelectedTab('faqs')}
-                className={`pb-4 ${selectedTab === 'faqs' ? 'border-b-2 border-black font-medium' : 'text-gray-600'}`}
+                onClick={() => setSelectedTab('sizeguide')}
+                className={`pb-4 ${selectedTab === 'sizeguide' ? 'border-b-2 border-black font-medium' : 'text-gray-600'}`}
               >
-                FAQs
+                Size Guide
               </button>
             </div>
           </div>
+
+          {/* Product Details Section */}
+          {selectedTab === 'details' && (
+            <div className="mb-12">
+              <div className="prose max-w-none">
+                <h3 className="text-xl font-bold mb-4">Product Description</h3>
+                <div className="text-gray-600 whitespace-pre-line">
+                  {product.full_description || product.description || 'No detailed description available.'}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Size Guide Section */}
+          {selectedTab === 'sizeguide' && (
+            <div className="mb-12">
+              <h3 className="text-xl font-bold mb-6">Size Guide</h3>
+              <div className="max-w-4xl mx-auto">
+                <Image
+                  src="/size_chart.jpg"
+                  alt="Size Chart"
+                  width={1200}
+                  height={800}
+                  className="w-full h-auto rounded-xl border border-gray-200"
+                />
+              </div>
+            </div>
+          )}
 
           {/* Reviews Section */}
           {selectedTab === 'reviews' && (
@@ -672,6 +694,14 @@ export default function ProductDetailPage() {
                   discount={relatedProduct.cost_price > relatedProduct.selling_price ? Math.round(((relatedProduct.cost_price - relatedProduct.selling_price) / relatedProduct.cost_price) * 100) : undefined}
                 />
               ))}
+            </div>
+            <div className="flex justify-center mt-8">
+              <Link
+                href="/products"
+                className="border border-black bg-white text-black px-12 py-3 rounded-full font-medium hover:bg-gray-50 transition"
+              >
+                View More
+              </Link>
             </div>
           </section>
         </div>

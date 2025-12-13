@@ -150,7 +150,7 @@ export default function ProductsPage() {
           <div className="flex items-center gap-2 text-sm mb-6">
             <span className="text-gray-500">Home</span>
             <ChevronRight className="w-4 h-4 text-gray-500" />
-            <span className="font-medium">Casual</span>
+            <span className="font-medium">Shop</span>
           </div>
 
           <div className="flex gap-6">
