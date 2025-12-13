@@ -94,15 +94,15 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Brands Section */}
+        {/* Categories Section */}
         <section className="bg-black py-8">
           <div className="container mx-auto px-6 md:px-12">
             <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16">
-              <div className="text-white text-2xl md:text-3xl font-bold">VERSACE</div>
-              <div className="text-white text-2xl md:text-3xl font-bold">ZARA</div>
-              <div className="text-white text-2xl md:text-3xl font-bold">GUCCI</div>
-              <div className="text-white text-2xl md:text-3xl font-bold">PRADA</div>
-              <div className="text-white text-2xl md:text-3xl font-bold">Calvin Klein</div>
+              <Link href="/products?category=t-shirts" className="text-white text-xl md:text-2xl font-bold hover:text-gray-300 transition">T-SHIRTS</Link>
+              <Link href="/products?category=jeans-pants" className="text-white text-xl md:text-2xl font-bold hover:text-gray-300 transition">JEANS & PANTS</Link>
+              <Link href="/products?category=shirts" className="text-white text-xl md:text-2xl font-bold hover:text-gray-300 transition">SHIRTS</Link>
+              <Link href="/products?category=outerwear" className="text-white text-xl md:text-2xl font-bold hover:text-gray-300 transition">OUTERWEAR</Link>
+              <Link href="/products?category=accessories" className="text-white text-xl md:text-2xl font-bold hover:text-gray-300 transition">ACCESSORIES</Link>
             </div>
           </div>
         </section>
@@ -247,14 +247,14 @@ export default function HomePage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Banner 1 - Sale Shock */}
-            <Link href="/sale" className="relative h-64 bg-red-500 rounded-3xl overflow-hidden group">
+            <Link href="/sale" className="relative h-64 bg-white border border-gray-300 rounded-3xl overflow-hidden group">
               <div className="absolute inset-0 p-8 flex flex-col justify-between">
                 <div>
-                  <p className="text-white text-sm font-semibold mb-2">SALE SHOCK</p>
-                  <h3 className="text-white text-3xl font-bold mb-2">Up to 50% OFF</h3>
-                  <p className="text-white/90 text-sm">Limited time only</p>
+                  <p className="text-black text-sm font-semibold mb-2">SALE SHOCK</p>
+                  <h3 className="text-black text-3xl font-bold mb-2">Up to 50% OFF</h3>
+                  <p className="text-gray-700 text-sm">Limited time only</p>
                 </div>
-                <div className="inline-flex items-center gap-2 bg-white text-black px-6 py-2.5 rounded-full font-semibold w-fit group-hover:gap-3 transition-all">
+                <div className="inline-flex items-center gap-2 bg-black text-white px-6 py-2.5 rounded-full font-semibold w-fit group-hover:gap-3 transition-all">
                   <span>Shop Now</span>
                   <span>→</span>
                 </div>
@@ -262,14 +262,14 @@ export default function HomePage() {
             </Link>
 
             {/* Banner 2 - New Arrivals */}
-            <Link href="/new-arrivals" className="relative h-64 bg-blue-500 rounded-3xl overflow-hidden group">
+            <Link href="/new-arrivals" className="relative h-64 bg-white border border-gray-300 rounded-3xl overflow-hidden group">
               <div className="absolute inset-0 p-8 flex flex-col justify-between">
                 <div>
-                  <p className="text-white text-sm font-semibold mb-2">JUST LANDED</p>
-                  <h3 className="text-white text-3xl font-bold mb-2">New Arrivals</h3>
-                  <p className="text-white/90 text-sm">Fresh styles for the season</p>
+                  <p className="text-black text-sm font-semibold mb-2">JUST LANDED</p>
+                  <h3 className="text-black text-3xl font-bold mb-2">New Arrivals</h3>
+                  <p className="text-gray-700 text-sm">Fresh styles for the season</p>
                 </div>
-                <div className="inline-flex items-center gap-2 bg-white text-black px-6 py-2.5 rounded-full font-semibold w-fit group-hover:gap-3 transition-all">
+                <div className="inline-flex items-center gap-2 bg-black text-white px-6 py-2.5 rounded-full font-semibold w-fit group-hover:gap-3 transition-all">
                   <span>Explore Now</span>
                   <span>→</span>
                 </div>
@@ -286,16 +286,16 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               {
-                name: 'Sarah M.',
-                review: "I'm blown away by the quality and style of the clothes I received from Shop.co. From casual wear to elegant dresses, every piece I've bought has exceeded my expectations.",
+                name: 'Mr. Wilson',
+                review: "I'm blown away by the high quality and style of the casual male wear I received from LeCas. From daily essentials to more elegant pieces, every item I've bought has exceeded my expectations in terms of durability and look. LeCas is my go-to for top-tier men's fashion!",
               },
               {
                 name: 'Alex K.',
-                review: "Finding clothes that align with my personal style used to be a challenge until I discovered Shop.co. The range of options they offer is truly remarkable, catering to a variety of tastes and occasions.",
+                review: "Finding clothes that align with my personal men's style used to be a challenge until I discovered LeCas. The range of casual men's clothing they offer is truly remarkable, catering to a variety of tastes and occasions. LeCas is the ideal destination for stylish everyday men's wear",
               },
               {
                 name: 'James L.',
-                review: "As someone who's always on the lookout for unique fashion pieces, I'm thrilled to have stumbled upon Shop.co. The selection of clothes is not only diverse but also on-point with the latest trends.",
+                review: "As someone who's always on the lookout for unique men's fashion pieces, I'm thrilled to have stumbled upon LeCas. The selection of casual male clothing is not only diverse but also perfectly on-point with the latest casual men's trends. Shopping for quality men's apparel at LeCas is a fantastic experience.",
               },
             ].map((testimonial, index) => (
               <div key={index} className="border border-gray-200 rounded-2xl p-6 space-y-4">

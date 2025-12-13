@@ -7,6 +7,8 @@ import useChatStore from '@/lib/stores/useChatStore';
 import MessageRenderer from './chatbot/MessageRenderer';
 import TypingIndicator from './chatbot/TypingIndicator';
 import chatService from '@/lib/services/chatService';
+import { RasaButton } from '@/lib/types/chat';
+import Image from 'next/image';
 
 export default function Chatbot() {
   const pathname = usePathname();
@@ -21,6 +23,8 @@ export default function Chatbot() {
     setIsOpen,
     initSession,
     sendMessage,
+    disableButtonsInMessage,
+    addMessage,
   } = useChatStore();
 
   const [inputValue, setInputValue] = useState('');
@@ -98,6 +102,15 @@ export default function Chatbot() {
     sendMessage(`Thêm sản phẩm ${productId} vào giỏ hàng`);
   };
 
+  const handleAddToCartWithVariant = async (productId: number, colorId: number, sizeId: number) => {
+    await sendMessage('Thêm vào giỏ hàng', undefined, {
+      action: 'add_to_cart',
+      product_id: productId,
+      color_id: colorId,
+      size_id: sizeId,
+    });
+  };
+
   const handleAddToWishlist = (productId: number) => {
     sendMessage(`Thêm sản phẩm ${productId} vào yêu thích`);
   };
@@ -116,6 +129,25 @@ export default function Chatbot() {
     } else {
       sendMessage(action);
     }
+  };
+
+  const handleRasaButtonClick = async (button: RasaButton, messageId: string) => {
+    // Disable buttons in the message immediately
+    disableButtonsInMessage(messageId);
+
+    // Display user's selection in chat
+    addMessage({
+      id: Date.now().toString(),
+      text: button.title,
+      sender: 'user',
+      timestamp: new Date(),
+    });
+
+    // Send payload to backend
+    await sendMessage(button.payload, undefined, {
+      button_clicked: true,
+      button_title: button.title,
+    });
   };
 
   return (
@@ -177,6 +209,8 @@ export default function Chatbot() {
                 onSizeSelect={handleSizeSelect}
                 onColorSelect={handleColorSelect}
                 onButtonClick={handleButtonClick}
+                onRasaButtonClick={(button) => handleRasaButtonClick(button, message.id)}
+                onAddToCartWithVariant={handleAddToCartWithVariant}
               />
             ))}
             {isTyping && <TypingIndicator />}

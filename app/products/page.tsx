@@ -7,16 +7,17 @@ import ProductCard from '@/components/ProductCard';
 import Pagination from '@/components/Pagination';
 import { ChevronRight, SlidersHorizontal, ChevronDown, Loader2 } from 'lucide-react';
 import productService, { Product } from '@/lib/services/productService';
-import filterService, { Color, Size } from '@/lib/services/filterService';
+import filterService, { Color, Size, Category } from '@/lib/services/filterService';
 
 const ITEMS_PER_PAGE = 20;
 
 export default function ProductsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedSizes, setSelectedSizes] = useState<number[]>([]); // Changed to number[] for IDs
-  const [selectedColors, setSelectedColors] = useState<number[]>([]); // Changed to number[] for IDs
-  const [priceRange, setPriceRange] = useState([0, 2000000]);
+  const [selectedSizes, setSelectedSizes] = useState<number[]>([]);
+  const [selectedColors, setSelectedColors] = useState<number[]>([]);
+  const [priceRange, setPriceRange] = useState([0, 500]);
+  const [selectedRatings, setSelectedRatings] = useState<number[]>([]);
   const [sortBy, setSortBy] = useState<string>('newest');
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -30,6 +31,7 @@ export default function ProductsPage() {
   // Filter options from API
   const [availableColors, setAvailableColors] = useState<Color[]>([]);
   const [availableSizes, setAvailableSizes] = useState<Size[]>([]);
+  const [availableCategories, setAvailableCategories] = useState<Category[]>([]);
   const [filtersLoading, setFiltersLoading] = useState(true);
 
   // Fetch filter options on mount
@@ -40,17 +42,36 @@ export default function ProductsPage() {
   // Fetch products from API
   useEffect(() => {
     fetchProducts();
-  }, [currentPage, selectedCategories, selectedSizes, selectedColors, priceRange, sortBy]);
+  }, [currentPage, selectedCategories, selectedSizes, selectedColors, priceRange, selectedRatings, sortBy]);
 
   const fetchFilterOptions = async () => {
     try {
       setFiltersLoading(true);
-      const [colorsRes, sizesRes] = await Promise.all([
+      const results = await Promise.allSettled([
         filterService.getAllColors(),
         filterService.getAllSizes(),
+        filterService.getAllCategories(),
       ]);
-      setAvailableColors(colorsRes.data);
-      setAvailableSizes(sizesRes.data);
+
+      if (results[0].status === 'fulfilled') {
+        setAvailableColors(results[0].value.data);
+      } else {
+        console.error('Failed to fetch colors:', results[0].reason);
+      }
+
+      if (results[1].status === 'fulfilled') {
+        setAvailableSizes(results[1].value.data);
+      } else {
+        console.error('Failed to fetch sizes:', results[1].reason);
+      }
+
+      if (results[2].status === 'fulfilled') {
+        const categoriesData = results[2].value.data;
+        setAvailableCategories(categoriesData.categories || categoriesData || []);
+      } else {
+        console.warn('⚠️ Categories API not available (404) - hiding category filter. Backend team has been notified.');
+        setAvailableCategories([]);
+      }
     } catch (err) {
       console.error('Error fetching filter options:', err);
     } finally {
@@ -63,14 +84,17 @@ export default function ProductsPage() {
       setLoading(true);
       setError('');
 
+      const minRating = selectedRatings.length > 0 ? Math.min(...selectedRatings) : undefined;
+
       const response = await productService.getProducts({
         page: currentPage,
         limit: ITEMS_PER_PAGE,
-        category_slug: selectedCategories[0], // API accepts single category
+        category_slug: selectedCategories[0],
         sizes: selectedSizes.length > 0 ? selectedSizes.join(',') : undefined,
         colors: selectedColors.length > 0 ? selectedColors.join(',') : undefined,
         min_price: priceRange[0],
         max_price: priceRange[1],
+        min_rating: minRating,
         sort_by: sortBy as 'newest' | 'price_asc' | 'price_desc' | 'rating',
       });
 
@@ -143,17 +167,23 @@ export default function ProductsPage() {
                 {/* Categories */}
                 <div className="space-y-3">
                   <h4 className="font-bold text-sm">Category</h4>
-                  {['T-shirts', 'Shorts', 'Shirts', 'Hoodie', 'Jeans'].map((category) => (
-                    <label key={category} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={selectedCategories.includes(category)}
-                        onChange={() => toggleCategory(category)}
-                        className="w-4 h-4 rounded"
-                      />
-                      <span className="text-sm">{category}</span>
-                    </label>
-                  ))}
+                  {filtersLoading ? (
+                    <div className="flex justify-center py-4">
+                      <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                    </div>
+                  ) : (
+                    availableCategories.map((category) => (
+                      <label key={category.id} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedCategories.includes(category.slug)}
+                          onChange={() => toggleCategory(category.slug)}
+                          className="w-4 h-4 rounded"
+                        />
+                        <span className="text-sm">{category.name}</span>
+                      </label>
+                    ))
+                  )}
                 </div>
 
                 <hr className="border-gray-200" />
@@ -164,19 +194,44 @@ export default function ProductsPage() {
                     <h4 className="font-bold">Price</h4>
                     <ChevronDown className="w-4 h-4" />
                   </div>
-                  <div className="space-y-2">
-                    <input
-                      type="range"
-                      min="0"
-                      max="2000000"
-                      step="10000"
-                      value={priceRange[1]}
-                      onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-sm">
-                      <span>{priceRange[0].toLocaleString('vi-VN')}₫</span>
-                      <span>{priceRange[1].toLocaleString('vi-VN')}₫</span>
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <label className="text-xs text-gray-600">Min: ${priceRange[0]}</label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="500"
+                        step="10"
+                        value={priceRange[0]}
+                        onChange={(e) => {
+                          const newMin = parseInt(e.target.value);
+                          if (newMin <= priceRange[1]) {
+                            setPriceRange([newMin, priceRange[1]]);
+                          }
+                        }}
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-gray-600">Max: ${priceRange[1]}</label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="500"
+                        step="10"
+                        value={priceRange[1]}
+                        onChange={(e) => {
+                          const newMax = parseInt(e.target.value);
+                          if (newMax >= priceRange[0]) {
+                            setPriceRange([priceRange[0], newMax]);
+                          }
+                        }}
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="flex justify-between text-sm font-medium">
+                      <span>${priceRange[0]}</span>
+                      <span>${priceRange[1]}</span>
                     </div>
                   </div>
                 </div>
@@ -240,14 +295,45 @@ export default function ProductsPage() {
 
                 <hr className="border-gray-200" />
 
-                {/* Note: Rating filter removed - not supported by current API */}
+                {/* Rating */}
+                <div className="space-y-3">
+                  <h4 className="font-bold text-sm">Rating</h4>
+                  <div className="space-y-2">
+                    {[5, 4, 3, 2, 1].map((rating) => (
+                      <label key={rating} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedRatings.includes(rating)}
+                          onChange={() => {
+                            setSelectedRatings(prev =>
+                              prev.includes(rating)
+                                ? prev.filter(r => r !== rating)
+                                : [...prev, rating]
+                            );
+                            setCurrentPage(1);
+                          }}
+                          className="w-4 h-4 rounded"
+                        />
+                        <div className="flex items-center gap-1">
+                          {[...Array(rating)].map((_, i) => (
+                            <span key={i} className="text-yellow-400 text-sm">★</span>
+                          ))}
+                          <span className="text-sm text-gray-600">& Up</span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <hr className="border-gray-200" />
 
                 <button
                   onClick={() => {
                     setSelectedCategories([]);
                     setSelectedSizes([]);
                     setSelectedColors([]);
-                    setPriceRange([0, 2000000]);
+                    setPriceRange([0, 500]);
+                    setSelectedRatings([]);
                     setSortBy('newest');
                     setCurrentPage(1);
                   }}

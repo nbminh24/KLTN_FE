@@ -1,6 +1,6 @@
 // Chat Custom Data Types for Rich Content Rendering
 
-export type MessageType = 'text' | 'products' | 'buttons' | 'size_selector' | 'color_selector' | 'order_status' | 'ticket_created' | 'image';
+export type MessageType = 'text' | 'products' | 'buttons' | 'size_selector' | 'color_selector' | 'order_status' | 'ticket_created' | 'image' | 'product_actions';
 
 export interface BaseCustomData {
     type: MessageType;
@@ -97,6 +97,32 @@ export interface ImageCustomData extends BaseCustomData {
     caption?: string;
 }
 
+export interface ColorOptionWithId {
+    id: number;
+    name: string;
+    hex?: string;
+}
+
+export interface SizeOptionWithId {
+    id: number;
+    name: string;
+}
+
+export interface ProductActionsCustomData extends BaseCustomData {
+    type: 'product_actions';
+    product_id: number;
+    product_name: string;
+    product_price?: number;
+    product_thumbnail?: string;
+    available_colors: ColorOptionWithId[];
+    available_sizes: SizeOptionWithId[];
+    actions?: {
+        type: string;
+        label: string;
+        requires?: string[];
+    }[];
+}
+
 export type CustomData =
     | ProductsCustomData
     | ButtonsCustomData
@@ -104,7 +130,13 @@ export type CustomData =
     | ColorSelectorCustomData
     | OrderStatusCustomData
     | TicketCreatedCustomData
-    | ImageCustomData;
+    | ImageCustomData
+    | ProductActionsCustomData;
+
+export interface RasaButton {
+    title: string;
+    payload: string;
+}
 
 export interface ChatMessage {
     id: string;
@@ -113,6 +145,8 @@ export interface ChatMessage {
     timestamp: Date;
     image?: string;
     custom?: CustomData;
+    buttons?: RasaButton[];
+    buttons_disabled?: boolean;
 }
 
 export interface ChatSession {

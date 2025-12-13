@@ -2,9 +2,24 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { TrendingUp, DollarSign, ShoppingCart, MessageSquare, AlertTriangle, ArrowUp, Loader2, Users } from 'lucide-react';
+import { TrendingUp, DollarSign, ShoppingCart, MessageSquare, AlertTriangle, ArrowUp, Loader2, Users, TrendingDown } from 'lucide-react';
 import Link from 'next/link';
-import dashboardService, { DashboardStats } from '@/lib/services/admin/dashboardService';
+import dashboardService, { DashboardStats, RevenueTrendResponse, OrderStatusDistributionResponse } from '@/lib/services/admin/dashboardService';
+import { CartesianGrid, Line, LineChart, XAxis, Pie, PieChart, Cell, Legend, ResponsiveContainer } from "recharts";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/line-chart";
+import { Badge } from "@/components/ui/badge";
 
 type DateRange = '7' | '30' | '90';
 
@@ -13,6 +28,9 @@ export default function AdminDashboard() {
   const [dateRange, setDateRange] = useState<DateRange>('30');
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [revenueTrendData, setRevenueTrendData] = useState<RevenueTrendResponse | null>(null);
+  const [orderStatusData, setOrderStatusData] = useState<OrderStatusDistributionResponse | null>(null);
+  const [chartsLoading, setChartsLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -21,6 +39,7 @@ export default function AdminDashboard() {
       return;
     }
     fetchStats();
+    fetchChartsData();
   }, [dateRange]);
 
   const fetchStats = async () => {
@@ -69,6 +88,33 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchChartsData = async () => {
+    try {
+      setChartsLoading(true);
+      const daysParam = parseInt(dateRange);
+      console.log('📈 Fetching charts data for', daysParam, 'days...');
+
+      // Fetch both chart APIs in parallel
+      const [revenueTrendResponse, orderStatusResponse] = await Promise.all([
+        dashboardService.getRevenueOrdersTrend({ days: daysParam }),
+        dashboardService.getOrderStatusDistribution({ days: daysParam })
+      ]);
+
+      console.log('📈 Revenue Trend Response:', revenueTrendResponse.data);
+      console.log('📊 Order Status Response:', orderStatusResponse.data);
+      console.log('📈 Daily Stats Sample:', revenueTrendResponse.data.data?.dailyStats?.slice(0, 3));
+
+      setRevenueTrendData(revenueTrendResponse.data.data);
+      setOrderStatusData(orderStatusResponse.data.data);
+    } catch (err: any) {
+      console.error('❌ Failed to fetch charts data:', err);
+      console.error('❌ Error response:', err.response?.data);
+      console.error('❌ Error status:', err.response?.status);
+    } finally {
+      setChartsLoading(false);
+    }
+  };
+
   if (loading || !stats) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -110,12 +156,55 @@ export default function AdminDashboard() {
 
   const recentOrders = stats?.recent_orders || [];
 
-  // Sales chart data (daily revenue for last 30 days)
-  const salesChartData = [
-    2.5, 3.2, 2.8, 3.5, 4.1, 3.8, 4.5, 3.9, 4.2, 4.8,
-    5.1, 4.7, 5.3, 5.8, 5.5, 6.2, 5.9, 6.5, 6.8, 6.3,
-    7.1, 6.9, 7.5, 7.2, 7.8, 8.1, 7.9, 8.5, 8.2, 8.8
-  ]; // in millions
+  // Line Chart Data - Use real data from API or fallback
+  const lineChartData = revenueTrendData?.dailyStats || [];
+  const revenueGrowth = revenueTrendData?.summary?.revenueGrowth || 0;
+
+  // Generate X-axis ticks based on date range
+  const getXAxisTicks = () => {
+    const days = parseInt(dateRange);
+    if (days === 7) {
+      return ['Day 1', 'Day 4', 'Day 7'];
+    } else if (days === 30) {
+      return ['Day 1', 'Day 10', 'Day 20', 'Day 30'];
+    } else if (days === 90) {
+      return ['Day 1', 'Day 30', 'Day 60', 'Day 90'];
+    }
+    return [];
+  };
+
+  const chartConfig = {
+    revenue: {
+      label: "Revenue (M VND)",
+      color: "#4880FF",
+    },
+    orders: {
+      label: "Orders",
+      color: "#10b981",
+    },
+  } satisfies ChartConfig;
+
+  // Pie Chart Data - Use real data from API or fallback
+  const pieChartData = orderStatusData?.distribution || [];
+
+  const pieChartConfig = {
+    completed: {
+      label: "Completed",
+      color: "#10b981",
+    },
+    processing: {
+      label: "Processing",
+      color: "#3b82f6",
+    },
+    pending: {
+      label: "Pending",
+      color: "#f59e0b",
+    },
+    cancelled: {
+      label: "Cancelled",
+      color: "#ef4444",
+    },
+  } satisfies ChartConfig;
 
   return (
     <div className="p-6 space-y-6">
@@ -154,35 +243,154 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* Sales Chart - Bar Chart */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-        <h2 className="text-xl font-bold text-[#202224] mb-6">Sales Overview</h2>
-        <div className="h-80 flex items-end justify-between gap-1">
-          {salesChartData.map((value, i) => {
-            const maxValue = Math.max(...salesChartData);
-            const height = (value / maxValue) * 100;
-            return (
-              <div
-                key={i}
-                className="flex-1 bg-gradient-to-t from-[#4880FF] to-blue-400 rounded-t-lg relative group cursor-pointer transition-all hover:from-blue-600 hover:to-blue-500"
-                style={{ height: `${height}%` }}
-              >
-                {/* Tooltip on hover */}
-                <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-[#202224] text-white px-3 py-1.5 rounded-lg text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
-                  {value.toFixed(1)}M VND
-                  <div className="absolute bottom-[-4px] left-1/2 -translate-x-1/2 w-2 h-2 bg-[#202224] rotate-45"></div>
-                </div>
+      {/* Charts Row - 2 Columns */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Sales Chart - Line Chart */}
+        <Card className="bg-white">
+          <CardHeader>
+            <CardTitle className="text-xl text-[#202224]">
+              Sales Overview
+              {revenueGrowth !== 0 && (
+                <Badge
+                  variant="outline"
+                  className={`${revenueGrowth >= 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'} border-none ml-2`}
+                >
+                  {revenueGrowth >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                  <span>{revenueGrowth >= 0 ? '+' : ''}{revenueGrowth.toFixed(1)}%</span>
+                </Badge>
+              )}
+            </CardTitle>
+            <CardDescription>Daily revenue for the last {dateRange} days</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {chartsLoading ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
               </div>
-            );
-          })}
-        </div>
-        {/* X-axis labels */}
-        <div className="flex justify-between mt-4 text-xs text-gray-500">
-          <span>Day 1</span>
-          <span>Day 10</span>
-          <span>Day 20</span>
-          <span>Day 30</span>
-        </div>
+            ) : lineChartData.length > 0 ? (
+              <ChartContainer config={chartConfig} className="h-[400px] w-full">
+                <LineChart
+                  data={lineChartData}
+                  margin={{
+                    top: 10,
+                    left: 12,
+                    right: 12,
+                    bottom: 10,
+                  }}
+                >
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="day"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    interval="preserveStartEnd"
+                    minTickGap={30}
+                    tickFormatter={(value) => {
+                      if (typeof value === 'string' && value.startsWith('Day ')) {
+                        return value.replace('Day ', '');
+                      }
+                      return value;
+                    }}
+                  />
+                  <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent hideLabel />}
+                  />
+                  <Line
+                    dataKey="revenueInMillions"
+                    type="monotone"
+                    stroke="var(--color-revenue)"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                  <Line
+                    dataKey="ordersCount"
+                    type="monotone"
+                    stroke="var(--color-orders)"
+                    strokeWidth={2}
+                    dot={false}
+                    strokeDasharray="5 5"
+                  />
+                </LineChart>
+              </ChartContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-gray-500">
+                No data available
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Order Status Distribution - Pie Chart */}
+        <Card className="bg-white">
+          <CardHeader>
+            <CardTitle className="text-xl text-[#202224]">
+              Order Status Distribution
+            </CardTitle>
+            <CardDescription>Current order breakdown by status</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {chartsLoading ? (
+              <div className="flex items-center justify-center h-[350px]">
+                <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+              </div>
+            ) : pieChartData.length > 0 ? (
+              <>
+                <ChartContainer config={pieChartConfig} className="mx-auto h-[350px]">
+                  <PieChart>
+                    <ChartTooltip
+                      content={({ active, payload }) => {
+                        if (!active || !payload?.length) return null;
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-lg">
+                            <p className="font-semibold text-sm">{data.statusLabel}</p>
+                            <p className="text-xs text-gray-600">{data.count} orders</p>
+                          </div>
+                        );
+                      }}
+                    />
+                    <Pie
+                      data={pieChartData as any}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={(props: any) => `${props.statusLabel}: ${props.count}`}
+                      outerRadius={110}
+                      innerRadius={60}
+                      fill="#8884d8"
+                      dataKey="count"
+                      paddingAngle={2}
+                    >
+                      {pieChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ChartContainer>
+                {/* Legend */}
+                <div className="grid grid-cols-2 gap-3 mt-6">
+                  {pieChartData.map((item) => (
+                    <div key={item.status} className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <span className="text-sm text-gray-700">
+                        <span className="font-semibold">{item.statusLabel}</span>: {item.count}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-center h-[350px] text-gray-500">
+                No data available
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Recent Orders Widget */}

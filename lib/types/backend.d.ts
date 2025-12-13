@@ -272,6 +272,7 @@ export interface ProductSearchParams {
     search?: string;
     min_price?: number;
     max_price?: number;
+    min_rating?: number;
     colors?: string; // comma-separated color IDs: "1,2,3"
     sizes?: string; // comma-separated size IDs: "1,2,3"
     sort_by?: 'newest' | 'price_asc' | 'price_desc' | 'rating';
@@ -345,7 +346,8 @@ export interface PaginationMeta {
 }
 
 export interface ProductsResponse {
-    products: Product[];
+    data: Product[];
+    products?: Product[];
     metadata: PaginationMeta;
 }
 

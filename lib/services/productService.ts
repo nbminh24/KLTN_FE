@@ -7,6 +7,8 @@ import type {
     Category,
 } from '@/lib/types/backend';
 
+export type { Product };
+
 // ========== PRODUCT SERVICE ==========
 
 const productService = {
@@ -27,6 +29,9 @@ const productService = {
             // Price range
             if (params.min_price !== undefined) queryParams.append('min_price', params.min_price.toString());
             if (params.max_price !== undefined) queryParams.append('max_price', params.max_price.toString());
+
+            // Rating filter
+            if (params.min_rating !== undefined) queryParams.append('min_rating', params.min_rating.toString());
 
             // Filters
             if (params.colors) queryParams.append('colors', params.colors);

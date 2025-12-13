@@ -22,7 +22,8 @@ interface ChatStore {
 
     initSession: () => Promise<void>;
     loadHistory: () => Promise<void>;
-    sendMessage: (text: string, image?: string) => Promise<void>;
+    sendMessage: (text: string, image?: string, metadata?: Record<string, any>) => Promise<void>;
+    disableButtonsInMessage: (messageId: string) => void;
     addMessage: (message: ChatMessage) => void;
     mergeSession: () => Promise<void>;
     clearMessages: () => void;
@@ -200,7 +201,7 @@ const useChatStore = create<ChatStore>()(
             },
 
             // Send message to bot
-            sendMessage: async (text: string, image?: string) => {
+            sendMessage: async (text: string, image?: string, metadata?: Record<string, any>) => {
                 const sessionId = get().sessionId;
 
                 // If no session, init first
@@ -235,6 +236,7 @@ const useChatStore = create<ChatStore>()(
                     const response = await chatService.sendMessage({
                         session_id: currentSessionId,
                         message: text,
+                        metadata: metadata,
                     });
 
                     console.log('[ChatStore] Send message response:', JSON.stringify(response.data, null, 2));
@@ -271,6 +273,8 @@ const useChatStore = create<ChatStore>()(
                         sender: 'bot' as const,
                         timestamp: new Date(msg.created_at || new Date()),
                         custom: msg.custom || undefined,
+                        buttons: msg.buttons || undefined,
+                        buttons_disabled: false,
                     }));
 
                     set((state) => ({
@@ -335,6 +339,17 @@ const useChatStore = create<ChatStore>()(
             // Mark messages as read
             markAsRead: () => {
                 set({ unreadCount: 0 });
+            },
+
+            // Disable buttons in a message after click
+            disableButtonsInMessage: (messageId: string) => {
+                set((state) => ({
+                    messages: state.messages.map((msg) =>
+                        msg.id === messageId
+                            ? { ...msg, buttons_disabled: true }
+                            : msg
+                    ),
+                }));
             },
         }),
         {

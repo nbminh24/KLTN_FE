@@ -44,6 +44,53 @@ export interface TopProduct {
     revenue: number;
 }
 
+// Revenue & Orders Trend Chart Data
+export interface DailyStats {
+    date: string;
+    day: string;
+    revenue: number;
+    revenueInMillions: number;
+    ordersCount: number;
+}
+
+export interface RevenueTrendResponse {
+    dailyStats: DailyStats[];
+    summary: {
+        totalRevenue: number;
+        totalOrders: number;
+        averageDailyRevenue: number;
+        averageDailyOrders: number;
+        revenueGrowth: number;
+        ordersGrowth: number;
+    };
+    dateRange: {
+        from: string;
+        to: string;
+    };
+}
+
+// Order Status Distribution Chart Data
+export interface OrderStatusItem {
+    status: string;
+    statusLabel: string;
+    count: number;
+    percentage: number;
+    color: string;
+}
+
+export interface OrderStatusDistributionResponse {
+    distribution: OrderStatusItem[];
+    summary: {
+        totalOrders: number;
+        completionRate: number;
+        cancellationRate: number;
+    };
+    dateRange: {
+        from: string;
+        to: string;
+    };
+}
+
 const dashboardService = {
     /**
      * Get dashboard statistics
@@ -133,6 +180,26 @@ const dashboardService = {
         end_date?: string;
     }): Promise<AxiosResponse<any>> => {
         return apiClient.get('/admin/analytics/promotions', { params });
+    },
+
+    /**
+     * Get revenue and orders trend for line chart
+     * GET /admin/dashboard/revenue-orders-trend
+     */
+    getRevenueOrdersTrend: async (params?: {
+        days?: number;
+    }): Promise<AxiosResponse<{ success: boolean; data: RevenueTrendResponse }>> => {
+        return apiClient.get('/admin/dashboard/revenue-orders-trend', { params });
+    },
+
+    /**
+     * Get order status distribution for pie chart
+     * GET /admin/dashboard/order-status-distribution
+     */
+    getOrderStatusDistribution: async (params?: {
+        days?: number;
+    }): Promise<AxiosResponse<{ success: boolean; data: OrderStatusDistributionResponse }>> => {
+        return apiClient.get('/admin/dashboard/order-status-distribution', { params });
     },
 };
 

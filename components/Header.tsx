@@ -3,9 +3,18 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, ShoppingCart, User, Menu, X, Camera, Heart } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, X, Camera, Heart, Settings, Package, LogOut } from 'lucide-react';
 import { getCartCount } from '@/lib/cart';
 import { getWishlistCount } from '@/lib/wishlist';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function Header() {
   const router = useRouter();
@@ -13,6 +22,7 @@ export default function Header() {
   const [showImageSearch, setShowImageSearch] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Update cart and wishlist count on mount and when they change
   useEffect(() => {
@@ -31,6 +41,23 @@ export default function Header() {
     };
   }, []);
 
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem('access_token');
+      setIsAuthenticated(!!token);
+    };
+
+    checkAuth();
+    window.addEventListener('storage', checkAuth);
+    window.addEventListener('auth-updated', checkAuth);
+
+    return () => {
+      window.removeEventListener('storage', checkAuth);
+      window.removeEventListener('auth-updated', checkAuth);
+    };
+  }, []);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -45,14 +72,20 @@ export default function Header() {
   return (
     <>
       {/* Top Banner */}
-      <div className="bg-black text-white text-center py-2 text-xs md:text-sm">
-        <p>
-          Sign up and get 20% off to your first order.{' '}
-          <Link href="/signup" className="underline font-medium">
-            Sign Up Now
-          </Link>
-        </p>
-      </div>
+      {!isAuthenticated && (
+        <div className="bg-black text-white text-center py-2 text-xs md:text-sm">
+          <p>
+            Join the LeCas Community for Effortless Casual Style.{' '}
+            <Link href="/login" className="underline font-medium">
+              Sign In
+            </Link>
+            {' / '}
+            <Link href="/signup" className="underline font-medium">
+              Sign Up Now
+            </Link>
+          </p>
+        </div>
+      )}
 
       {/* Main Header */}
       <header className="border-b">
@@ -124,9 +157,42 @@ export default function Header() {
                   </span>
                 )}
               </Link>
-              <Link href="/profile" className="hover:text-gray-600 transition" title="Profile">
-                <User className="w-6 h-6" />
-              </Link>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="hover:text-gray-600 transition" title="Account">
+                    <User className="w-6 h-6" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile" className="cursor-pointer">
+                        <User className="w-4 h-4" />
+                        Profile
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/orders" className="cursor-pointer">
+                        <Package className="w-4 h-4" />
+                        Orders
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/addresses" className="cursor-pointer">
+                        <Settings className="w-4 h-4" />
+                        Settings
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-red-600 focus:text-red-600 cursor-pointer">
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 

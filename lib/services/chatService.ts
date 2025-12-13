@@ -43,6 +43,7 @@ export interface ChatHistoryResponse {
 export interface SendMessagePayload {
     session_id: number;
     message: string;
+    metadata?: Record<string, any>;
 }
 
 export interface SendMessageResponse {

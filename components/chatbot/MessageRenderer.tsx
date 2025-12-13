@@ -1,11 +1,13 @@
 import Image from 'next/image';
-import { ChatMessage } from '@/lib/types/chat';
+import { ChatMessage, RasaButton } from '@/lib/types/chat';
 import ProductCarousel from './ProductCarousel';
 import ActionButtons from './ActionButtons';
 import SizeSelector from './SizeSelector';
 import ColorSelector from './ColorSelector';
 import OrderTimeline from './OrderTimeline';
 import TicketConfirmation from './TicketConfirmation';
+import RasaButtons from './RasaButtons';
+import ProductActionsCard from './ProductActionsCard';
 
 interface MessageRendererProps {
     message: ChatMessage;
@@ -14,6 +16,8 @@ interface MessageRendererProps {
     onSizeSelect: (size: string) => void;
     onColorSelect: (color: string) => void;
     onButtonClick: (action: string, payload?: any) => void;
+    onRasaButtonClick: (button: RasaButton) => void;
+    onAddToCartWithVariant?: (productId: number, colorId: number, sizeId: number) => void;
 }
 
 export default function MessageRenderer({
@@ -23,6 +27,8 @@ export default function MessageRenderer({
     onSizeSelect,
     onColorSelect,
     onButtonClick,
+    onRasaButtonClick,
+    onAddToCartWithVariant,
 }: MessageRendererProps) {
     // Render based on message type
     const renderContent = () => {
@@ -124,6 +130,23 @@ export default function MessageRenderer({
                         </>
                     );
 
+                case 'product_actions':
+                    return (
+                        <>
+                            {message.text && (
+                                <p className="text-sm mb-2">{message.text}</p>
+                            )}
+                            <ProductActionsCard
+                                data={message.custom}
+                                onAddToCart={(productId, colorId, sizeId) => {
+                                    if (onAddToCartWithVariant) {
+                                        onAddToCartWithVariant(productId, colorId, sizeId);
+                                    }
+                                }}
+                            />
+                        </>
+                    );
+
                 default:
                     // Fallback to text
                     return <p className="text-sm whitespace-pre-line">{message.text}</p>;
@@ -157,12 +180,21 @@ export default function MessageRenderer({
         <div className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div
                 className={`max-w-[80%] rounded-2xl ${message.sender === 'user'
-                        ? 'bg-black text-white px-4 py-2'
-                        : 'bg-gray-100 text-black px-4 py-3'
+                    ? 'bg-black text-white px-4 py-2'
+                    : 'bg-gray-100 text-black px-4 py-3'
                     }`}
             >
                 {/* Render Content */}
                 {renderContent()}
+
+                {/* Rasa Buttons (only for bot messages) */}
+                {message.sender === 'bot' && message.buttons && message.buttons.length > 0 && (
+                    <RasaButtons
+                        buttons={message.buttons}
+                        disabled={message.buttons_disabled}
+                        onButtonClick={onRasaButtonClick}
+                    />
+                )}
 
                 {/* Timestamp */}
                 <p
