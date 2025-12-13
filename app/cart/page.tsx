@@ -337,7 +337,7 @@ export default function CartPage() {
                                                         <span className="text-gray-600">{item.variant?.sku || 'N/A'}</span>
                                                     </p>
                                                 </div>
-                                                <p className="text-xl font-bold">{Number(item.variant?.price || 0).toLocaleString('vi-VN')}₫</p>
+                                                <p className="text-xl font-bold">${Number(item.variant?.price || 0).toFixed(2)}</p>
 
                                                 {/* Stock message */}
                                                 {!item.is_available && item.stock_message && (
@@ -395,26 +395,26 @@ export default function CartPage() {
                                 <div className="space-y-4">
                                     <div className="flex justify-between">
                                         <span className="text-gray-600">Subtotal ({summary?.items_count || 0} items)</span>
-                                        <span className="font-bold">{Number(summary?.subtotal || 0).toLocaleString('vi-VN')}₫</span>
+                                        <span className="font-bold">${Number(summary?.subtotal || 0).toFixed(2)}</span>
                                     </div>
 
                                     {Number(summary?.discount || 0) > 0 && (
                                         <div className="flex justify-between">
                                             <span className="text-gray-600">Discount</span>
-                                            <span className="font-bold text-green-600">-{Number(summary?.discount || 0).toLocaleString('vi-VN')}₫</span>
+                                            <span className="font-bold text-green-600">-${Number(summary?.discount || 0).toFixed(2)}</span>
                                         </div>
                                     )}
 
                                     <div className="flex justify-between">
                                         <span className="text-gray-600">Shipping Fee</span>
-                                        <span className="font-bold">{Number(summary?.shipping_fee || 0).toLocaleString('vi-VN')}₫</span>
+                                        <span className="font-bold">${Number(summary?.shipping_fee || 0).toFixed(2)}</span>
                                     </div>
 
                                     <hr className="border-gray-200" />
 
                                     <div className="flex justify-between text-lg">
                                         <span className="font-medium">Total</span>
-                                        <span className="font-bold">{Number(summary?.total || 0).toLocaleString('vi-VN')}₫</span>
+                                        <span className="font-bold">${Number(summary?.total || 0).toFixed(2)}</span>
                                     </div>
                                 </div>
 

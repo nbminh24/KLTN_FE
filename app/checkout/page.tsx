@@ -357,7 +357,7 @@ export default function CheckoutPage() {
                         </div>
                         <div className="flex items-center justify-between mt-2">
                           <span className="text-sm text-gray-600">Qty: {item.quantity || 1}</span>
-                          <span className="font-bold">{Number(item.variant?.price || 0).toLocaleString('vi-VN')}₫</span>
+                          <span className="font-bold">${Number(item.variant?.price || 0).toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
@@ -414,22 +414,22 @@ export default function CheckoutPage() {
                 <div className="space-y-4">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Subtotal ({cart.summary?.items_count || 0} items)</span>
-                    <span className="font-bold">{Number(cart.summary?.subtotal || 0).toLocaleString('vi-VN')}₫</span>
+                    <span className="font-bold">${Number(cart.summary?.subtotal || 0).toFixed(2)}</span>
                   </div>
                   {(cart.summary?.discount || 0) > 0 && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Discount</span>
-                      <span className="font-bold text-green-600">-{Number(cart.summary?.discount || 0).toLocaleString('vi-VN')}₫</span>
+                      <span className="font-bold text-green-600">-${Number(cart.summary?.discount || 0).toFixed(2)}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
                     <span className="text-gray-600">Shipping Fee</span>
-                    <span className="font-bold">{Number(cart.summary?.shipping_fee || 0).toLocaleString('vi-VN')}₫</span>
+                    <span className="font-bold">${Number(cart.summary?.shipping_fee || 0).toFixed(2)}</span>
                   </div>
                   <hr className="border-gray-200" />
                   <div className="flex justify-between text-lg">
                     <span className="font-medium">Total</span>
-                    <span className="font-bold">{Number(cart.summary?.total || 0).toLocaleString('vi-VN')}₫</span>
+                    <span className="font-bold">${Number(cart.summary?.total || 0).toFixed(2)}</span>
                   </div>
                 </div>
 
