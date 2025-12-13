@@ -23,7 +23,7 @@ export default function AboutPage() {
               ABOUT LECAS
             </h1>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              We're passionate about bringing you the best fashion from around the world. 
+              We're passionate about bringing you the best fashion from around the world.
               Our mission is to make style accessible to everyone.
             </p>
           </div>
@@ -72,8 +72,8 @@ export default function AboutPage() {
                 },
               ].map((value, index) => (
                 <div key={index} className="text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-black text-white rounded-full mb-4">
-                    <value.icon className="w-8 h-8" />
+                  <div className="inline-flex items-center justify-center w-16 h-16 border-2 border-black bg-white rounded-full mb-4">
+                    <value.icon className="w-8 h-8 text-black" />
                   </div>
                   <h3 className="text-xl font-bold mb-2">{value.title}</h3>
                   <p className="text-gray-600 text-sm">{value.description}</p>
@@ -85,22 +85,16 @@ export default function AboutPage() {
           {/* Story */}
           <div className="bg-gray-100 rounded-3xl p-8 md:p-12 mb-16">
             <div className="max-w-3xl mx-auto">
-              <h2 className="text-2xl md:text-3xl font-bold mb-6">Our Story</h2>
+              <h2 className="text-2xl md:text-3xl font-bold mb-6">THE NEW ERA OF CASUAL ELEGANCE</h2>
               <div className="space-y-4 text-gray-700">
                 <p>
-                  Founded in 2020, LeCas started with a simple vision: to make fashion accessible, 
-                  affordable, and sustainable for everyone. What began as a small online store has grown 
-                  into a global fashion destination.
+                  LeCas was born in 2025 with a disruptive vision: to redefine casual male fashion. We saw a gap between comfort and sophistication, and we filled it. What started as a focused online studio dedicated to premium menswear essentials has quickly grown into the definitive hub for the modern man's wardrobe.
                 </p>
                 <p>
-                  Today, we partner with over 200 international brands and serve customers in more than 
-                  50 countries. Our commitment to quality, authenticity, and customer satisfaction has 
-                  made us a trusted name in online fashion retail.
+                  Today, we aren't just selling clothes; we are curating a lifestyle. LeCas is the trusted destination for those who believe in subtle power dressing. Our commitment goes beyond fabric—it's built on quality, refined design, and genuine self-expression. We ship to over 50 countries, proving that Casually Elegant is a global mindset.
                 </p>
                 <p>
-                  We believe that fashion is more than just clothing—it\'s a form of self-expression. 
-                  That\'s why we\'re dedicated to offering a diverse range of styles that cater to every 
-                  taste and occasion.
+                  We believe true style is effortless. Join the LeCas movement and wear your confidence.
                 </p>
               </div>
             </div>

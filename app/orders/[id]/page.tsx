@@ -9,6 +9,7 @@ import Footer from '@/components/Footer';
 import { showToast } from '@/components/Toast';
 import { ChevronRight, Package, MapPin, CreditCard, Truck, Loader2, AlertCircle, XCircle } from 'lucide-react';
 import orderService from '@/lib/services/orderService';
+import filterService from '@/lib/services/filterService';
 import axios from 'axios';
 
 const STATUS_LABELS = {
@@ -38,14 +39,39 @@ export default function OrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [cancelling, setCancelling] = useState(false);
+  const [sizes, setSizes] = useState<any[]>([]);
+  const [colors, setColors] = useState<any[]>([]);
 
   useEffect(() => {
     if (orderId) {
-      fetchOrderDetail();
+      loadOrderData();
     }
   }, [orderId]);
 
-  const fetchOrderDetail = async () => {
+  const loadOrderData = async () => {
+    try {
+      // Fetch filters first
+      const [sizesRes, colorsRes] = await Promise.all([
+        filterService.getAllSizes(),
+        filterService.getAllColors()
+      ]);
+      const fetchedSizes = sizesRes.data || [];
+      const fetchedColors = colorsRes.data || [];
+      setSizes(fetchedSizes);
+      setColors(fetchedColors);
+
+      console.log('📐 Fetched Sizes:', fetchedSizes);
+      console.log('🎨 Fetched Colors:', fetchedColors);
+
+      // Then fetch order with filters available
+      await fetchOrderDetail(fetchedSizes, fetchedColors);
+    } catch (err) {
+      console.error('Failed to load order data:', err);
+      setLoading(false);
+    }
+  };
+
+  const fetchOrderDetail = async (fetchedSizes: any[], fetchedColors: any[]) => {
     try {
       setLoading(true);
       setError('');
@@ -63,19 +89,70 @@ export default function OrderDetailPage() {
           const variant = item.variant || {};
           const product = variant.product || {};
 
+          // Calculate subtotal properly
+          const price = Number(item.price_at_purchase || 0);
+          const quantity = Number(item.quantity || 1);
+          const calculatedSubtotal = price * quantity;
+
+          // Map size_id and color_id to actual names
+          let sizeName = 'N/A';
+          let colorName = 'N/A';
+
+          if (variant.size_id && fetchedSizes.length > 0) {
+            // Convert both to numbers for comparison since API returns string IDs
+            const sizeId = typeof variant.size_id === 'string' ? parseInt(variant.size_id) : variant.size_id;
+            const sizeObj = fetchedSizes.find((s: any) => s.id === sizeId);
+            sizeName = sizeObj?.name || `Size ${variant.size_id}`;
+            console.log(`🔍 Looking for size_id: ${variant.size_id} (${sizeId}), found:`, sizeObj);
+          } else if (variant.size?.name) {
+            sizeName = variant.size.name;
+          } else if (item.size?.name) {
+            sizeName = item.size.name;
+          }
+
+          if (variant.color_id && fetchedColors.length > 0) {
+            // Convert both to numbers for comparison since API returns string IDs
+            const colorId = typeof variant.color_id === 'string' ? parseInt(variant.color_id) : variant.color_id;
+            const colorObj = fetchedColors.find((c: any) => c.id === colorId);
+            colorName = colorObj?.name || `Color ${variant.color_id}`;
+            console.log(`🔍 Looking for color_id: ${variant.color_id} (${colorId}), found:`, colorObj);
+          } else if (variant.color?.name) {
+            colorName = variant.color.name;
+          } else if (item.color?.name) {
+            colorName = item.color.name;
+          }
+
+          // Get product image - try multiple sources
+          let imageUrl = '/bmm32410_black_xl.webp';
+          if (product.thumbnail_url) {
+            imageUrl = product.thumbnail_url;
+          } else if (product.images && product.images.length > 0) {
+            imageUrl = product.images[0].url || product.images[0].image_url;
+          } else if (variant.image_url) {
+            imageUrl = variant.image_url;
+          } else if (item.thumbnail_url && !item.thumbnail_url.includes('bmm32410')) {
+            imageUrl = item.thumbnail_url;
+          }
+
           return {
             ...item,
             product_id: product.id || item.product_id || variant.product_id,
             product_name: product.name || item.product_name || variant.name || 'Product',
-            thumbnail_url: product.thumbnail_url || item.thumbnail_url || variant.image_url || '/bmm32410_black_xl.webp',
-            // Keep existing fields if they exist
-            size: item.size || variant.size,
-            color: item.color || variant.color,
+            thumbnail_url: imageUrl,
+            size_name: sizeName,
+            color_name: colorName,
             variant_sku: item.variant_sku || item.sku || variant.sku,
-            price_at_purchase: item.price_at_purchase || item.price || variant.price || product.selling_price || 0,
-            subtotal: item.subtotal || (item.quantity || 1) * (item.price || variant.price || 0)
+            price_at_purchase: price,
+            subtotal: calculatedSubtotal
           };
         });
+      }
+
+      // Calculate order subtotal from items
+      if (orderData.items && Array.isArray(orderData.items)) {
+        orderData.subtotal = orderData.items.reduce((sum: number, item: any) => {
+          return sum + Number(item.subtotal || 0);
+        }, 0);
       }
 
       console.log('📦 Transformed Items:', orderData.items);
@@ -122,7 +199,7 @@ export default function OrderDetailPage() {
       setCancelling(true);
       await orderService.cancelOrder(Number(orderId));
       showToast('Order cancelled successfully', 'success');
-      await fetchOrderDetail();
+      await fetchOrderDetail(sizes, colors);
     } catch (err: any) {
       if (axios.isAxiosError(err)) {
         showToast(err.response?.data?.message || 'Failed to cancel order', 'error');
@@ -188,7 +265,7 @@ export default function OrderDetailPage() {
                 Order {order.order_number}
               </h1>
               <p className="text-gray-600">
-                Placed on {new Date(order.created_at).toLocaleDateString('vi-VN', {
+                Placed on {new Date(order.created_at).toLocaleDateString('en-US', {
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric',
@@ -235,23 +312,15 @@ export default function OrderDetailPage() {
                           {item.product_name || 'Product'}
                         </Link>
                         <div className="text-sm text-gray-600 mt-1 space-y-0.5">
-                          <p>Size: {
-                            typeof item.size === 'object' && item.size?.name
-                              ? item.size.name
-                              : item.size || 'N/A'
-                          } | Color: {
-                              typeof item.color === 'object' && item.color?.name
-                                ? item.color.name
-                                : item.color || 'N/A'
-                            }</p>
+                          <p>Size: {item.size_name || 'N/A'} | Color: {item.color_name || 'N/A'}</p>
                           <p>SKU: {item.variant_sku || item.sku || 'N/A'}</p>
                           <p>Quantity: {item.quantity || 1}</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold">{Number(item.price_at_purchase || 0).toLocaleString('vi-VN')}₫</p>
+                        <p className="font-bold">${Number(item.price_at_purchase || 0).toFixed(2)}</p>
                         <p className="text-sm text-gray-600">× {item.quantity || 1}</p>
-                        <p className="font-bold text-lg mt-1">{Number(item.subtotal || 0).toLocaleString('vi-VN')}₫</p>
+                        <p className="font-bold text-lg mt-1">${Number(item.subtotal || 0).toFixed(2)}</p>
                       </div>
                     </div>
                   ))}
@@ -271,7 +340,9 @@ export default function OrderDetailPage() {
                   )}
 
                   {/* Customer Name & Phone */}
-                  <p className="font-medium text-black">{order.customer_name || order.shipping_name || 'N/A'}</p>
+                  {(order.customer_name || order.shipping_name) && (
+                    <p className="font-medium text-black">{order.customer_name || order.shipping_name}</p>
+                  )}
                   <p>{order.customer_phone || order.shipping_phone || order.phone_number || 'N/A'}</p>
 
                   {/* Full Address */}
@@ -329,22 +400,22 @@ export default function OrderDetailPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium">{Number(order.subtotal || 0).toLocaleString('vi-VN')}₫</span>
+                    <span className="font-medium">${Number(order.subtotal || 0).toFixed(2)}</span>
                   </div>
                   {(order.discount || 0) > 0 && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">Discount</span>
-                      <span className="font-medium text-green-600">-{Number(order.discount || 0).toLocaleString('vi-VN')}₫</span>
+                      <span className="font-medium text-green-600">-${Number(order.discount || 0).toFixed(2)}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
                     <span className="text-gray-600">Shipping Fee</span>
-                    <span className="font-medium">{Number(order.shipping_fee || 0).toLocaleString('vi-VN')}₫</span>
+                    <span className="font-medium">${Number(order.shipping_fee || 0).toFixed(2)}</span>
                   </div>
                   <hr />
                   <div className="flex justify-between text-lg">
                     <span className="font-bold">Total</span>
-                    <span className="font-bold">{Number(order.total_amount || order.total || 0).toLocaleString('vi-VN')}₫</span>
+                    <span className="font-bold">${Number(order.total_amount || order.total || 0).toFixed(2)}</span>
                   </div>
                 </div>
 

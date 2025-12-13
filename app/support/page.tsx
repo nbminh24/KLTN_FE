@@ -108,10 +108,10 @@ export default function SupportPage() {
           {/* Hero */}
           <div className="text-center mb-12">
             <h1 className="text-3xl md:text-5xl font-integral font-bold mb-6">
-              HOW CAN WE HELP?
+              WE'RE HERE TO HELP YOU
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-6">
-              Our support team is here to assist you 24/7
+              Our dedicated team provides thoughtful and detailed assistance
             </p>
           </div>
 
@@ -121,20 +121,20 @@ export default function SupportPage() {
               {
                 icon: Mail,
                 title: 'Email Us',
-                info: 'support@lecas.com',
+                info: 'lecas.office@gmail.com',
                 description: 'Response within 24 hours',
               },
               {
                 icon: Phone,
                 title: 'Call Us',
-                info: '+1 (555) 123-4567',
-                description: 'Mon-Fri, 9AM-6PM EST',
+                info: '0342343591',
+                description: 'Everyday, 8AM-8PM',
               },
               {
                 icon: MessageCircle,
-                title: 'Live Chat',
-                info: 'Chat with us',
-                description: 'Available 24/7',
+                title: 'Email Support',
+                info: 'Get in touch',
+                description: 'Guaranteed reply within 4 Hrs',
               },
             ].map((contact, index) => (
               <div key={index} className="border border-gray-200 rounded-2xl p-6 text-center hover:shadow-lg transition">
@@ -151,7 +151,7 @@ export default function SupportPage() {
           {/* Contact Form */}
           <div className="max-w-3xl mx-auto">
             <div className="border border-gray-200 rounded-2xl p-8">
-              <h2 className="text-2xl font-bold mb-6">Send Us a Message</h2>
+              <h2 className="text-2xl font-bold mb-6">Contact Us for Support</h2>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>

@@ -34,7 +34,7 @@ export default function DeliveryPage() {
                 icon: Truck,
                 title: 'Standard Delivery',
                 time: '3-5 Business Days',
-                price: 'Free on orders over $100',
+                price: 'Free (Domestic)',
               },
               {
                 icon: Clock,
@@ -65,15 +65,22 @@ export default function DeliveryPage() {
             <section>
               <h2 className="text-2xl font-bold mb-4">Shipping Locations</h2>
               <p className="text-gray-700 mb-4">
-                We currently ship to over 50 countries worldwide. Delivery times may vary depending on your location.
+                We ship nationwide across Vietnam with free domestic delivery. International shipping is also available to select regions worldwide.
               </p>
+              <div className="bg-gray-100 rounded-xl p-6 mb-4">
+                <h3 className="font-bold mb-3">Domestic Shipping (Vietnam)</h3>
+                <ul className="space-y-2 text-gray-700 text-sm">
+                  <li>• Nationwide delivery: 3-5 business days</li>
+                  <li>• Major cities (Hanoi, HCMC, Da Nang): 1-2 business days</li>
+                  <li>• <strong>Free shipping</strong> on all domestic orders</li>
+                </ul>
+              </div>
               <div className="bg-gray-100 rounded-xl p-6">
                 <h3 className="font-bold mb-3">International Shipping</h3>
                 <ul className="space-y-2 text-gray-700 text-sm">
-                  <li>• United States: 3-5 business days</li>
-                  <li>• Europe: 5-7 business days</li>
-                  <li>• Asia: 7-10 business days</li>
-                  <li>• Rest of the world: 10-14 business days</li>
+                  <li>• Asia (Thailand, Singapore, Malaysia, etc.): 5-7 business days - $8.99</li>
+                  <li>• Rest of the world: 10-14 business days - $15.99</li>
+                  <li>• Express international shipping available upon request</li>
                 </ul>
               </div>
             </section>

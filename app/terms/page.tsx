@@ -97,7 +97,7 @@ export default function TermsPage() {
               <section>
                 <h2 className="text-2xl font-bold mb-4">10. Contact Information</h2>
                 <p className="text-gray-700 leading-relaxed">
-                  If you have any questions about these Terms & Conditions, please contact us at support@lecas.com
+                  If you have any questions about these Terms & Conditions, please contact us at lecas.office@gmail.com
                 </p>
               </section>
             </div>

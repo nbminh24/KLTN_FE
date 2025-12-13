@@ -282,7 +282,7 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
                   <div>
                     <p className="text-gray-600">Total Amount</p>
                     <p className="font-medium">
-                      {Number(order?.total_amount || order?.total || 0).toLocaleString('vi-VN')}₫
+                      ${Number(order?.total_amount || order?.total || 0).toFixed(2)}
                     </p>
                   </div>
                   <div>

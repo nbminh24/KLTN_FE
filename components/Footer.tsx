@@ -83,7 +83,6 @@ export default function Footer() {
               <li><Link href="/profile" className="hover:text-black transition">My Account</Link></li>
               <li><Link href="/addresses" className="hover:text-black transition">My Addresses</Link></li>
               <li><Link href="/orders" className="hover:text-black transition">Orders</Link></li>
-              <li><Link href="/payments" className="hover:text-black transition">Payments</Link></li>
             </ul>
           </div>
         </div>
