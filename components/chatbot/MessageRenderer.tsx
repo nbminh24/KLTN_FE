@@ -36,6 +36,7 @@ export default function MessageRenderer({
         if (message.custom) {
             switch (message.custom.type) {
                 case 'products':
+                case 'product_list':  // Backend uses "product_list"
                     return (
                         <>
                             {message.text && (
@@ -43,8 +44,6 @@ export default function MessageRenderer({
                             )}
                             <ProductCarousel
                                 data={message.custom}
-                                onAddToCart={onAddToCart}
-                                onAddToWishlist={onAddToWishlist}
                             />
                         </>
                     );
@@ -147,9 +146,47 @@ export default function MessageRenderer({
                         </>
                     );
 
+                case 'cart_summary':
+                    return (
+                        <>
+                            {message.text && (
+                                <p className="text-sm mb-2">{message.text}</p>
+                            )}
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 my-2 text-sm">
+                                {message.custom.items && message.custom.items.length > 0 ? (
+                                    <>
+                                        {message.custom.items.map((item: any, index: number) => (
+                                            <div key={index} className="flex justify-between items-center mb-2 pb-2 border-b border-gray-200 last:border-0 last:mb-0 last:pb-0">
+                                                <div className="flex-1">
+                                                    <p className="font-medium text-gray-900">{item.product_name}</p>
+                                                    <p className="text-xs text-gray-500">
+                                                        {item.size && item.color && `${item.color} • ${item.size} • `}
+                                                        Qty: {item.quantity}
+                                                    </p>
+                                                </div>
+                                                <p className="font-semibold text-gray-900">${item.price?.toFixed(2)}</p>
+                                            </div>
+                                        ))}
+                                        <div className="mt-3 pt-2 border-t border-gray-300">
+                                            <div className="flex justify-between items-center">
+                                                <p className="font-bold text-gray-900">Total:</p>
+                                                <p className="font-bold text-lg text-black">${message.custom.total?.toFixed(2)}</p>
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <p className="text-gray-500 text-center py-2">Your cart is empty</p>
+                                )}
+                            </div>
+                        </>
+                    );
+
                 default:
-                    // Fallback to text
-                    return <p className="text-sm whitespace-pre-line">{message.text}</p>;
+                    // Fallback to text if available
+                    if (message.text) {
+                        return <p className="text-sm whitespace-pre-line">{message.text}</p>;
+                    }
+                    return null;
             }
         }
 
@@ -172,8 +209,13 @@ export default function MessageRenderer({
             );
         }
 
-        // Default: text only
-        return <p className="text-sm whitespace-pre-line">{message.text}</p>;
+        // Default: text only (if text exists)
+        if (message.text) {
+            return <p className="text-sm whitespace-pre-line">{message.text}</p>;
+        }
+
+        // No content to render
+        return null;
     };
 
     return (

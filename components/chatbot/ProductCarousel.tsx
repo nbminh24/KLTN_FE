@@ -1,15 +1,13 @@
 import { useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ProductCard from './ProductCard';
-import { ProductsCustomData } from '@/lib/types/chat';
+import { ProductsCustomData, ProductListCustomData } from '@/lib/types/chat';
 
 interface ProductCarouselProps {
-    data: ProductsCustomData;
-    onAddToCart: (productId: number) => void;
-    onAddToWishlist: (productId: number) => void;
+    data: ProductsCustomData | ProductListCustomData;
 }
 
-export default function ProductCarousel({ data, onAddToCart, onAddToWishlist }: ProductCarouselProps) {
+export default function ProductCarousel({ data }: ProductCarouselProps) {
     const scrollRef = useRef<HTMLDivElement>(null);
 
     const scroll = (direction: 'left' | 'right') => {
@@ -25,7 +23,7 @@ export default function ProductCarousel({ data, onAddToCart, onAddToWishlist }: 
     if (!data.products || data.products.length === 0) {
         return (
             <div className="bg-gray-50 rounded-lg p-4 text-center">
-                <p className="text-sm text-gray-600">Không tìm thấy sản phẩm nào.</p>
+                <p className="text-sm text-gray-600">No products found.</p>
             </div>
         );
     }
@@ -36,7 +34,7 @@ export default function ProductCarousel({ data, onAddToCart, onAddToWishlist }: 
             {data.total && data.total > 0 && (
                 <div className="mb-2">
                     <p className="text-xs text-gray-600">
-                        Tìm thấy <span className="font-bold">{data.total}</span> sản phẩm
+                        Found <span className="font-bold">{data.total}</span> products
                     </p>
                 </div>
             )}
@@ -67,8 +65,6 @@ export default function ProductCarousel({ data, onAddToCart, onAddToWishlist }: 
                         <ProductCard
                             key={product.product_id}
                             product={product}
-                            onAddToCart={onAddToCart}
-                            onAddToWishlist={onAddToWishlist}
                         />
                     ))}
                 </div>
@@ -89,7 +85,7 @@ export default function ProductCarousel({ data, onAddToCart, onAddToWishlist }: 
             {data.total && data.total > data.products.length && (
                 <div className="mt-3 text-center">
                     <button className="text-xs text-blue-600 hover:text-blue-800 font-semibold">
-                        Xem tất cả {data.total} sản phẩm →
+                        View all {data.total} products →
                     </button>
                 </div>
             )}

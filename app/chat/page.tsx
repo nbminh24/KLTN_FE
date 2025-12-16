@@ -56,13 +56,20 @@ export default function ChatPage() {
             const token = localStorage.getItem('access_token');
             const visitorId = localStorage.getItem('visitor_id');
 
-            const params: any = { limit: 50 };
+            let params: any = {};
 
-            // Only send visitor_id if NOT logged in
-            if (!token && visitorId) {
-                params.visitor_id = visitorId;
+            if (token) {
+                // Logged-in user: Send empty params - backend will extract customer_id from JWT
+                params = {};
+            } else if (visitorId) {
+                // Guest user: Send visitor_id
+                params = { visitor_id: visitorId, limit: 50 };
+            } else {
+                // No auth - skip loading
+                console.warn('[Chat] No token or visitor_id - skipping sessions history');
+                setLoadingHistory(false);
+                return;
             }
-            // If logged in (has token), send empty params - backend will use JWT
 
             const response = await chatService.getSessionsHistory(params);
             setSessionsHistory(response.data.sessions);

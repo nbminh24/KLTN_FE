@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import chatService from '@/lib/services/chatService';
 import { ChatMessage, ChatSession } from '@/lib/types/chat';
+import { messageCache } from '@/lib/utils/messageCache';
 
 interface ChatStore {
     // State
@@ -188,18 +189,48 @@ const useChatStore = create<ChatStore>()(
                 if (!sessionId) return;
 
                 try {
+                    // Try loading from cache first
+                    const cachedMessages = messageCache.load(sessionId);
+                    if (cachedMessages) {
+                        console.log(`[ChatStore] 💾 Found ${cachedMessages.length} cached messages`);
+                    }
+
                     const response = await chatService.getChatHistory(sessionId, {
                         limit: 50,
                         offset: 0,
                     });
 
-                    const historyMessages: ChatMessage[] = response.data.messages.map((msg: any) => ({
-                        id: msg.id.toString(),
-                        text: msg.message,
-                        sender: msg.sender === 'customer' ? 'user' : 'bot',
-                        timestamp: new Date(msg.created_at),
-                        custom: msg.custom || undefined,
-                    }));
+                    console.log('[ChatStore] 🔍 History API Response:', JSON.stringify(response.data, null, 2));
+
+                    const historyMessages: ChatMessage[] = response.data.messages.map((msg: any) => {
+                        // Check if this message exists in cache with custom data
+                        const cachedMsg = cachedMessages?.find(cm => cm.id === msg.id.toString());
+
+                        console.log(`[ChatStore] 📝 Message ${msg.id}:`, {
+                            hasCustom: !!msg.custom,
+                            customType: msg.custom?.type,
+                            hasCachedCustom: !!cachedMsg?.custom,
+                            cachedCustomType: cachedMsg?.custom?.type,
+                            hasButtons: !!msg.buttons,
+                            text: msg.message?.substring(0, 50)
+                        });
+
+                        return {
+                            id: msg.id.toString(),
+                            text: msg.message ?? '',
+                            sender: msg.sender === 'customer' ? 'user' : 'bot',
+                            timestamp: new Date(msg.created_at),
+                            // Use cached custom/buttons if API doesn't return them
+                            custom: msg.custom || cachedMsg?.custom || undefined,
+                            buttons: msg.buttons || cachedMsg?.buttons || undefined,
+                        };
+                    });
+
+                    const apiCustomCount = response.data.messages.filter((m: any) => m.custom).length;
+                    const totalCustomCount = historyMessages.filter(m => m.custom).length;
+
+                    console.log(`[ChatStore] ✅ Loaded ${historyMessages.length} messages from history`);
+                    console.log(`[ChatStore] Custom data - API: ${apiCustomCount}, Cache: ${totalCustomCount - apiCustomCount}, Total: ${totalCustomCount}`);
 
                     // If loading a different session, update sessionId
                     if (providedSessionId && providedSessionId !== get().sessionId) {
@@ -209,6 +240,13 @@ const useChatStore = create<ChatStore>()(
                     }
                 } catch (error) {
                     console.error('Failed to load history:', error);
+
+                    // Fallback to cache only if API fails
+                    const cachedMessages = messageCache.load(sessionId);
+                    if (cachedMessages) {
+                        console.log('[ChatStore] 💾 Using cached messages as fallback');
+                        set({ messages: cachedMessages });
+                    }
                 }
             },
 
@@ -281,7 +319,7 @@ const useChatStore = create<ChatStore>()(
                     // Add bot responses to UI
                     const botMessages: ChatMessage[] = botResponses.map((msg: any) => ({
                         id: msg.id?.toString() || Date.now().toString(),
-                        text: msg.message || msg.text || 'No message',
+                        text: msg.message ?? msg.text ?? '',
                         sender: 'bot' as const,
                         timestamp: new Date(msg.created_at || new Date()),
                         custom: msg.custom || undefined,
@@ -292,6 +330,12 @@ const useChatStore = create<ChatStore>()(
                     set((state) => ({
                         messages: [...state.messages, ...botMessages],
                     }));
+
+                    // Cache messages with custom data
+                    const allMessages = [...get().messages];
+                    if (currentSessionId) {
+                        messageCache.save(currentSessionId, allMessages);
+                    }
 
                     // Update unread count if widget is closed
                     if (!get().isOpen) {
