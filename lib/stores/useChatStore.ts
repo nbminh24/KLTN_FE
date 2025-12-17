@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import chatService from '@/lib/services/chatService';
+import handoffService from '@/lib/services/handoffService';
 import { ChatMessage, ChatSession } from '@/lib/types/chat';
 import { messageCache } from '@/lib/utils/messageCache';
 
@@ -406,6 +407,60 @@ const useChatStore = create<ChatStore>()(
                             : msg
                     ),
                 }));
+            },
+
+            // Request human handoff
+            requestHumanHandoff: async (reason?: string) => {
+                const sessionId = get().sessionId;
+                if (!sessionId) {
+                    console.error('[ChatStore] Cannot request handoff: No session ID');
+                    return;
+                }
+
+                try {
+                    const response = await handoffService.requestHandoff({
+                        session_id: sessionId,
+                        reason: reason,
+                    });
+
+                    console.log('[ChatStore] Handoff requested:', response.data);
+
+                    // Update session status
+                    set({ sessionStatus: response.data.session.status });
+
+                    // Add system message
+                    const systemMessage: ChatMessage = {
+                        id: Date.now().toString(),
+                        text: response.data.session.working_hours
+                            ? 'Yêu cầu đã được gửi. Nhân viên hỗ trợ sẽ kết nối với bạn sớm nhất có thể...'
+                            : 'Yêu cầu đã được ghi nhận. Hiện tại ngoài giờ làm việc (8AM-8PM). Nhân viên sẽ phản hồi trong giờ làm việc.',
+                        sender: 'bot',
+                        timestamp: new Date(),
+                    };
+
+                    set((state) => ({
+                        messages: [...state.messages, systemMessage],
+                    }));
+                } catch (error) {
+                    console.error('[ChatStore] Failed to request handoff:', error);
+
+                    // Add error message
+                    const errorMessage: ChatMessage = {
+                        id: Date.now().toString(),
+                        text: 'Không thể kết nối với nhân viên hỗ trợ. Vui lòng thử lại sau.',
+                        sender: 'bot',
+                        timestamp: new Date(),
+                    };
+
+                    set((state) => ({
+                        messages: [...state.messages, errorMessage],
+                    }));
+                }
+            },
+
+            // Update session status manually
+            updateSessionStatus: (status) => {
+                set({ sessionStatus: status });
             },
         }),
         {

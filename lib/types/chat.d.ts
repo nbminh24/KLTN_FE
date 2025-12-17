@@ -174,6 +174,11 @@ export interface ChatSession {
     id: number;
     customer_id?: number;
     visitor_id?: string;
+    status?: 'bot' | 'human_pending' | 'human_active' | 'closed';
+    assigned_admin_id?: number;
+    handoff_requested_at?: string;
+    handoff_accepted_at?: string;
+    handoff_reason?: string;
     created_at: string;
     updated_at: string;
 }
