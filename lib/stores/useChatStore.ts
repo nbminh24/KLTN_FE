@@ -213,6 +213,7 @@ const useChatStore = create<ChatStore>()(
                             hasCachedCustom: !!cachedMsg?.custom,
                             cachedCustomType: cachedMsg?.custom?.type,
                             hasButtons: !!msg.buttons,
+                            hasImage: !!msg.image_url,
                             text: msg.message?.substring(0, 50)
                         });
 
@@ -221,6 +222,7 @@ const useChatStore = create<ChatStore>()(
                             text: msg.message ?? '',
                             sender: msg.sender === 'customer' ? 'user' : 'bot',
                             timestamp: new Date(msg.created_at),
+                            image: msg.image_url || undefined,
                             // Use cached custom/buttons if API doesn't return them
                             custom: msg.custom || cachedMsg?.custom || undefined,
                             buttons: msg.buttons || cachedMsg?.buttons || undefined,
@@ -252,7 +254,7 @@ const useChatStore = create<ChatStore>()(
             },
 
             // Send message to bot
-            sendMessage: async (text: string, image?: string, metadata?: Record<string, any>) => {
+            sendMessage: async (text: string, imageUrl?: string, metadata?: Record<string, any>) => {
                 const sessionId = get().sessionId;
 
                 // If no session, init first
@@ -267,13 +269,16 @@ const useChatStore = create<ChatStore>()(
                 }
 
                 try {
+                    // Ensure message has value (backend requires non-empty message)
+                    const messageText = text || (imageUrl ? '📷 Tìm sản phẩm tương tự với ảnh này' : '');
+
                     // Add user message to UI immediately
                     const userMessage: ChatMessage = {
                         id: Date.now().toString(),
-                        text: text || 'Sản phẩm tương tự với ảnh này?',
+                        text: messageText,
                         sender: 'user',
                         timestamp: new Date(),
-                        image: image,
+                        image: imageUrl,
                     };
 
                     set((state) => ({
@@ -283,12 +288,22 @@ const useChatStore = create<ChatStore>()(
                     // Show typing indicator
                     set({ isTyping: true });
 
-                    // Send to backend
-                    const response = await chatService.sendMessage({
+                    // Send to backend (only include image_url if it exists)
+                    const payload: any = {
                         session_id: currentSessionId,
-                        message: text,
-                        metadata: metadata,
-                    });
+                        message: messageText,
+                    };
+
+                    if (imageUrl) {
+                        payload.image_url = imageUrl;
+                    }
+
+                    if (metadata) {
+                        payload.metadata = metadata;
+                    }
+
+                    console.log('[ChatStore] 🚀 Sending payload:', JSON.stringify(payload, null, 2));
+                    const response = await chatService.sendMessage(payload);
 
                     console.log('[ChatStore] Send message response:', JSON.stringify(response.data, null, 2));
 

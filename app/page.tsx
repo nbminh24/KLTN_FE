@@ -45,48 +45,48 @@ export default function HomePage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative min-h-[600px] md:min-h-[750px]" style={{ backgroundColor: '#dadee3' }}>
+        <section className="relative min-h-[600px] md:min-h-[750px]" style={{ backgroundColor: '#e6e6e8' }}>
           <div className="container mx-auto px-6 md:px-20 h-full">
             <div className="grid md:grid-cols-2 gap-4 md:gap-2 items-stretch h-full min-h-[600px] md:min-h-[750px]">
               <div className="flex flex-col justify-center space-y-6 py-12 md:py-20">
                 <h1 className="text-3xl md:text-5xl font-integral font-bold leading-tight">
-                  LeCas - Casually Elegant Every Moment
+                  LeCas - Thanh Lịch Trong Từng Khoảnh Khắc
                 </h1>
                 <p className="text-gray-600 text-sm md:text-base max-w-xl">
-                  Experience the essence of modern men's fashion - refined, confident, and built to last. Every design embodies a balance of style and quality made for today's man.
+                  Trải nghiệm tinh hoa thời trang nam hiện đại - tinh tế, tự tin và bền vững. Mỗi thiết kế thể hiện sự cân bằng hoàn hảo giữa phong cách và chất lượng dành cho phái mạnh.
                 </p>
                 <Link
                   href="/products"
                   className="inline-block bg-black text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition w-auto max-w-xs text-center"
                 >
-                  Shop Now
+                  Mua Ngay
                 </Link>
 
                 {/* Stats */}
                 <div className="flex flex-wrap gap-4 md:gap-6 pt-4">
                   <div>
                     <p className="text-2xl md:text-3xl font-bold">200+</p>
-                    <p className="text-gray-600 text-xs md:text-sm">International Brands</p>
+                    <p className="text-gray-600 text-xs md:text-sm">Thương Hiệu Quốc Tế</p>
                   </div>
                   <div className="h-10 w-px bg-gray-300"></div>
                   <div>
                     <p className="text-2xl md:text-3xl font-bold">2,000+</p>
-                    <p className="text-gray-600 text-xs md:text-sm">High-Quality Products</p>
+                    <p className="text-gray-600 text-xs md:text-sm">Sản Phẩm Chất Lượng Cao</p>
                   </div>
                   <div className="h-10 w-px bg-gray-300"></div>
                   <div>
                     <p className="text-2xl md:text-3xl font-bold">30,000+</p>
-                    <p className="text-gray-600 text-xs md:text-sm">Happy Customers</p>
+                    <p className="text-gray-600 text-xs md:text-sm">Khách Hàng Hài Lòng</p>
                   </div>
                 </div>
               </div>
 
               <div className="relative h-full min-h-[600px] md:min-h-[750px]">
                 <Image
-                  src="/bmm32410_black_xl-Photoroom.png"
+                  src="/hero.png"
                   alt="Hero"
                   fill
-                  className="object-contain"
+                  className="object-cover"
                   priority
                 />
               </div>
@@ -98,11 +98,11 @@ export default function HomePage() {
         <section className="bg-black py-8">
           <div className="container mx-auto px-6 md:px-12">
             <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16">
-              <Link href="/products?category=t-shirts" className="text-white text-xl md:text-2xl font-bold hover:text-gray-300 transition">T-SHIRTS</Link>
-              <Link href="/products?category=jeans-pants" className="text-white text-xl md:text-2xl font-bold hover:text-gray-300 transition">JEANS & PANTS</Link>
-              <Link href="/products?category=shirts" className="text-white text-xl md:text-2xl font-bold hover:text-gray-300 transition">SHIRTS</Link>
-              <Link href="/products?category=outerwear" className="text-white text-xl md:text-2xl font-bold hover:text-gray-300 transition">OUTERWEAR</Link>
-              <Link href="/products?category=accessories" className="text-white text-xl md:text-2xl font-bold hover:text-gray-300 transition">ACCESSORIES</Link>
+              <Link href="/products?category=t-shirts" className="text-white text-xl md:text-2xl font-bold hover:text-gray-300 transition">ÁO THUN</Link>
+              <Link href="/products?category=jeans-pants" className="text-white text-xl md:text-2xl font-bold hover:text-gray-300 transition">QUẦN JEANS & KAKI</Link>
+              <Link href="/products?category=shirts" className="text-white text-xl md:text-2xl font-bold hover:text-gray-300 transition">ÁO SƠ MI</Link>
+              <Link href="/products?category=outerwear" className="text-white text-xl md:text-2xl font-bold hover:text-gray-300 transition">ÁO KHOÁC</Link>
+              <Link href="/products?category=accessories" className="text-white text-xl md:text-2xl font-bold hover:text-gray-300 transition">PHỤ KIỆN</Link>
             </div>
           </div>
         </section>
@@ -110,7 +110,7 @@ export default function HomePage() {
         {/* New Arrivals */}
         <section className="container mx-auto px-6 md:px-12 py-10 md:py-14">
           <h2 className="text-2xl md:text-4xl font-integral font-bold text-center mb-6 md:mb-10">
-            NEW ARRIVALS
+            HÀNG MỚI VỀ
           </h2>
           {loading ? (
             <div className="flex justify-center py-12">
@@ -138,7 +138,7 @@ export default function HomePage() {
                   href="/new-arrivals"
                   className="border border-gray-300 px-12 py-3 rounded-full font-medium hover:bg-gray-50 transition"
                 >
-                  View All
+                  Xem Tất Cả
                 </Link>
               </div>
             </>
@@ -151,19 +151,11 @@ export default function HomePage() {
 
         {/* Recommended for You - AI Personalization */}
         <section className="container mx-auto px-6 md:px-12 py-10 md:py-14">
-          <div className="flex items-center justify-center gap-3 mb-6 md:mb-10">
-            <h2 className="text-2xl md:text-4xl font-integral font-bold text-center">
-              RECOMMENDED FOR YOU
-            </h2>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-100 to-blue-100 border border-purple-300 rounded-full">
-              <svg className="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-              </svg>
-              <span className="text-xs font-bold text-purple-700">AI Powered</span>
-            </div>
-          </div>
+          <h2 className="text-2xl md:text-4xl font-integral font-bold text-center mb-6 md:mb-10">
+            GỢI Ý DÀNH CHO BẠN
+          </h2>
           <p className="text-center text-gray-600 mb-8 max-w-2xl mx-auto">
-            Based on your browsing history and preferences, we've curated these items just for you
+            Dựa trên lịch sử duyệt web và sở thích của bạn, chúng tôi đã tuyển chọn những sản phẩm này dành riêng cho bạn
           </p>
           {loading ? (
             <div className="flex justify-center py-12">
@@ -191,7 +183,7 @@ export default function HomePage() {
                   href="/products"
                   className="border border-gray-300 px-12 py-3 rounded-full font-medium hover:bg-gray-50 transition"
                 >
-                  View All
+                  Xem Tất Cả
                 </Link>
               </div>
             </>
@@ -205,7 +197,7 @@ export default function HomePage() {
         {/* Top Selling */}
         <section className="container mx-auto px-6 md:px-12 py-10 md:py-14">
           <h2 className="text-2xl md:text-4xl font-integral font-bold text-center mb-6 md:mb-10">
-            TOP SELLING
+            BÁN CHẠY NHẤT
           </h2>
           {loading ? (
             <div className="flex justify-center py-12">
@@ -233,7 +225,7 @@ export default function HomePage() {
                   href="/products"
                   className="border border-gray-300 px-12 py-3 rounded-full font-medium hover:bg-gray-50 transition"
                 >
-                  View All
+                  Xem Tất Cả
                 </Link>
               </div>
             </>
@@ -243,19 +235,19 @@ export default function HomePage() {
         {/* Promotional Banners */}
         <section className="container mx-auto px-6 md:px-12 py-10 md:py-14">
           <h2 className="text-2xl md:text-4xl font-integral font-bold text-center mb-6 md:mb-10">
-            SPECIAL OFFERS
+            ƯU ĐÃI ĐẶC BIỆT
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Banner 1 - Sale Shock */}
             <Link href="/sale" className="relative h-64 bg-white border border-gray-300 rounded-3xl overflow-hidden group">
               <div className="absolute inset-0 p-8 flex flex-col justify-between">
                 <div>
-                  <p className="text-black text-sm font-semibold mb-2">SALE SHOCK</p>
-                  <h3 className="text-black text-3xl font-bold mb-2">Up to 50% OFF</h3>
-                  <p className="text-gray-700 text-sm">Limited time only</p>
+                  <p className="text-black text-sm font-semibold mb-2">GIẢM GIÁ SỐC</p>
+                  <h3 className="text-black text-3xl font-bold mb-2">Giảm Đến 50%</h3>
+                  <p className="text-gray-700 text-sm">Thời gian có hạn</p>
                 </div>
                 <div className="inline-flex items-center gap-2 bg-black text-white px-6 py-2.5 rounded-full font-semibold w-fit group-hover:gap-3 transition-all">
-                  <span>Shop Now</span>
+                  <span>Mua Ngay</span>
                   <span>→</span>
                 </div>
               </div>
@@ -265,12 +257,12 @@ export default function HomePage() {
             <Link href="/new-arrivals" className="relative h-64 bg-white border border-gray-300 rounded-3xl overflow-hidden group">
               <div className="absolute inset-0 p-8 flex flex-col justify-between">
                 <div>
-                  <p className="text-black text-sm font-semibold mb-2">JUST LANDED</p>
-                  <h3 className="text-black text-3xl font-bold mb-2">New Arrivals</h3>
-                  <p className="text-gray-700 text-sm">Fresh styles for the season</p>
+                  <p className="text-black text-sm font-semibold mb-2">MỚI RA MẮT</p>
+                  <h3 className="text-black text-3xl font-bold mb-2">Hàng Mới Về</h3>
+                  <p className="text-gray-700 text-sm">Phong cách mới cho mùa</p>
                 </div>
                 <div className="inline-flex items-center gap-2 bg-black text-white px-6 py-2.5 rounded-full font-semibold w-fit group-hover:gap-3 transition-all">
-                  <span>Explore Now</span>
+                  <span>Khám Phá Ngay</span>
                   <span>→</span>
                 </div>
               </div>
@@ -281,21 +273,21 @@ export default function HomePage() {
         {/* Customer Reviews */}
         <section className="container mx-auto px-6 md:px-12 py-10 md:py-14">
           <h2 className="text-2xl md:text-4xl font-integral font-bold mb-6 md:mb-10">
-            OUR HAPPY CUSTOMERS
+            KHÁCH HÀNG HÀI LÒNG
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               {
-                name: 'Mr. Wilson',
-                review: "I'm blown away by the high quality and style of the casual male wear I received from LeCas. From daily essentials to more elegant pieces, every item I've bought has exceeded my expectations in terms of durability and look. LeCas is my go-to for top-tier men's fashion!",
+                name: 'Anh Wilson',
+                review: "Tôi thực sự ấn tượng với chất lượng cao và phong cách của trang phục nam tôi nhận được từ LeCas. Từ những món đồ thiết yếu hàng ngày đến những thiết kế thanh lịch hơn, mọi sản phẩm tôi mua đều vượt quá mong đợi về độ bền và vẻ ngoài. LeCas là lựa chọn hàng đầu của tôi cho thời trang nam!",
               },
               {
-                name: 'Alex K.',
-                review: "Finding clothes that align with my personal men's style used to be a challenge until I discovered LeCas. The range of casual men's clothing they offer is truly remarkable, catering to a variety of tastes and occasions. LeCas is the ideal destination for stylish everyday men's wear",
+                name: 'Anh Alex K.',
+                review: "Việc tìm quần áo phù hợp với phong cách cá nhân từng là thử thách cho đến khi tôi khám phá ra LeCas. Bộ sưu tập trang phục nam họ cung cấp thực sự đáng chú ý, đáp ứng nhiều khẩu vị và dịp khác nhau. LeCas là điểm đến lý tưởng cho trang phục nam phong cách hàng ngày.",
               },
               {
-                name: 'James L.',
-                review: "As someone who's always on the lookout for unique men's fashion pieces, I'm thrilled to have stumbled upon LeCas. The selection of casual male clothing is not only diverse but also perfectly on-point with the latest casual men's trends. Shopping for quality men's apparel at LeCas is a fantastic experience.",
+                name: 'Anh James L.',
+                review: "Là người luôn tìm kiếm những món đồ thời trang nam độc đáo, tôi rất vui khi tình cờ biết đến LeCas. Bộ sưu tập quần áo nam không chỉ đa dạng mà còn hoàn toàn phù hợp với xu hướng thời trang nam mới nhất. Mua sắm trang phục nam chất lượng tại LeCas là một trải nghiệm tuyệt vời.",
               },
             ].map((testimonial, index) => (
               <div key={index} className="border border-gray-200 rounded-2xl p-6 space-y-4">

@@ -61,15 +61,15 @@ export default function WishlistPage() {
                 console.error('❌ Full error:', JSON.stringify(err.response?.data, null, 2));
 
                 if (err.response?.status === 401) {
-                    setError('Session expired. Please login again.');
+                    setError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
                     setIsAuthenticated(false);
                 } else if (err.response?.status === 500) {
-                    setError('Server error. Backend may have issues with database or entity mapping.');
+                    setError('Lỗi máy chủ. Vui lòng thử lại sau.');
                 } else {
-                    setError('Failed to load wishlist. Please try again.');
+                    setError('Không thể tải danh sách yêu thích. Vui lòng thử lại.');
                 }
             } else {
-                setError('Failed to load wishlist. Please try again.');
+                setError('Không thể tải danh sách yêu thích. Vui lòng thử lại.');
             }
             setWishlist([]);
         } finally {
@@ -78,14 +78,14 @@ export default function WishlistPage() {
     };
 
     const handleRemoveItem = async (variantId: number) => {
-        if (!confirm('Remove this item from wishlist?')) return;
+        if (!confirm('Xóa sản phẩm này khỏi danh sách yêu thích?')) return;
 
         try {
             await wishlistService.removeFromWishlist(variantId);
             await fetchWishlist();
-            showToast('Removed from wishlist', 'info');
+            showToast('Đã xóa khỏi danh sách yêu thích', 'info');
         } catch (err) {
-            showToast('Failed to remove item', 'error');
+            showToast('Không thể xóa sản phẩm', 'error');
         }
     };
 
@@ -101,25 +101,25 @@ export default function WishlistPage() {
             await wishlistService.removeFromWishlist(item.variant_id);
             await fetchWishlist();
 
-            showToast('Moved to cart!', 'success');
+            showToast('Đã chuyển vào giỏ hàng!', 'success');
         } catch (err: any) {
             if (axios.isAxiosError(err)) {
-                showToast(err.response?.data?.message || 'Failed to move to cart', 'error');
+                showToast(err.response?.data?.message || 'Không thể chuyển vào giỏ hàng', 'error');
             } else {
-                showToast('Failed to move to cart', 'error');
+                showToast('Không thể chuyển vào giỏ hàng', 'error');
             }
         }
     };
 
     const handleClearAll = async () => {
-        if (!confirm('Are you sure you want to clear all items from your wishlist?')) return;
+        if (!confirm('Bạn có chắc muốn xóa tất cả sản phẩm khỏi danh sách yêu thích?')) return;
 
         try {
             await wishlistService.clearWishlist();
             await fetchWishlist();
-            showToast('Wishlist cleared', 'info');
+            showToast('Đã xóa danh sách yêu thích', 'info');
         } catch (err) {
-            showToast('Failed to clear wishlist', 'error');
+            showToast('Không thể xóa danh sách yêu thích', 'error');
         }
     };
 
@@ -131,10 +131,10 @@ export default function WishlistPage() {
                 <main className="flex-1 flex items-center justify-center py-20">
                     <div className="text-center max-w-md">
                         <Heart className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                        <h2 className="text-2xl font-bold mb-2">Your Wishlist is Empty</h2>
-                        <p className="text-gray-600 mb-6">Please login to view your wishlist</p>
+                        <h2 className="text-2xl font-bold mb-2">Danh Sách Yêu Thích Trống</h2>
+                        <p className="text-gray-600 mb-6">Vui lòng đăng nhập để xem danh sách yêu thích</p>
                         <Link href="/login?redirect=/wishlist" className="inline-block bg-black text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition">
-                            Login to Continue
+                            Đăng Nhập Để Tiếp Tục
                         </Link>
                     </div>
                 </main>
@@ -164,10 +164,10 @@ export default function WishlistPage() {
                 <main className="flex-1 flex items-center justify-center py-20">
                     <div className="text-center max-w-md">
                         <AlertCircle className="w-16 h-16 mx-auto mb-4 text-red-500" />
-                        <h2 className="text-2xl font-bold mb-2">Error Loading Wishlist</h2>
+                        <h2 className="text-2xl font-bold mb-2">Lỗi Tải Danh Sách Yêu Thích</h2>
                         <p className="text-gray-600 mb-6">{error}</p>
                         <button onClick={fetchWishlist} className="bg-black text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition">
-                            Try Again
+                            Thử Lại
                         </button>
                     </div>
                 </main>
@@ -184,10 +184,10 @@ export default function WishlistPage() {
                 <main className="flex-1 flex items-center justify-center py-20">
                     <div className="text-center max-w-md">
                         <Heart className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                        <h2 className="text-2xl font-bold mb-2">Your Wishlist is Empty</h2>
-                        <p className="text-gray-600 mb-6">Save your favorite items to wishlist!</p>
+                        <h2 className="text-2xl font-bold mb-2">Danh Sách Yêu Thích Trống</h2>
+                        <p className="text-gray-600 mb-6">Lưu các sản phẩm yêu thích vào danh sách!</p>
                         <Link href="/products" className="inline-block bg-black text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition">
-                            Continue Shopping
+                            Tiếp Tục Mua Sắm
                         </Link>
                     </div>
                 </main>
@@ -204,21 +204,21 @@ export default function WishlistPage() {
                 <div className="container mx-auto px-6 md:px-12 py-6">
                     {/* Breadcrumb */}
                     <div className="flex items-center gap-2 text-sm mb-6">
-                        <Link href="/" className="text-gray-500">Home</Link>
+                        <Link href="/" className="text-gray-500">Trang Chủ</Link>
                         <ChevronRight className="w-4 h-4 text-gray-500" />
-                        <span className="font-medium">Wishlist</span>
+                        <span className="font-medium">Danh Sách Yêu Thích</span>
                     </div>
 
                     <div className="flex items-center justify-between mb-6">
                         <h1 className="text-2xl md:text-3xl font-integral font-bold">
-                            My Wishlist <span className="text-gray-500">({wishlist?.length || 0})</span>
+                            Danh Sách Yêu Thích <span className="text-gray-500">({wishlist?.length || 0})</span>
                         </h1>
                         <button
                             onClick={handleClearAll}
                             className="text-red-500 hover:text-red-700 transition flex items-center gap-2"
                         >
                             <Trash2 className="w-5 h-5" />
-                            Clear All
+                            Xóa Tất Cả
                         </button>
                     </div>
 
@@ -238,7 +238,7 @@ export default function WishlistPage() {
                                         {!item.variant.in_stock && (
                                             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                                                 <span className="bg-white px-4 py-2 rounded-full text-sm font-medium">
-                                                    Out of Stock
+                                                    Hết Hàng
                                                 </span>
                                             </div>
                                         )}
@@ -253,13 +253,13 @@ export default function WishlistPage() {
                                         {/* Variant Info */}
                                         <div className="text-xs text-gray-600 space-y-1">
                                             <p>
-                                                <span className="font-medium">Size:</span>{' '}
+                                                <span className="font-medium">Kích thước:</span>{' '}
                                                 {typeof item.variant.size === 'object' && item.variant.size?.name
                                                     ? item.variant.size.name
                                                     : item.variant.size || 'N/A'}
                                             </p>
                                             <p>
-                                                <span className="font-medium">Color:</span>{' '}
+                                                <span className="font-medium">Màu sắc:</span>{' '}
                                                 {typeof item.variant.color === 'object' && item.variant.color?.name
                                                     ? item.variant.color.name
                                                     : item.variant.color || 'N/A'}
@@ -285,7 +285,7 @@ export default function WishlistPage() {
                                         {/* Price */}
                                         <div className="flex items-baseline gap-2">
                                             <span className="font-bold text-lg">
-                                                {Number(item.product.selling_price || 0).toLocaleString('vi-VN')}₫
+                                                {(Number(item.product.selling_price || 0) * 25000).toLocaleString('vi-VN')}₫
                                             </span>
                                         </div>
 
@@ -300,12 +300,12 @@ export default function WishlistPage() {
                                                     }`}
                                             >
                                                 <ShoppingCart className="w-4 h-4" />
-                                                Add to Cart
+                                                Thêm Vào Giỏ
                                             </button>
                                             <button
                                                 onClick={() => handleRemoveItem(item.variant_id)}
                                                 className="p-2.5 border border-gray-300 rounded-full hover:bg-red-50 hover:border-red-500 hover:text-red-500 transition"
-                                                title="Remove from wishlist"
+                                                title="Xóa khỏi danh sách yêu thích"
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
@@ -314,7 +314,7 @@ export default function WishlistPage() {
                                         {/* Stock info */}
                                         {item.variant.in_stock && (
                                             <p className="text-xs text-gray-500 text-center mt-2">
-                                                {item.variant.available_stock} in stock
+                                                Còn {item.variant.available_stock} sản phẩm
                                             </p>
                                         )}
                                     </div>
@@ -324,7 +324,7 @@ export default function WishlistPage() {
                                 <button
                                     onClick={() => handleRemoveItem(item.variant_id)}
                                     className="absolute top-2 right-2 w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition hover:bg-red-50 hover:text-red-500"
-                                    title="Remove from wishlist"
+                                    title="Xóa khỏi danh sách yêu thích"
                                 >
                                     <Heart className="w-4 h-4 fill-current" />
                                 </button>
@@ -338,7 +338,7 @@ export default function WishlistPage() {
                             href="/products"
                             className="inline-block bg-gray-100 text-black px-8 py-3 rounded-full font-medium hover:bg-gray-200 transition"
                         >
-                            Continue Shopping
+                            Tiếp Tục Mua Sắm
                         </Link>
                     </div>
                 </div>

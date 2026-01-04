@@ -50,9 +50,8 @@ export default function Toast({ message, type = 'success', duration = 3000, onCl
 
   return (
     <div
-      className={`fixed top-20 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg transition-all duration-300 ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
-      } ${getBackgroundColor()}`}
+      className={`fixed top-20 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg transition-all duration-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
+        } ${getBackgroundColor()}`}
     >
       {getIcon()}
       <span className="font-medium text-sm">{message}</span>
@@ -70,13 +69,15 @@ export default function Toast({ message, type = 'success', duration = 3000, onCl
 }
 
 // Toast Container to manage multiple toasts
+let toastCounter = 0;
+
 export function ToastContainer() {
-  const [toasts, setToasts] = useState<Array<{ id: number; message: string; type: 'success' | 'error' | 'info' | 'warning' }>>([]);
+  const [toasts, setToasts] = useState<Array<{ id: string; message: string; type: 'success' | 'error' | 'info' | 'warning' }>>([]);
 
   useEffect(() => {
     const handleShowToast = (event: CustomEvent) => {
       const { message, type } = event.detail;
-      const id = Date.now();
+      const id = `toast-${Date.now()}-${toastCounter++}`;
       setToasts((prev) => [...prev, { id, message, type: type || 'success' }]);
     };
 

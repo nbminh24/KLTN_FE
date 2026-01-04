@@ -62,14 +62,14 @@ export default function LoginPage() {
       // Handle errors from API
       if (axios.isAxiosError(err)) {
         if (err.response?.status === 401) {
-          setError('Invalid email or password');
+          setError('Email hoặc mật khẩu không đúng');
         } else if (err.response?.status === 403) {
-          setError('Account not activated. Please check your email.');
+          setError('Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email.');
         } else {
-          setError(err.response?.data?.message || 'Login failed. Please try again.');
+          setError(err.response?.data?.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
         }
       } else {
-        setError('Network error. Please check your connection.');
+        setError('Lỗi kết nối. Vui lòng kiểm tra đường truyền.');
       }
     } finally {
       setLoading(false);
@@ -95,9 +95,9 @@ export default function LoginPage() {
               {/* Logo/Title */}
               <div className="text-center mb-8">
                 <h1 className="text-3xl font-integral font-bold mb-2">
-                  Welcome Back
+                  LeCas Xin chào
                 </h1>
-                <p className="text-gray-600">Sign in to your account</p>
+                <p className="text-gray-600">Đăng nhập vào tài khoản của bạn</p>
               </div>
 
               {/* Google Sign In */}
@@ -123,7 +123,7 @@ export default function LoginPage() {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </svg>
-                Continue with Google
+                Tiếp tục với Google
               </button>
 
               {/* Divider */}
@@ -132,7 +132,7 @@ export default function LoginPage() {
                   <div className="w-full border-t border-gray-300"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white text-gray-500">Or continue with email</span>
+                  <span className="px-4 bg-white text-gray-500">Hoặc tiếp tục với email</span>
                 </div>
               </div>
 
@@ -156,7 +156,7 @@ export default function LoginPage() {
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       required
-                      placeholder="your@email.com"
+                      placeholder="email@example.com"
                       className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-black"
                     />
                   </div>
@@ -164,7 +164,7 @@ export default function LoginPage() {
 
                 {/* Password */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">Password</label>
+                  <label className="block text-sm font-medium mb-2">Mật Khẩu</label>
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
@@ -189,10 +189,10 @@ export default function LoginPage() {
                 <div className="flex items-center justify-between text-sm">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" className="w-4 h-4 rounded" />
-                    <span>Remember me</span>
+                    <span>Ghi nhớ đăng nhập</span>
                   </label>
                   <Link href="/forgot-password" className="text-black font-medium hover:underline">
-                    Forgot password?
+                    Quên mật khẩu?
                   </Link>
                 </div>
 
@@ -202,15 +202,15 @@ export default function LoginPage() {
                   disabled={loading}
                   className="w-full bg-black text-white py-3 rounded-full font-medium hover:bg-gray-800 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Signing in...' : 'Sign In'}
+                  {loading ? 'Đang đăng nhập...' : 'Đăng Nhập'}
                 </button>
               </form>
 
               {/* Sign Up Link */}
               <p className="text-center mt-6 text-sm text-gray-600">
-                Don&apos;t have an account?{' '}
+                Chưa có tài khoản?{' '}
                 <Link href="/signup" className="text-black font-medium hover:underline">
-                  Sign up
+                  Đăng ký
                 </Link>
               </p>
             </div>

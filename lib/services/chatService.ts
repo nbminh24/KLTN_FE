@@ -51,6 +51,7 @@ export interface ChatHistoryResponse {
 export interface SendMessagePayload {
     session_id: number;
     message: string;
+    image_url?: string;
     metadata?: Record<string, any>;
 }
 
@@ -228,7 +229,7 @@ const chatService = {
      * Upload image in chat
      * POST /api/v1/chat/upload-image
      */
-    uploadImage: async (file: File): Promise<AxiosResponse<{ image_url: string }>> => {
+    uploadImage: async (file: File): Promise<AxiosResponse<{ url: string; filename: string; size: number }>> => {
         const formData = new FormData();
         formData.append('file', file);
         return apiClient.post('/api/v1/chat/upload-image', formData, {

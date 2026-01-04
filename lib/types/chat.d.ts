@@ -1,6 +1,6 @@
 // Chat Custom Data Types for Rich Content Rendering
 
-export type MessageType = 'text' | 'products' | 'product_list' | 'cart_summary' | 'buttons' | 'size_selector' | 'color_selector' | 'order_status' | 'ticket_created' | 'image' | 'product_actions';
+export type MessageType = 'text' | 'products' | 'product_list' | 'cart_summary' | 'buttons' | 'size_selector' | 'color_selector' | 'order_status' | 'ticket_created' | 'image' | 'product_actions' | 'image_search_results';
 
 export interface BaseCustomData {
     type: MessageType;
@@ -129,6 +129,18 @@ export interface ProductActionsCustomData extends BaseCustomData {
     }[];
 }
 
+export interface ImageSearchResultsCustomData extends BaseCustomData {
+    type: 'image_search_results';
+    products: {
+        id: number;
+        name: string;
+        price: number;
+        image: string;
+        slug: string;
+        similarity: number;
+    }[];
+}
+
 export interface CartSummaryCustomData extends BaseCustomData {
     type: 'cart_summary';
     items: {
@@ -152,6 +164,7 @@ export type CustomData =
     | TicketCreatedCustomData
     | ImageCustomData
     | ProductActionsCustomData
+    | ImageSearchResultsCustomData
     | CartSummaryCustomData;
 
 export interface RasaButton {

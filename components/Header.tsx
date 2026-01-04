@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ShoppingCart, User, Menu, X, Heart, Settings, Package, LogOut } from 'lucide-react';
 import { getCartCount } from '@/lib/cart';
@@ -60,96 +61,97 @@ export default function Header() {
     <>
       {/* Top Banner */}
       {!isAuthenticated && (
-        <div className="bg-black text-white text-center py-2 text-xs md:text-sm">
+        <div className="bg-gradient-to-r from-gray-900 via-black to-gray-900 text-white text-center py-2.5 text-xs md:text-sm">
           <p>
-            Join the LeCas Community for Effortless Casual Style.{' '}
-            <Link href="/login" className="underline font-medium">
-              Sign In
+            Tham gia cộng đồng LeCas để trải nghiệm phong cách thanh lịch.{' '}
+            <Link href="/login" className="underline font-medium hover:text-gray-300 transition">
+              Đăng Nhập
             </Link>
             {' / '}
-            <Link href="/signup" className="underline font-medium">
-              Sign Up Now
+            <Link href="/signup" className="underline font-medium hover:text-gray-300 transition">
+              Đăng Ký Ngay
             </Link>
           </p>
         </div>
       )}
 
-      {/* Main Header */}
-      <header className="border-b">
+      {/* Main Header - Sticky */}
+      <header className="sticky top-0 z-50 bg-white shadow-md">
         <div className="container mx-auto px-6 md:px-12 py-4">
           <div className="flex items-center justify-between gap-8">
-            {/* Logo */}
-            <Link href="/" className="text-xl md:text-2xl font-integral font-bold">
-              LeCas
+            {/* Logo with Image */}
+            <Link href="/" className="flex items-center gap-3 group">
+              <div className="relative w-10 h-10 md:w-12 md:h-12">
+                <Image
+                  src="/lecas_logo.png"
+                  alt="LeCas Logo"
+                  fill
+                  className="object-contain group-hover:scale-105 transition-transform"
+                  priority
+                />
+              </div>
+              <span className="text-xl md:text-2xl font-integral font-bold group-hover:text-gray-700 transition">
+                LeCas
+              </span>
             </Link>
 
             {/* Navigation - Hidden on mobile */}
-            <nav className="hidden md:flex items-center gap-6 text-sm">
-              <Link href="/products" className="hover:text-gray-600 transition">
-                Shop
+            <nav className="hidden md:flex items-center gap-8 font-medium" style={{ fontSize: '17px' }}>
+              <Link href="/products" className="hover:text-gray-700 transition-colors duration-200">
+                Cửa Hàng
               </Link>
-              <Link href="/sale" className="hover:text-gray-600 transition">
-                On Sale
+              <Link href="/sale" className="hover:text-gray-700 transition-colors duration-200">
+                Khuyến Mãi
               </Link>
-              <Link href="/new-arrivals" className="hover:text-gray-600 transition">
-                New Arrivals
+              <Link href="/new-arrivals" className="hover:text-gray-700 transition-colors duration-200">
+                Hàng Mới
               </Link>
-              <Link href="/chat" className="hover:text-gray-600 transition">
-                LeCas Assistant
+              <Link href="/chat" className="hover:text-gray-700 transition-colors duration-200">
+                Trợ Lý LeCas
               </Link>
             </nav>
 
             {/* Icons */}
-            <div className="flex items-center gap-3 md:gap-4">
-              <Link href="/wishlist" className="relative hover:text-gray-600 transition" title="Wishlist">
-                <Heart className="w-6 h-6" />
-                {wishlistCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                    {wishlistCount}
-                  </span>
-                )}
+            <div className="flex items-center gap-4 md:gap-5">
+              <Link href="/wishlist" className="relative hover:text-gray-700 transition-colors duration-200" title="Danh sách yêu thích">
+                <Heart className="w-7 h-7" />
               </Link>
-              <Link href="/cart" className="relative hover:text-gray-600 transition" title="Shopping Cart">
-                <ShoppingCart className="w-6 h-6" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-black text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                    {cartCount}
-                  </span>
-                )}
+              <Link href="/cart" className="relative hover:text-gray-700 transition-colors duration-200" title="Giỏ hàng">
+                <ShoppingCart className="w-7 h-7" />
               </Link>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="hover:text-gray-600 transition" title="Account">
-                    <User className="w-6 h-6" />
+                  <button className="hover:text-gray-700 transition-colors duration-200" title="Tài khoản">
+                    <User className="w-7 h-7" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuLabel>Tài Khoản Của Tôi</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
                     <DropdownMenuItem asChild>
                       <Link href="/profile" className="cursor-pointer">
                         <User className="w-4 h-4" />
-                        Profile
+                        Hồ Sơ
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link href="/orders" className="cursor-pointer">
                         <Package className="w-4 h-4" />
-                        Orders
+                        Đơn Hàng
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link href="/addresses" className="cursor-pointer">
                         <Settings className="w-4 h-4" />
-                        Settings
+                        Cài Đặt
                       </Link>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="text-red-600 focus:text-red-600 cursor-pointer">
                     <LogOut className="w-4 h-4" />
-                    Logout
+                    Đăng Xuất
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

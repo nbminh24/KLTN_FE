@@ -27,17 +27,17 @@ export default function SignupPage() {
 
     // Client-side validation (matches DB schema constraints)
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError('Mật khẩu không khớp');
       return;
     }
 
     if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError('Mật khẩu phải có ít nhất 8 ký tự');
       return;
     }
 
     if (formData.name.trim().length < 2) {
-      setError('Name must be at least 2 characters');
+      setError('Tên phải có ít nhất 2 ký tự');
       return;
     }
 
@@ -58,14 +58,14 @@ export default function SignupPage() {
       if (axios.isAxiosError(err)) {
         if (err.response?.status === 409) {
           // DB constraint: email UNIQUE
-          setError('Email already exists. Please use a different email or login.');
+          setError('Email đã tồn tại. Vui lòng sử dụng email khác hoặc đăng nhập.');
         } else if (err.response?.status === 400) {
-          setError(err.response?.data?.message || 'Invalid registration data');
+          setError(err.response?.data?.message || 'Dữ liệu đăng ký không hợp lệ');
         } else {
-          setError(err.response?.data?.message || 'Registration failed. Please try again.');
+          setError(err.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại.');
         }
       } else {
-        setError('Network error. Please check your connection.');
+        setError('Lỗi kết nối. Vui lòng kiểm tra đường truyền.');
       }
     } finally {
       setLoading(false);
@@ -89,9 +89,9 @@ export default function SignupPage() {
               {/* Logo/Title */}
               <div className="text-center mb-8">
                 <h1 className="text-3xl font-integral font-bold mb-2">
-                  Create Account
+                  Tạo Tài Khoản
                 </h1>
-                <p className="text-gray-600">Join LeCas today</p>
+                <p className="text-gray-600">Tham gia LeCas ngay hôm nay</p>
               </div>
 
               {/* Google Sign Up */}
@@ -117,7 +117,7 @@ export default function SignupPage() {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </svg>
-                Continue with Google
+                Tiếp tục với Google
               </button>
 
               {/* Divider */}
@@ -126,7 +126,7 @@ export default function SignupPage() {
                   <div className="w-full border-t border-gray-300"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white text-gray-500">Or sign up with email</span>
+                  <span className="px-4 bg-white text-gray-500">Hoặc đăng ký bằng email</span>
                 </div>
               </div>
 
@@ -142,7 +142,7 @@ export default function SignupPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Name */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">Full Name</label>
+                  <label className="block text-sm font-medium mb-2">Họ và Tên</label>
                   <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
@@ -151,7 +151,7 @@ export default function SignupPage() {
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       required
                       minLength={2}
-                      placeholder="John Doe"
+                      placeholder="Nguyễn Văn A"
                       className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-black"
                     />
                   </div>
@@ -167,7 +167,7 @@ export default function SignupPage() {
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       required
-                      placeholder="your@email.com"
+                      placeholder="email@example.com"
                       className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-black"
                     />
                   </div>
@@ -175,7 +175,7 @@ export default function SignupPage() {
 
                 {/* Password */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">Password</label>
+                  <label className="block text-sm font-medium mb-2">Mật Khẩu</label>
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
@@ -195,12 +195,12 @@ export default function SignupPage() {
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters</p>
+                  <p className="text-xs text-gray-500 mt-1">Tối thiểu 8 ký tự</p>
                 </div>
 
                 {/* Confirm Password */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">Confirm Password</label>
+                  <label className="block text-sm font-medium mb-2">Xác Nhận Mật Khẩu</label>
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
@@ -218,13 +218,13 @@ export default function SignupPage() {
                 <label className="flex items-start gap-2 cursor-pointer text-sm">
                   <input type="checkbox" required className="w-4 h-4 rounded mt-0.5" />
                   <span className="text-gray-600">
-                    I agree to the{' '}
+                    Tôi đồng ý với{' '}
                     <Link href="/terms" className="text-black font-medium hover:underline">
-                      Terms & Conditions
+                      Điều Khoản & Điều Kiện
                     </Link>{' '}
-                    and{' '}
+                    và{' '}
                     <Link href="/privacy" className="text-black font-medium hover:underline">
-                      Privacy Policy
+                      Chính Sách Bảo Mật
                     </Link>
                   </span>
                 </label>
@@ -235,15 +235,15 @@ export default function SignupPage() {
                   disabled={loading}
                   className="w-full bg-black text-white py-3 rounded-full font-medium hover:bg-gray-800 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Creating Account...' : 'Create Account'}
+                  {loading ? 'Đang tạo tài khoản...' : 'Tạo Tài Khoản'}
                 </button>
               </form>
 
               {/* Sign In Link */}
               <p className="text-center mt-6 text-sm text-gray-600">
-                Already have an account?{' '}
+                Đã có tài khoản?{' '}
                 <Link href="/login" className="text-black font-medium hover:underline">
-                  Sign in
+                  Đăng nhập
                 </Link>
               </p>
             </div>

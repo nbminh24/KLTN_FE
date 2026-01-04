@@ -56,34 +56,31 @@ export default function Chatbot() {
   const handleSend = async () => {
     if (!inputValue.trim() && !uploadedImage) return;
 
-    let imageUrl = uploadedImage;
+    setIsUploading(true);
+    let imageUrl: string | undefined = undefined;
 
-    // Upload image if exists
-    if (uploadedImage) {
-      setIsUploading(true);
-      try {
-        // Convert base64 to File
+    try {
+      // Upload image if exists and get URL
+      if (uploadedImage) {
         const response = await fetch(uploadedImage);
         const blob = await response.blob();
         const file = new File([blob], 'uploaded-image.jpg', { type: 'image/jpeg' });
-
-        // Upload to backend
         const uploadResponse = await chatService.uploadImage(file);
         imageUrl = uploadResponse.data.image_url;
-      } catch (error) {
-        console.error('Failed to upload image:', error);
-      } finally {
-        setIsUploading(false);
       }
+
+      // Send message via store with image_url
+      const messageText = inputValue || (imageUrl ? '📷 Tìm sản phẩm tương tự với ảnh này' : '');
+      await sendMessage(messageText, imageUrl);
+
+      // Clear input
+      setInputValue('');
+      setUploadedImage(null);
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    } finally {
+      setIsUploading(false);
     }
-
-    // Send message via store
-    const messageText = inputValue || (imageUrl ? 'Sản phẩm tương tự với ảnh này?' : '');
-    await sendMessage(messageText, imageUrl || undefined);
-
-    // Clear input
-    setInputValue('');
-    setUploadedImage(null);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -177,15 +174,15 @@ export default function Chatbot() {
                 <Bot className="w-5 h-5 text-black" />
               </div>
               <div>
-                <h3 className="font-bold">Shopping Assistant</h3>
-                <p className="text-xs text-gray-300">Always here to help</p>
+                <h3 className="font-bold">Trợ Lý Mua Sắm</h3>
+                <p className="text-xs text-gray-300">Luôn sẵn sàng hỗ trợ bạn</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => router.push('/chat')}
                 className="hover:bg-gray-800 p-1 rounded"
-                title="Open full screen"
+                title="Mở toàn màn hình"
               >
                 <Maximize2 className="w-5 h-5" />
               </button>
@@ -221,22 +218,22 @@ export default function Chatbot() {
           <div className="px-4 pb-2">
             <div className="flex gap-2 flex-wrap">
               <button
-                onClick={() => setInputValue('Track my order')}
+                onClick={() => setInputValue('Theo dõi đơn hàng')}
                 className="text-xs bg-gray-100 px-3 py-2 rounded-full hover:bg-gray-200 transition"
               >
-                Track Order
+                Theo Dõi Đơn Hàng
               </button>
               <button
-                onClick={() => setInputValue('Show me new arrivals')}
+                onClick={() => setInputValue('Hiển thị hàng mới về')}
                 className="text-xs bg-gray-100 px-3 py-2 rounded-full hover:bg-gray-200 transition"
               >
-                New Arrivals
+                Hàng Mới Về
               </button>
               <button
-                onClick={() => setInputValue('Help with returns')}
+                onClick={() => setInputValue('Hỗ trợ đổi trả')}
                 className="text-xs bg-gray-100 px-3 py-2 rounded-full hover:bg-gray-200 transition"
               >
-                Returns
+                Đổi Trả
               </button>
             </div>
           </div>
@@ -274,7 +271,7 @@ export default function Chatbot() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 className="p-3 border border-gray-300 rounded-full hover:bg-gray-50 transition"
-                title="Upload image"
+                title="Tải ảnh lên"
               >
                 <Camera className="w-5 h-5 text-gray-600" />
               </button>
@@ -283,7 +280,7 @@ export default function Chatbot() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="Type your message..."
+                placeholder="Nhập tin nhắn của bạn..."
                 className="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-black"
               />
               <button

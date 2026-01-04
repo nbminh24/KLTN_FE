@@ -54,7 +54,7 @@ export default function ProfilePage() {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordData.new_password !== passwordData.confirm_password) {
-      showToast('Passwords do not match', 'error');
+      showToast('Mật khẩu không khớp', 'error');
       return;
     }
     try {
@@ -63,22 +63,22 @@ export default function ProfilePage() {
         old_password: passwordData.old_password,
         new_password: passwordData.new_password,
       });
-      showToast('Password changed successfully', 'success');
+      showToast('Đã đổi mật khẩu thành công', 'success');
       setPasswordData({ old_password: '', new_password: '', confirm_password: '' });
     } catch (err: any) {
-      showToast(axios.isAxiosError(err) ? err.response?.data?.message || 'Failed to change password' : 'Failed to change password', 'error');
+      showToast(axios.isAxiosError(err) ? err.response?.data?.message || 'Không thể đổi mật khẩu' : 'Không thể đổi mật khẩu', 'error');
     } finally {
       setUpdating(false);
     }
   };
 
   const handleLogout = () => {
-    if (confirm('Are you sure you want to logout?')) {
+    if (confirm('Bạn có chắc muốn đăng xuất?')) {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('user');
       localStorage.removeItem('guest_cart_session');
-      showToast('Logged out successfully', 'success');
+      showToast('Đã đăng xuất thành công', 'success');
       router.push('/login');
     }
   };
@@ -103,12 +103,12 @@ export default function ProfilePage() {
         <div className="container mx-auto px-6 md:px-12 py-6">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm mb-6">
-            <Link href="/" className="text-gray-500">Home</Link>
+            <Link href="/" className="text-gray-500">Trang Chủ</Link>
             <ChevronRight className="w-4 h-4 text-gray-500" />
-            <span className="font-medium">My Profile</span>
+            <span className="font-medium">Tài Khoản Của Tôi</span>
           </div>
 
-          <h1 className="text-2xl md:text-3xl font-integral font-bold mb-6">My Profile</h1>
+          <h1 className="text-2xl md:text-3xl font-integral font-bold mb-6">Tài Khoản Của Tôi</h1>
 
           <div className="grid lg:grid-cols-4 gap-6">
             {/* Sidebar */}
@@ -120,7 +120,7 @@ export default function ProfilePage() {
                     }`}
                 >
                   <User className="w-5 h-5" />
-                  <span>Account Details</span>
+                  <span>Thông Tin Tài Khoản</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('orders')}
@@ -128,7 +128,7 @@ export default function ProfilePage() {
                     }`}
                 >
                   <Package className="w-5 h-5" />
-                  <span>My Orders</span>
+                  <span>Đơn Hàng Của Tôi</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('addresses')}
@@ -136,7 +136,7 @@ export default function ProfilePage() {
                     }`}
                 >
                   <MapPin className="w-5 h-5" />
-                  <span>Addresses</span>
+                  <span>Địa Chỉ</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('wishlist')}
@@ -144,7 +144,7 @@ export default function ProfilePage() {
                     }`}
                 >
                   <Heart className="w-5 h-5" />
-                  <span>Wishlist</span>
+                  <span>Yêu Thích</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('settings')}
@@ -152,7 +152,7 @@ export default function ProfilePage() {
                     }`}
                 >
                   <Settings className="w-5 h-5" />
-                  <span>Settings</span>
+                  <span>Cài Đặt</span>
                 </button>
                 <hr className="border-gray-200 my-2" />
                 <button
@@ -160,7 +160,7 @@ export default function ProfilePage() {
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition"
                 >
                   <LogOut className="w-5 h-5" />
-                  <span>Logout</span>
+                  <span>Đăng Xuất</span>
                 </button>
               </div>
             </div>
@@ -169,11 +169,11 @@ export default function ProfilePage() {
             <div className="lg:col-span-3">
               {activeTab === 'account' && (
                 <div className="border border-gray-200 rounded-2xl p-6">
-                  <h2 className="text-xl font-bold mb-6">Account Details</h2>
+                  <h2 className="text-xl font-bold mb-6">Thông Tin Tài Khoản</h2>
                   <div className="space-y-5">
                     {/* Full Name */}
                     <div className="pb-4 border-b border-gray-100">
-                      <label className="block text-sm font-medium text-gray-500 mb-2">Full Name</label>
+                      <label className="block text-sm font-medium text-gray-500 mb-2">Họ Và Tên</label>
                       <p className="text-base font-medium text-gray-900">{profile?.name || 'N/A'}</p>
                     </div>
 
@@ -186,7 +186,7 @@ export default function ProfilePage() {
                     {/* Info Note */}
                     <div className="bg-gray-50 rounded-lg p-4 mt-4">
                       <p className="text-sm text-gray-600">
-                        <span className="font-medium">Note:</span> Account information cannot be modified. Please contact support if you need to update your details.
+                        <span className="font-medium">Lưu ý:</span> Thông tin tài khoản không thể thay đổi. Vui lòng liên hệ hỗ trợ nếu cần cập nhật.
                       </p>
                     </div>
                   </div>
@@ -195,11 +195,11 @@ export default function ProfilePage() {
 
               {activeTab === 'orders' && (
                 <div className="border border-gray-200 rounded-2xl p-6">
-                  <h2 className="text-2xl font-bold mb-6">My Orders</h2>
+                  <h2 className="text-2xl font-bold mb-6">Đơn Hàng Của Tôi</h2>
                   <p className="text-gray-600">
-                    View your order history.{' '}
+                    Xem lịch sử đơn hàng của bạn.{' '}
                     <Link href="/orders" className="text-black font-medium underline">
-                      Go to Orders
+                      Đi Tới Đơn Hàng
                     </Link>
                   </p>
                 </div>
@@ -207,11 +207,11 @@ export default function ProfilePage() {
 
               {activeTab === 'addresses' && (
                 <div className="border border-gray-200 rounded-2xl p-6">
-                  <h2 className="text-2xl font-bold mb-6">Saved Addresses</h2>
+                  <h2 className="text-2xl font-bold mb-6">Địa Chỉ Đã Lưu</h2>
                   <p className="text-gray-600 mb-4">
-                    Manage your delivery addresses.{' '}
+                    Quản lý địa chỉ giao hàng của bạn.{' '}
                     <Link href="/addresses" className="text-black font-medium underline">
-                      View All Addresses
+                      Xem Tất Cả Địa Chỉ
                     </Link>
                   </p>
                 </div>
@@ -219,11 +219,11 @@ export default function ProfilePage() {
 
               {activeTab === 'wishlist' && (
                 <div className="border border-gray-200 rounded-2xl p-6">
-                  <h2 className="text-2xl font-bold mb-6">My Wishlist</h2>
+                  <h2 className="text-2xl font-bold mb-6">Danh Sách Yêu Thích</h2>
                   <p className="text-gray-600 mb-4">
-                    View and manage your saved items.{' '}
+                    Xem và quản lý sản phẩm yêu thích.{' '}
                     <Link href="/wishlist" className="text-black font-medium underline">
-                      Go to Wishlist
+                      Đi Tới Danh Sách Yêu Thích
                     </Link>
                   </p>
                 </div>
@@ -235,40 +235,40 @@ export default function ProfilePage() {
                   <div className="border border-gray-200 rounded-2xl p-6">
                     <div className="flex items-center gap-3 mb-5">
                       <Lock className="w-5 h-5" />
-                      <h2 className="text-xl font-bold">Change Password</h2>
+                      <h2 className="text-xl font-bold">Đổi Mật Khẩu</h2>
                     </div>
                     <form onSubmit={handleChangePassword} className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium mb-2">Current Password</label>
+                        <label className="block text-sm font-medium mb-2">Mật Khẩu Hiện Tại</label>
                         <input
                           type="password"
                           required
                           value={passwordData.old_password || ''}
                           onChange={(e) => setPasswordData({ ...passwordData, old_password: e.target.value })}
-                          placeholder="Enter current password"
+                          placeholder="Nhập mật khẩu hiện tại"
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-2">New Password</label>
+                        <label className="block text-sm font-medium mb-2">Mật Khẩu Mới</label>
                         <input
                           type="password"
                           required
                           minLength={8}
                           value={passwordData.new_password || ''}
                           onChange={(e) => setPasswordData({ ...passwordData, new_password: e.target.value })}
-                          placeholder="Enter new password (min 8 characters)"
+                          placeholder="Nhập mật khẩu mới (tối thiểu 8 ký tự)"
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-2">Confirm New Password</label>
+                        <label className="block text-sm font-medium mb-2">Xác Nhận Mật Khẩu Mới</label>
                         <input
                           type="password"
                           required
                           value={passwordData.confirm_password || ''}
                           onChange={(e) => setPasswordData({ ...passwordData, confirm_password: e.target.value })}
-                          placeholder="Confirm new password"
+                          placeholder="Xác nhận mật khẩu mới"
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                         />
                       </div>
@@ -277,25 +277,25 @@ export default function ProfilePage() {
                         disabled={updating}
                         className="bg-black text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition disabled:opacity-50"
                       >
-                        {updating ? 'Updating...' : 'Update Password'}
+                        {updating ? 'Đang cập nhật...' : 'Cập Nhật Mật Khẩu'}
                       </button>
                     </form>
                   </div>
 
                   {/* Notification Settings */}
                   <div className="border border-gray-200 rounded-2xl p-6">
-                    <h2 className="text-xl font-bold mb-5">Notification Preferences</h2>
+                    <h2 className="text-xl font-bold mb-5">Tùy Chọn Thông Báo</h2>
                     <div className="space-y-4">
                       <label className="flex items-center justify-between">
-                        <span className="font-medium">Email Notifications</span>
+                        <span className="font-medium">Thông Báo Email</span>
                         <input type="checkbox" className="w-5 h-5" defaultChecked />
                       </label>
                       <label className="flex items-center justify-between">
-                        <span className="font-medium">SMS Notifications</span>
+                        <span className="font-medium">Thông Báo SMS</span>
                         <input type="checkbox" className="w-5 h-5" />
                       </label>
                       <label className="flex items-center justify-between">
-                        <span className="font-medium">Newsletter</span>
+                        <span className="font-medium">Bản Tin</span>
                         <input type="checkbox" className="w-5 h-5" defaultChecked />
                       </label>
                     </div>

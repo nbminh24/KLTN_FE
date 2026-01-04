@@ -40,7 +40,7 @@ export default function CategoriesPage() {
         // Silently handle network errors
       } else {
         console.warn('Failed to fetch categories:', error?.response?.status || error?.message);
-        showToast('Failed to load categories', 'error');
+        showToast('Không thể tải danh mục', 'error');
       }
       setCategories([]);
     } finally {
@@ -61,16 +61,16 @@ export default function CategoriesPage() {
   const handleToggleCategoryStatus = async (category: AdminCategory) => {
     const newStatus = category.status === 'active' ? 'inactive' : 'active';
     if (newStatus === 'inactive' && category.product_count && category.product_count > 0) {
-      if (!confirm(`Deactivate '${category.name}'? This may affect ${category.product_count} products.`)) return;
+      if (!confirm(`Vô hiệu hóa '${category.name}'? Điều này có thể ảnh hưởng ${category.product_count} sản phẩm.`)) return;
     }
 
     try {
       await adminCategoryService.updateCategory(category.id, { status: newStatus });
-      showToast(`Category ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`, 'success');
+      showToast(`Đã ${newStatus === 'active' ? 'kích hoạt' : 'vô hiệu hóa'} danh mục thành công`, 'success');
       fetchCategories();
     } catch (error) {
       console.error('Error updating category:', error);
-      showToast('Failed to update category', 'error');
+      showToast('Không thể cập nhật danh mục', 'error');
     }
   };
 
@@ -87,10 +87,10 @@ export default function CategoriesPage() {
 
       if (editMode && selectedCategory) {
         await adminCategoryService.updateCategory(selectedCategory.id, dataToSend);
-        showToast('Category updated successfully', 'success');
+        showToast('Đã cập nhật danh mục thành công', 'success');
       } else {
         await adminCategoryService.createCategory(dataToSend);
-        showToast('Category created successfully', 'success');
+        showToast('Đã tạo danh mục thành công', 'success');
       }
       setShowModal(false);
       setFormData({ name: '', slug: '', status: 'active' });

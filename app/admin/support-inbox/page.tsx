@@ -128,26 +128,26 @@ function SupportInboxContent() {
         <div className="p-6 space-y-6">
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-bold text-[#202224]">Support Inbox</h1>
-                <p className="text-gray-600 mt-1">Manage customer support requests</p>
+                <h1 className="text-3xl font-bold text-[#202224]">Hộp Thư Hỗ Trợ</h1>
+                <p className="text-gray-600 mt-1">Quản lý yêu cầu hỗ trợ khách hàng</p>
             </div>
 
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="bg-white border border-gray-200 rounded-xl p-5">
-                    <p className="text-sm text-gray-600 mb-1">Pending</p>
+                    <p className="text-sm text-gray-600 mb-1">Chờ Xử Lý</p>
                     <p className="text-3xl font-bold text-yellow-600">{stats.pending}</p>
                 </div>
                 <div className="bg-white border border-gray-200 rounded-xl p-5">
-                    <p className="text-sm text-gray-600 mb-1">In Progress</p>
+                    <p className="text-sm text-gray-600 mb-1">Đang Xử Lý</p>
                     <p className="text-3xl font-bold text-blue-600">{stats.in_progress}</p>
                 </div>
                 <div className="bg-white border border-gray-200 rounded-xl p-5">
-                    <p className="text-sm text-gray-600 mb-1">Resolved</p>
+                    <p className="text-sm text-gray-600 mb-1">Đã Giải Quyết</p>
                     <p className="text-3xl font-bold text-green-600">{stats.resolved}</p>
                 </div>
                 <div className="bg-white border border-gray-200 rounded-xl p-5">
-                    <p className="text-sm text-gray-600 mb-1">Total</p>
+                    <p className="text-sm text-gray-600 mb-1">Tổng Cộng</p>
                     <p className="text-3xl font-bold text-gray-600">{stats.total}</p>
                 </div>
             </div>
@@ -162,7 +162,7 @@ function SupportInboxContent() {
                             : 'text-gray-600 hover:text-gray-800'
                             }`}
                     >
-                        Pending
+                        Chờ Xử Lý
                     </button>
                     <button
                         onClick={() => handleTabChange('in_progress')}
@@ -171,7 +171,7 @@ function SupportInboxContent() {
                             : 'text-gray-600 hover:text-gray-800'
                             }`}
                     >
-                        In Progress
+                        Đang Xử Lý
                     </button>
                     <button
                         onClick={() => handleTabChange('resolved')}
@@ -180,7 +180,7 @@ function SupportInboxContent() {
                             : 'text-gray-600 hover:text-gray-800'
                             }`}
                     >
-                        Resolved
+                        Đã Giải Quyết
                     </button>
                 </div>
                 <div className="p-4">
@@ -188,7 +188,7 @@ function SupportInboxContent() {
                         <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                         <input
                             type="text"
-                            placeholder="Search by ticket code, email, or subject..."
+                            placeholder="Tìm theo mã phiếu, email hoặc chủ đề..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
@@ -202,12 +202,12 @@ function SupportInboxContent() {
                 <table className="w-full">
                     <thead className="bg-[#F1F4F9]">
                         <tr>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Ticket</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Customer</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Source</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Priority</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Status</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Created</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Phiếu</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Khách Hàng</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Nguồn</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Ưu Tiên</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Trạng Thái</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Tạo Lúc</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -220,7 +220,7 @@ function SupportInboxContent() {
                         ) : filteredTickets.length === 0 ? (
                             <tr>
                                 <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                                    No tickets found
+                                    Không tìm thấy phiếu hỗ trợ
                                 </td>
                             </tr>
                         ) : (

@@ -62,13 +62,13 @@ export default function ProductCard({
 
     const token = localStorage.getItem('access_token');
     if (!token) {
-      showToast('Please login to add to wishlist', 'error');
+      showToast('Vui lòng đăng nhập để thêm vào danh sách yêu thích', 'error');
       return;
     }
 
     // Option 2: If no variantId, redirect to product detail page
     if (!variantId) {
-      showToast('Select size and color on product page', 'info');
+      showToast('Chọn kích thước và màu sắc trên trang sản phẩm', 'info');
       window.location.href = `/products/${id}`;
       return;
     }
@@ -80,18 +80,18 @@ export default function ProductCard({
         // Remove from wishlist
         await wishlistService.removeFromWishlist(variantId);
         setIsWished(false);
-        showToast('Removed from wishlist', 'info');
+        showToast('Đã xóa khỏi danh sách yêu thích', 'info');
       } else {
         // Add to wishlist
         await wishlistService.addToWishlist(variantId);
         setIsWished(true);
-        showToast('Added to wishlist!', 'success');
+        showToast('Đã thêm vào danh sách yêu thích!', 'success');
       }
     } catch (err: any) {
       if (axios.isAxiosError(err) && err.response?.status === 401) {
-        showToast('Please login to add to wishlist', 'error');
+        showToast('Vui lòng đăng nhập để thêm vào danh sách yêu thích', 'error');
       } else {
-        showToast('Failed to update wishlist', 'error');
+        showToast('Không thể cập nhật danh sách yêu thích', 'error');
       }
     } finally {
       setWishlistLoading(false);
@@ -103,7 +103,7 @@ export default function ProductCard({
     e.stopPropagation();
 
     // Add to cart logic (will integrate with cart context later)
-    showToast('Added to cart!', 'success');
+    showToast('Đã thêm vào giỏ hàng!', 'success');
   };
 
   return (
@@ -125,7 +125,7 @@ export default function ProductCard({
               ? 'bg-red-500 text-white'
               : 'bg-white text-gray-600 hover:bg-gray-100'
               }`}
-            title={isWished ? 'Remove from wishlist' : 'Add to wishlist'}
+            title={isWished ? 'Xóa khỏi danh sách yêu thích' : 'Thêm vào danh sách yêu thích'}
           >
             <Heart className={`w-5 h-5 ${isWished ? 'fill-current' : ''}`} />
           </button>
@@ -134,10 +134,10 @@ export default function ProductCard({
           <button
             onClick={handleAddToCart}
             className="absolute bottom-3 right-3 bg-black text-white px-4 py-2 rounded-full flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-gray-800 text-sm font-medium"
-            title="Add to cart"
+            title="Thêm vào giỏ hàng"
           >
             <ShoppingCart className="w-4 h-4" />
-            <span>Add to Cart</span>
+            <span>Thêm Vào Giỏ</span>
           </button>
         </div>
 
@@ -164,13 +164,13 @@ export default function ProductCard({
 
           {/* Price */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-lg md:text-xl font-bold">${price}</span>
-            {originalPrice && (
+            <span className="text-lg md:text-xl font-bold">{(price * 25000).toLocaleString('vi-VN')}₫</span>
+            {originalPrice && originalPrice > price && (
               <>
                 <span className="text-lg md:text-xl font-bold text-gray-400 line-through">
-                  ${originalPrice}
+                  {(originalPrice * 25000).toLocaleString('vi-VN')}₫
                 </span>
-                {discount && (
+                {discount && discount > 0 && (
                   <span className="bg-red-100 text-red-600 text-xs font-medium px-2 py-0.5 rounded-full">
                     -{discount}%
                   </span>

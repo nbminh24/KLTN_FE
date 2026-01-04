@@ -102,7 +102,7 @@ export default function CheckoutPage() {
         if (err.response?.status === 401) {
           router.push('/login?redirect=/checkout');
         } else {
-          setError('Failed to load checkout data');
+          setError('Không thể tải dữ liệu thanh toán');
         }
       } else {
         setError('Failed to load checkout data');
@@ -114,12 +114,12 @@ export default function CheckoutPage() {
 
   const handleCheckout = async () => {
     if (!selectedAddressId) {
-      showToast('Please select a shipping address', 'warning');
+      showToast('Vui lòng chọn địa chỉ giao hàng', 'warning');
       return;
     }
 
     if (!cart || !cart.items || cart.items.length === 0) {
-      showToast('Your cart is empty', 'warning');
+      showToast('Giỏ hàng của bạn trống', 'warning');
       return;
     }
 
@@ -151,7 +151,7 @@ export default function CheckoutPage() {
 
         if (!paymentUrl) {
           console.error('❌ VNPAY payment URL is undefined!', paymentRes.data);
-          showToast('Payment URL not received. Please contact support.', 'error');
+          showToast('Không nhận được URL thanh toán. Vui lòng liên hệ hỗ trợ.', 'error');
           return;
         }
 
@@ -159,15 +159,15 @@ export default function CheckoutPage() {
         window.location.href = paymentUrl;
       } else {
         // COD - redirect to order success
-        showToast('Order placed successfully!', 'success');
+        showToast('Đặt hàng thành công!', 'success');
         router.push(`/orders/${order.id}`);
       }
     } catch (err: any) {
       console.error('Checkout error:', err);
       if (axios.isAxiosError(err)) {
-        showToast(err.response?.data?.message || 'Checkout failed', 'error');
+        showToast(err.response?.data?.message || 'Thanh toán thất bại', 'error');
       } else {
-        showToast('Failed to place order', 'error');
+        showToast('Không thể đặt hàng', 'error');
       }
     } finally {
       setSubmitting(false);
@@ -193,10 +193,10 @@ export default function CheckoutPage() {
         <main className="flex-1 flex items-center justify-center py-20">
           <div className="text-center max-w-md">
             <AlertCircle className="w-16 h-16 mx-auto mb-4 text-red-500" />
-            <h2 className="text-2xl font-bold mb-2">Error</h2>
+            <h2 className="text-2xl font-bold mb-2">Lỗi</h2>
             <p className="text-gray-600 mb-6">{error}</p>
             <Link href="/cart" className="inline-block bg-black text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition">
-              Back to Cart
+              Quay Lại Giỏ Hàng
             </Link>
           </div>
         </main>
@@ -211,10 +211,10 @@ export default function CheckoutPage() {
         <Header />
         <main className="flex-1 flex items-center justify-center py-20">
           <div className="text-center max-w-md">
-            <h2 className="text-2xl font-bold mb-2">Cart is Empty</h2>
-            <p className="text-gray-600 mb-6">Add items to cart before checkout</p>
+            <h2 className="text-2xl font-bold mb-2">Giỏ Hàng Trống</h2>
+            <p className="text-gray-600 mb-6">Thêm sản phẩm vào giỏ hàng trước khi thanh toán</p>
             <Link href="/products" className="inline-block bg-black text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition">
-              Continue Shopping
+              Tiếp Tục Mua Sắm
             </Link>
           </div>
         </main>
@@ -231,21 +231,21 @@ export default function CheckoutPage() {
         <div className="container mx-auto px-6 md:px-12 py-6">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm mb-6">
-            <Link href="/" className="text-gray-500">Home</Link>
+            <Link href="/" className="text-gray-500">Trang Chủ</Link>
             <ChevronRight className="w-4 h-4 text-gray-500" />
-            <Link href="/cart" className="text-gray-500">Cart</Link>
+            <Link href="/cart" className="text-gray-500">Giỏ Hàng</Link>
             <ChevronRight className="w-4 h-4 text-gray-500" />
-            <span className="font-medium">Checkout</span>
+            <span className="font-medium">Thanh Toán</span>
           </div>
 
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl md:text-3xl font-integral font-bold">Checkout</h1>
+            <h1 className="text-2xl md:text-3xl font-integral font-bold">Thanh Toán</h1>
             <Link
               href="/cart"
               className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-black transition"
             >
               <ArrowLeft className="w-4 h-4" />
-              Back to Cart
+              Quay Lại Giỏ Hàng
             </Link>
           </div>
 
@@ -257,24 +257,24 @@ export default function CheckoutPage() {
                 <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-3">
                     <MapPin className="w-5 h-5" />
-                    <h2 className="text-lg font-bold">Shipping Address</h2>
+                    <h2 className="text-lg font-bold">Địa Chỉ Giao Hàng</h2>
                   </div>
                   <Link
                     href="/addresses"
                     className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700"
                   >
                     <Plus className="w-4 h-4" />
-                    Add New
+                    Thêm Mới
                   </Link>
                 </div>
                 {addresses.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-gray-600 mb-4">No saved addresses</p>
+                    <p className="text-gray-600 mb-4">Chưa có địa chỉ nào</p>
                     <Link
                       href="/addresses"
                       className="inline-block bg-black text-white px-6 py-2 rounded-full text-sm hover:bg-gray-800 transition"
                     >
-                      Add Address
+                      Thêm Địa Chỉ
                     </Link>
                   </div>
                 ) : (
@@ -300,11 +300,16 @@ export default function CheckoutPage() {
                             <span className="font-bold">{addr.address_type || 'Address'}</span>
                             {addr.is_default && (
                               <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                                Default
+                                Mặc Định
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-gray-600">{addr.detailed_address}</p>
+                          <p className="text-sm text-gray-600">
+                            {addr.street_address}
+                            {addr.ward && `, ${addr.ward}`}
+                            {addr.district && `, ${addr.district}`}
+                            {addr.province && `, ${addr.province}`}
+                          </p>
                           <p className="text-sm text-gray-600">{addr.phone_number}</p>
                         </div>
                       </label>
@@ -315,11 +320,11 @@ export default function CheckoutPage() {
 
               {/* Order Note */}
               <div className="border border-gray-200 rounded-2xl p-5">
-                <h2 className="text-lg font-bold mb-3">Order Note (Optional)</h2>
+                <h2 className="text-lg font-bold mb-3">Ghi Chú Đơn Hàng (Tùy Chọn)</h2>
                 <textarea
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  placeholder="Add delivery instructions or notes..."
+                  placeholder="Thêm hướng dẫn giao hàng hoặc ghi chú..."
                   rows={3}
                   maxLength={500}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black resize-none"
@@ -328,7 +333,7 @@ export default function CheckoutPage() {
 
               {/* Review Order */}
               <div className="border border-gray-200 rounded-2xl p-5">
-                <h2 className="text-lg font-bold mb-5">Review Order ({cart.items?.length || 0} items)</h2>
+                <h2 className="text-lg font-bold mb-5">Xem Lại Đơn Hàng ({cart.items?.length || 0} sản phẩm)</h2>
                 <div className="space-y-4">
                   {(cart.items || []).map((item) => (
                     <div key={item.id} className="flex gap-4">
@@ -343,21 +348,21 @@ export default function CheckoutPage() {
                       <div className="flex-1">
                         <h3 className="font-bold text-sm">{item.product?.name || 'Product'}</h3>
                         <div className="text-xs text-gray-600 mt-1">
-                          <span>Size: {
+                          <span>Kích thước: {
                             typeof item.variant?.size === 'object' && item.variant?.size?.name
                               ? item.variant.size.name
                               : item.variant?.size || 'N/A'
                           }</span>
                           <span className="mx-2">•</span>
-                          <span>Color: {
+                          <span>Màu sắc: {
                             typeof item.variant?.color === 'object' && item.variant?.color?.name
                               ? item.variant.color.name
                               : item.variant?.color || 'N/A'
                           }</span>
                         </div>
                         <div className="flex items-center justify-between mt-2">
-                          <span className="text-sm text-gray-600">Qty: {item.quantity || 1}</span>
-                          <span className="font-bold">${Number(item.variant?.price || 0).toFixed(2)}</span>
+                          <span className="text-sm text-gray-600">SL: {item.quantity || 1}</span>
+                          <span className="font-bold">{(Number(item.variant?.price || 0) * 25000).toLocaleString('vi-VN')}₫</span>
                         </div>
                       </div>
                     </div>
@@ -369,7 +374,7 @@ export default function CheckoutPage() {
               <div className="border border-gray-200 rounded-2xl p-5">
                 <div className="flex items-center gap-3 mb-5">
                   <CreditCard className="w-5 h-5" />
-                  <h2 className="text-lg font-bold">Payment Method</h2>
+                  <h2 className="text-lg font-bold">Phương Thức Thanh Toán</h2>
                 </div>
                 <div className="space-y-3">
                   <label className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition ${paymentMethod === 'cod' ? 'border-black bg-gray-50' : 'border-gray-200 hover:border-gray-400'
@@ -383,8 +388,8 @@ export default function CheckoutPage() {
                       className="w-5 h-5"
                     />
                     <div>
-                      <p className="font-medium">Cash on Delivery (COD)</p>
-                      <p className="text-xs text-gray-600">Pay when you receive</p>
+                      <p className="font-medium">Thanh Toán Khi Nhận Hàng (COD)</p>
+                      <p className="text-xs text-gray-600">Thanh toán khi nhận hàng</p>
                     </div>
                   </label>
                   <label className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition ${paymentMethod === 'vnpay' ? 'border-black bg-gray-50' : 'border-gray-200 hover:border-gray-400'
@@ -399,7 +404,7 @@ export default function CheckoutPage() {
                     />
                     <div>
                       <p className="font-medium">VNPAY</p>
-                      <p className="text-xs text-gray-600">Pay online via VNPAY gateway</p>
+                      <p className="text-xs text-gray-600">Thanh toán trực tuyến qua cổng VNPAY</p>
                     </div>
                   </label>
                 </div>
@@ -409,27 +414,27 @@ export default function CheckoutPage() {
             {/* Order Summary */}
             <div className="lg:col-span-1">
               <div className="border border-gray-200 rounded-2xl p-5 space-y-5 sticky top-6">
-                <h2 className="text-xl font-bold">Order Summary</h2>
+                <h2 className="text-xl font-bold">Tóm Tắt Đơn Hàng</h2>
 
                 <div className="space-y-4">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Subtotal ({cart.summary?.items_count || 0} items)</span>
-                    <span className="font-bold">${Number(cart.summary?.subtotal || 0).toFixed(2)}</span>
+                    <span className="text-gray-600">Tạm tính ({cart.summary?.items_count || 0} sản phẩm)</span>
+                    <span className="font-bold">{(Number(cart.summary?.subtotal || 0) * 25000).toLocaleString('vi-VN')}₫</span>
                   </div>
                   {(cart.summary?.discount || 0) > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Discount</span>
-                      <span className="font-bold text-green-600">-${Number(cart.summary?.discount || 0).toFixed(2)}</span>
+                      <span className="text-gray-600">Giảm giá</span>
+                      <span className="font-bold text-green-600">-{(Number(cart.summary?.discount || 0) * 25000).toLocaleString('vi-VN')}₫</span>
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Shipping Fee</span>
-                    <span className="font-bold">${Number(cart.summary?.shipping_fee || 0).toFixed(2)}</span>
+                    <span className="text-gray-600">Phí vận chuyển</span>
+                    <span className="font-bold">{(Number(cart.summary?.shipping_fee || 0) * 25000).toLocaleString('vi-VN')}₫</span>
                   </div>
                   <hr className="border-gray-200" />
                   <div className="flex justify-between text-lg">
-                    <span className="font-medium">Total</span>
-                    <span className="font-bold">${Number(cart.summary?.total || 0).toFixed(2)}</span>
+                    <span className="font-medium">Tổng cộng</span>
+                    <span className="font-bold">{(Number(cart.summary?.total || 0) * 25000).toLocaleString('vi-VN')}₫</span>
                   </div>
                 </div>
 
@@ -438,12 +443,12 @@ export default function CheckoutPage() {
                   disabled={submitting || !selectedAddressId}
                   className="w-full bg-black text-white py-4 rounded-full font-medium hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {submitting ? 'Processing...' : 'Place Order'}
+                  {submitting ? 'Đang xử lý...' : 'Đặt Hàng'}
                 </button>
 
                 {(cart.unavailable_items || 0) > 0 && (
                   <p className="text-xs text-center text-red-500">
-                    Some items are unavailable. Please update your cart.
+                    Một số sản phẩm không có sẵn. Vui lòng cập nhật giỏ hàng.
                   </p>
                 )}
               </div>

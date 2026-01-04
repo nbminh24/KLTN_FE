@@ -125,30 +125,30 @@ export default function AdminDashboard() {
 
   const statCards = [
     {
-      title: 'Total Revenue',
+      title: 'Tổng Doanh Thu',
       value: `${(stats?.total_revenue || 0).toLocaleString('vi-VN')} VND`,
-      subtitle: 'Total earnings',
+      subtitle: 'Tổng thu nhập',
       icon: <DollarSign className="w-7 h-7" />,
       color: 'bg-green-500',
     },
     {
-      title: 'Total Orders',
+      title: 'Tổng Đơn Hàng',
       value: (stats?.total_orders || 0).toString(),
-      subtitle: 'All time orders',
+      subtitle: 'Đơn hàng tất cả thời gian',
       icon: <ShoppingCart className="w-7 h-7" />,
       color: 'bg-blue-500',
     },
     {
-      title: 'Total Customers',
+      title: 'Tổng Khách Hàng',
       value: (stats?.total_customers || 0).toString(),
-      subtitle: 'Registered users',
+      subtitle: 'Người dùng đã đăng ký',
       icon: <Users className="w-7 h-7" />,
       color: 'bg-purple-500',
     },
     {
-      title: 'Pending Orders',
+      title: 'Đơn Hàng Chờ Xử Lý',
       value: (stats?.pending_orders || 0).toString(),
-      subtitle: 'Needs attention',
+      subtitle: 'Cần xử lý',
       icon: <AlertTriangle className="w-7 h-7" />,
       color: 'bg-orange-500',
     },
@@ -210,15 +210,15 @@ export default function AdminDashboard() {
     <div className="p-6 space-y-6">
       {/* Header with Date Range Filter */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-[#202224]">Dashboard</h1>
+        <h1 className="text-3xl font-bold text-[#202224]">Bảng Điều Khiển</h1>
         <select
           value={dateRange}
           onChange={(e) => setDateRange(e.target.value as DateRange)}
           className="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF] font-semibold"
         >
-          <option value="7">Last 7 days</option>
-          <option value="30">Last 30 days</option>
-          <option value="90">Last 90 days</option>
+          <option value="7">7 ngày qua</option>
+          <option value="30">30 ngày qua</option>
+          <option value="90">90 ngày qua</option>
         </select>
       </div>
 
@@ -249,7 +249,7 @@ export default function AdminDashboard() {
         <Card className="bg-white">
           <CardHeader>
             <CardTitle className="text-xl text-[#202224]">
-              Sales Overview
+              Tổng Quan Bán Hàng
               {revenueGrowth !== 0 && (
                 <Badge
                   variant="outline"
@@ -260,7 +260,7 @@ export default function AdminDashboard() {
                 </Badge>
               )}
             </CardTitle>
-            <CardDescription>Daily revenue for the last {dateRange} days</CardDescription>
+            <CardDescription>Doanh thu hàng ngày trong {dateRange} ngày qua</CardDescription>
           </CardHeader>
           <CardContent>
             {chartsLoading ? (
@@ -316,7 +316,7 @@ export default function AdminDashboard() {
               </ChartContainer>
             ) : (
               <div className="flex items-center justify-center h-[300px] text-gray-500">
-                No data available
+                Không có dữ liệu
               </div>
             )}
           </CardContent>
@@ -326,9 +326,9 @@ export default function AdminDashboard() {
         <Card className="bg-white">
           <CardHeader>
             <CardTitle className="text-xl text-[#202224]">
-              Order Status Distribution
+              Phân Phối Trạng Thái Đơn Hàng
             </CardTitle>
-            <CardDescription>Current order breakdown by status</CardDescription>
+            <CardDescription>Phân loại đơn hàng theo trạng thái hiện tại</CardDescription>
           </CardHeader>
           <CardContent>
             {chartsLoading ? (
@@ -386,7 +386,7 @@ export default function AdminDashboard() {
               </>
             ) : (
               <div className="flex items-center justify-center h-[350px] text-gray-500">
-                No data available
+                Không có dữ liệu
               </div>
             )}
           </CardContent>
@@ -397,18 +397,18 @@ export default function AdminDashboard() {
       <div className="bg-white rounded-xl p-6 border border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-[#202224]">
-            Recent Orders ({recentOrders.length})
+            Đơn Hàng Gần Đây ({recentOrders.length})
           </h2>
           <Link
             href="/admin/orders"
             className="text-sm font-semibold text-[#4880FF] hover:underline flex items-center gap-1"
           >
-            View All →
+            Xem Tất Cả →
           </Link>
         </div>
         <div className="space-y-3">
           {recentOrders.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No recent orders</p>
+            <p className="text-gray-500 text-center py-8">Không có đơn hàng gần đây</p>
           ) : (
             recentOrders.map((order) => (
               <div
@@ -435,32 +435,32 @@ export default function AdminDashboard() {
 
       {/* Stock Alert Widget */}
       <div className="bg-white rounded-xl p-6 border border-gray-200">
-        <h2 className="text-xl font-bold mb-4">⚠️ Stock Alert</h2>
+        <h2 className="text-xl font-bold mb-4">⚠️ Cảnh Báo Tồn Kho</h2>
         <div className="space-y-3">
           <div className="flex items-center gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-semibold text-yellow-900">23 products are running low on stock</p>
-              <p className="text-xs text-yellow-700">Consider restocking these items soon</p>
+              <p className="text-sm font-semibold text-yellow-900">23 sản phẩm sắp hết hàng</p>
+              <p className="text-xs text-yellow-700">Cân nhắc nhập thêm hàng sớm</p>
             </div>
             <button
               onClick={() => router.push('/admin/inventory')}
               className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition text-sm font-semibold"
             >
-              View Stock
+              Xem Tồn Kho
             </button>
           </div>
           <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
             <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-semibold text-red-900">8 products are out of stock</p>
-              <p className="text-xs text-red-700">These items need immediate attention</p>
+              <p className="text-sm font-semibold text-red-900">8 sản phẩm đã hết hàng</p>
+              <p className="text-xs text-red-700">Các mặt hàng này cần xử lý ngay</p>
             </div>
             <button
               onClick={() => router.push('/admin/inventory?tab=out-of-stock')}
               className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-semibold"
             >
-              View Stock
+              Xem Tồn Kho
             </button>
           </div>
         </div>
@@ -468,32 +468,32 @@ export default function AdminDashboard() {
 
       {/* Support Tickets Widget */}
       <div className="bg-white rounded-xl p-6 border border-gray-200">
-        <h2 className="text-xl font-bold mb-4">💬 Support Tickets</h2>
+        <h2 className="text-xl font-bold mb-4">💬 Phiếu Hỗ Trợ</h2>
         <div className="space-y-3">
           <div className="flex items-center gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <MessageSquare className="w-5 h-5 text-yellow-600 flex-shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-semibold text-yellow-900">12 tickets are awaiting response</p>
-              <p className="text-xs text-yellow-700">These tickets need attention</p>
+              <p className="text-sm font-semibold text-yellow-900">12 phiếu đang chờ phản hồi</p>
+              <p className="text-xs text-yellow-700">Các phiếu này cần được xử lý</p>
             </div>
             <button
               onClick={() => router.push('/admin/support-inbox')}
               className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition text-sm font-semibold"
             >
-              View Inbox
+              Xem Hộp Thư
             </button>
           </div>
           <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
             <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-semibold text-red-900">3 tickets are escalated</p>
-              <p className="text-xs text-red-700">High priority tickets</p>
+              <p className="text-sm font-semibold text-red-900">3 phiếu được leo thang</p>
+              <p className="text-xs text-red-700">Phiếu ưu tiên cao</p>
             </div>
             <button
               onClick={() => router.push('/admin/support-inbox')}
               className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-semibold"
             >
-              View Inbox
+              Xem Hộp Thư
             </button>
           </div>
         </div>

@@ -27,19 +27,19 @@ export default function AdminSidebar() {
   const pathname = usePathname();
 
   const menuItems: MenuItem[] = [
-    { name: 'Dashboard', path: '/admin', icon: <LayoutDashboard className="w-5 h-5" /> },
-    { name: 'Products', path: '/admin/products', icon: <Package className="w-5 h-5" /> },
-    { name: 'Categories', path: '/admin/categories', icon: <Folder className="w-5 h-5" /> },
-    { name: 'Orders', path: '/admin/orders', icon: <ShoppingCart className="w-5 h-5" /> },
-    { name: 'Customers', path: '/admin/customers', icon: <Users className="w-5 h-5" /> },
+    { name: 'Bảng Điều Khiển', path: '/admin', icon: <LayoutDashboard className="w-5 h-5" /> },
+    { name: 'Sản Phẩm', path: '/admin/products', icon: <Package className="w-5 h-5" /> },
+    { name: 'Danh Mục', path: '/admin/categories', icon: <Folder className="w-5 h-5" /> },
+    { name: 'Đơn Hàng', path: '/admin/orders', icon: <ShoppingCart className="w-5 h-5" /> },
+    { name: 'Khách Hàng', path: '/admin/customers', icon: <Users className="w-5 h-5" /> },
   ];
 
   const pagesItems: MenuItem[] = [
-    { name: 'Promotions', path: '/admin/promotions', icon: <Tag className="w-5 h-5" /> },
-    { name: 'Inventory', path: '/admin/inventory', icon: <PackageSearch className="w-5 h-5" /> },
+    { name: 'Khuyến Mãi', path: '/admin/promotions', icon: <Tag className="w-5 h-5" /> },
+    { name: 'Tồn Kho', path: '/admin/inventory', icon: <PackageSearch className="w-5 h-5" /> },
     { name: 'Chatbot', path: '/admin/chatbot', icon: <MessageSquare className="w-5 h-5" /> },
-    { name: 'Support Inbox', path: '/admin/support-inbox', icon: <Mail className="w-5 h-5" /> },
-    { name: 'Pages (CMS)', path: '/admin/pages', icon: <FileText className="w-5 h-5" /> },
+    { name: 'Hỗ Trợ Khách Hàng', path: '/admin/support-inbox', icon: <Mail className="w-5 h-5" /> },
+    { name: 'Trang (CMS)', path: '/admin/pages', icon: <FileText className="w-5 h-5" /> },
   ];
 
   const isActive = (path: string) => {
@@ -66,11 +66,10 @@ export default function AdminSidebar() {
             <Link
               key={item.path}
               href={item.path}
-              className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-all ${
-                isActive(item.path)
-                  ? 'bg-[#4880FF] text-white'
-                  : 'text-[#202224] hover:bg-gray-50'
-              }`}
+              className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-all ${isActive(item.path)
+                ? 'bg-[#4880FF] text-white'
+                : 'text-[#202224] hover:bg-gray-50'
+                }`}
             >
               {item.icon}
               <span className="text-sm font-semibold">{item.name}</span>
@@ -83,18 +82,17 @@ export default function AdminSidebar() {
 
         {/* Pages Section */}
         <div className="px-6 mb-2">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Pages</p>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Trang</p>
         </div>
         <nav className="space-y-1 px-3">
           {pagesItems.map((item) => (
             <Link
               key={item.path}
               href={item.path}
-              className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-all ${
-                isActive(item.path)
-                  ? 'bg-[#4880FF] text-white'
-                  : 'text-[#202224] hover:bg-gray-50'
-              }`}
+              className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-all ${isActive(item.path)
+                ? 'bg-[#4880FF] text-white'
+                : 'text-[#202224] hover:bg-gray-50'
+                }`}
             >
               {item.icon}
               <span className="text-sm font-semibold">{item.name}</span>
@@ -107,14 +105,13 @@ export default function AdminSidebar() {
       <div className="border-t border-gray-200">
         <Link
           href="/admin/settings"
-          className={`flex items-center gap-3 px-6 py-3 transition-all ${
-            isActive('/admin/settings')
-              ? 'bg-[#4880FF] text-white'
-              : 'text-[#202224] hover:bg-gray-50'
-          }`}
+          className={`flex items-center gap-3 px-6 py-3 transition-all ${isActive('/admin/settings')
+            ? 'bg-[#4880FF] text-white'
+            : 'text-[#202224] hover:bg-gray-50'
+            }`}
         >
           <Settings className="w-5 h-5" />
-          <span className="text-sm font-semibold">Settings</span>
+          <span className="text-sm font-semibold">Cài Đặt</span>
         </Link>
         <button
           onClick={() => {
@@ -124,7 +121,7 @@ export default function AdminSidebar() {
           className="w-full flex items-center gap-3 px-6 py-3 text-[#202224] hover:bg-gray-50 transition-all"
         >
           <LogOut className="w-5 h-5" />
-          <span className="text-sm font-semibold">Logout</span>
+          <span className="text-sm font-semibold">Đăng Xuất</span>
         </button>
       </div>
     </div>

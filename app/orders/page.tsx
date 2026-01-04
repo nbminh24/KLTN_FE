@@ -13,11 +13,11 @@ import axios from 'axios';
 type OrderStatus = 'All' | 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
 const STATUS_LABELS = {
-    pending: 'Pending',
-    processing: 'Processing',
-    shipped: 'Shipped',
-    delivered: 'Delivered',
-    cancelled: 'Cancelled',
+    pending: 'Chờ Xử Lý',
+    processing: 'Đang Xử Lý',
+    shipped: 'Đang Giao Hàng',
+    delivered: 'Đã Giao',
+    cancelled: 'Đã Hủy',
 };
 
 const STATUS_COLORS = {
@@ -78,10 +78,10 @@ export default function OrdersPage() {
             if (axios.isAxiosError(err)) {
                 console.error('❌ Error response:', err.response?.data);
                 if (err.response?.status === 401) {
-                    setError('Session expired. Please login again.');
+                    setError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
                     setIsAuthenticated(false);
                 } else {
-                    setError('Failed to load orders. Please try again.');
+                    setError('Không thể tải đơn hàng. Vui lòng thử lại.');
                 }
             } else {
                 setError('Failed to load orders. Please try again.');
@@ -100,10 +100,10 @@ export default function OrdersPage() {
                 <main className="flex-1 flex items-center justify-center py-20">
                     <div className="text-center max-w-md">
                         <Package className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                        <h2 className="text-2xl font-bold mb-2">No Orders Found</h2>
-                        <p className="text-gray-600 mb-6">Please login to view your orders</p>
+                        <h2 className="text-2xl font-bold mb-2">Không Tìm Thấy Đơn Hàng</h2>
+                        <p className="text-gray-600 mb-6">Vui lòng đăng nhập để xem đơn hàng</p>
                         <Link href="/login?redirect=/orders" className="inline-block bg-black text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition">
-                            Login to Continue
+                            Đăng Nhập Để Tiếp Tục
                         </Link>
                     </div>
                 </main>
@@ -133,10 +133,10 @@ export default function OrdersPage() {
                 <main className="flex-1 flex items-center justify-center py-20">
                     <div className="text-center max-w-md">
                         <AlertCircle className="w-16 h-16 mx-auto mb-4 text-red-500" />
-                        <h2 className="text-2xl font-bold mb-2">Error Loading Orders</h2>
+                        <h2 className="text-2xl font-bold mb-2">Lỗi Tải Đơn Hàng</h2>
                         <p className="text-gray-600 mb-6">{error}</p>
                         <button onClick={fetchOrders} className="bg-black text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition">
-                            Try Again
+                            Thử Lại
                         </button>
                     </div>
                 </main>
@@ -168,12 +168,12 @@ export default function OrdersPage() {
                 <div className="container mx-auto px-6 md:px-12 py-6">
                     {/* Breadcrumb */}
                     <div className="flex items-center gap-2 text-sm mb-6">
-                        <Link href="/" className="text-gray-500">Home</Link>
+                        <Link href="/" className="text-gray-500">Trang Chủ</Link>
                         <ChevronRight className="w-4 h-4 text-gray-500" />
-                        <span className="font-medium">My Orders</span>
+                        <span className="font-medium">Đơn Hàng Của Tôi</span>
                     </div>
 
-                    <h1 className="text-2xl md:text-3xl font-integral font-bold mb-6">My Orders</h1>
+                    <h1 className="text-2xl md:text-3xl font-integral font-bold mb-6">Đơn Hàng Của Tôi</h1>
 
                     {/* Status Filter Tabs */}
                     <div className="border-b border-gray-200 mb-6 overflow-x-auto">
@@ -190,7 +190,7 @@ export default function OrdersPage() {
                                         : 'border-transparent text-gray-500 hover:text-gray-700'
                                         }`}
                                 >
-                                    {status === 'All' ? 'All' : STATUS_LABELS[status]} ({statusCounts[status] || 0})
+                                    {status === 'All' ? 'Tất Cả' : STATUS_LABELS[status]} ({statusCounts[status] || 0})
                                 </button>
                             ))}
                         </div>
@@ -202,7 +202,7 @@ export default function OrdersPage() {
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                             <input
                                 type="text"
-                                placeholder="Search by order number..."
+                                placeholder="Tìm theo mã đơn hàng..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-black"
@@ -214,12 +214,12 @@ export default function OrdersPage() {
                     {filteredOrders.length === 0 ? (
                         <div className="text-center py-20">
                             <Package className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                            <h2 className="text-xl font-bold mb-2">No Orders Found</h2>
+                            <h2 className="text-xl font-bold mb-2">Không Tìm Thấy Đơn Hàng</h2>
                             <p className="text-gray-600 mb-6">
-                                {searchQuery ? 'No orders match your search.' : 'You haven\'t placed any orders yet.'}
+                                {searchQuery ? 'Không có đơn hàng nào khớp với tìm kiếm.' : 'Bạn chưa đặt đơn hàng nào.'}
                             </p>
                             <Link href="/products" className="inline-block bg-black text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition">
-                                Start Shopping
+                                Bắt Đầu Mua Sắm
                             </Link>
                         </div>
                     ) : (
@@ -240,7 +240,7 @@ export default function OrdersPage() {
                                             </div>
                                             <div className="text-sm text-gray-600 space-y-1">
                                                 <p>
-                                                    <span className="font-medium">Placed:</span>{' '}
+                                                    <span className="font-medium">Đặt hàng:</span>{' '}
                                                     {new Date(order.created_at).toLocaleDateString('vi-VN', {
                                                         year: 'numeric',
                                                         month: 'long',
@@ -248,14 +248,14 @@ export default function OrdersPage() {
                                                     })}
                                                 </p>
                                                 <p>
-                                                    <span className="font-medium">Items:</span> {order.items_count}
+                                                    <span className="font-medium">Số lượng:</span> {order.items_count}
                                                 </p>
                                                 <p>
-                                                    <span className="font-medium">Payment:</span>{' '}
+                                                    <span className="font-medium">Thanh toán:</span>{' '}
                                                     <span className="capitalize">{order.payment_method}</span>
                                                     {' - '}
                                                     <span className={order.payment_status === 'paid' ? 'text-green-600' : 'text-orange-600'}>
-                                                        {order.payment_status === 'paid' ? 'Paid' : 'Unpaid'}
+                                                        {order.payment_status === 'paid' ? 'Đã Thanh Toán' : 'Chưa Thanh Toán'}
                                                     </span>
                                                 </p>
                                             </div>
@@ -266,7 +266,7 @@ export default function OrdersPage() {
                                                 {order.total_amount.toLocaleString('vi-VN')}₫
                                             </p>
                                             <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                                                View Details →
+                                                Xem Chi Tiết →
                                             </button>
                                         </div>
                                     </div>
@@ -283,17 +283,17 @@ export default function OrdersPage() {
                                 disabled={currentPage === 1}
                                 className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition"
                             >
-                                Previous
+                                Trước
                             </button>
                             <span className="px-4 py-2">
-                                Page {currentPage} of {totalPages}
+                                Trang {currentPage} / {totalPages}
                             </span>
                             <button
                                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                                 disabled={currentPage === totalPages}
                                 className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition"
                             >
-                                Next
+                                Tiếp
                             </button>
                         </div>
                     )}

@@ -79,7 +79,7 @@ export default function CustomersPage() {
       setTotalCustomers(response.data.meta?.total || response.data.total || 0);
     } catch (err) {
       console.error('❌ Failed to fetch customers:', err);
-      showToast('Failed to load customers', 'error');
+      showToast('Không thể tải khách hàng', 'error');
       setCustomers([]);
     } finally {
       setLoading(false);
@@ -104,27 +104,27 @@ export default function CustomersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-[#202224]">Customers</h1>
-          <p className="text-gray-600 mt-1">Manage your customers</p>
+          <h1 className="text-3xl font-bold text-[#202224]">Khách Hàng</h1>
+          <p className="text-gray-600 mt-1">Quản lý khách hàng của bạn</p>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl p-5 border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">Total Customers</p>
+          <p className="text-sm text-gray-600 mb-1">Tổng Khách Hàng</p>
           <p className="text-2xl font-bold text-blue-600">{stats.total_customers.toLocaleString()}</p>
         </div>
         <div className="bg-white rounded-xl p-5 border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">Active</p>
+          <p className="text-sm text-gray-600 mb-1">Hoạt Động</p>
           <p className="text-2xl font-bold text-green-600">{stats.active_customers.toLocaleString()}</p>
         </div>
         <div className="bg-white rounded-xl p-5 border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">New This Month</p>
+          <p className="text-sm text-gray-600 mb-1">Mới Tháng Này</p>
           <p className="text-2xl font-bold text-purple-600">{stats.new_customers_this_month.toLocaleString()}</p>
         </div>
         <div className="bg-white rounded-xl p-5 border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">Inactive</p>
+          <p className="text-sm text-gray-600 mb-1">Không Hoạt Động</p>
           <p className="text-2xl font-bold text-red-600">{stats.blocked_customers.toLocaleString()}</p>
         </div>
       </div>
@@ -136,7 +136,7 @@ export default function CustomersPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search by name or email..."
+              placeholder="Tìm theo tên hoặc email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -147,7 +147,7 @@ export default function CustomersPage() {
             onClick={handleSearch}
             className="px-4 py-2 bg-[#4880FF] text-white rounded-lg hover:bg-blue-600 transition"
           >
-            Search
+            Tìm Kiếm
           </button>
           <select
             value={statusFilter}

@@ -49,7 +49,7 @@ export default function ProductsPage() {
     } catch (err: any) {
       console.error('❌ Failed to load products:', err);
       console.error('❌ Error response:', err.response?.data);
-      showToast('Failed to load products', 'error');
+      showToast('Không thể tải danh sách sản phẩm', 'error');
       setProducts([]);
     } finally {
       setLoading(false);
@@ -57,13 +57,13 @@ export default function ProductsPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+    if (!confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) return;
     try {
       await adminProductService.deleteProduct(id);
-      showToast('Product deleted successfully', 'success');
+      showToast('Đã xóa sản phẩm thành công', 'success');
       fetchProducts();
     } catch (err) {
-      showToast('Failed to delete product', 'error');
+      showToast('Không thể xóa sản phẩm', 'error');
     }
   };
 
@@ -83,8 +83,8 @@ export default function ProductsPage() {
   };
 
   const handleDeleteSelected = () => {
-    if (confirm(`Delete ${selectedProducts.length} selected product(s)?`)) {
-      alert('Products deleted successfully!');
+    if (confirm(`Xóa ${selectedProducts.length} sản phẩm đã chọn?`)) {
+      alert('Đã xóa sản phẩm thành công!');
       setSelectedProducts([]);
     }
   };
@@ -94,8 +94,8 @@ export default function ProductsPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-[#202224]">Products</h1>
-          <p className="text-gray-600 mt-1">Manage your product inventory</p>
+          <h1 className="text-3xl font-bold text-[#202224]">Sản Phẩm</h1>
+          <p className="text-gray-600 mt-1">Quản lý kho sản phẩm của bạn</p>
         </div>
         <div className="flex gap-3">
           {selectedProducts.length > 0 && (
@@ -104,7 +104,7 @@ export default function ProductsPage() {
               className="flex items-center gap-2 px-4 py-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
             >
               <Trash2 className="w-4 h-4" />
-              <span className="font-semibold text-sm">Delete Selected ({selectedProducts.length})</span>
+              <span className="font-semibold text-sm">Xóa Đã Chọn ({selectedProducts.length})</span>
             </button>
           )}
           <Link
@@ -112,7 +112,7 @@ export default function ProductsPage() {
             className="flex items-center gap-2 px-4 py-2.5 bg-[#4880FF] text-white rounded-lg hover:bg-blue-600 transition"
           >
             <Plus className="w-4 h-4" />
-            <span className="font-semibold text-sm">Add Product</span>
+            <span className="font-semibold text-sm">Thêm Sản Phẩm</span>
           </Link>
         </div>
       </div>
@@ -124,7 +124,7 @@ export default function ProductsPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search products by name or SKU..."
+              placeholder="Tìm sản phẩm theo tên hoặc SKU..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
@@ -135,7 +135,7 @@ export default function ProductsPage() {
             onChange={(e) => setSelectedCategory(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
           >
-            <option value="all">All Categories</option>
+            <option value="all">Tất Cả Danh Mục</option>
             <option value="T-Shirts">T-Shirts</option>
             <option value="Shirts">Shirts</option>
             <option value="Jeans">Jeans</option>
@@ -146,21 +146,21 @@ export default function ProductsPage() {
             onChange={(e) => setSelectedStockStatus(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
           >
-            <option value="all">All Stock Status</option>
-            <option value="in-stock">In Stock</option>
-            <option value="low-stock">Low Stock</option>
-            <option value="out-of-stock">Out of Stock</option>
+            <option value="all">Tất Cả Trạng Thái</option>
+            <option value="in-stock">Còn Hàng</option>
+            <option value="low-stock">Sắp Hết</option>
+            <option value="out-of-stock">Hết Hàng</option>
           </select>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
           >
-            <option value="name">Sort by Name</option>
-            <option value="price-asc">Price: Low to High</option>
-            <option value="price-desc">Price: High to Low</option>
-            <option value="stock-asc">Stock: Low to High</option>
-            <option value="stock-desc">Stock: High to Low</option>
+            <option value="name">Sắp Xếp Theo Tên</option>
+            <option value="price-asc">Giá: Thấp Đến Cao</option>
+            <option value="price-desc">Giá: Cao Đến Thấp</option>
+            <option value="stock-asc">Tồn Kho: Thấp Đến Cao</option>
+            <option value="stock-desc">Tồn Kho: Cao Đến Thấp</option>
           </select>
         </div>
       </div>
@@ -179,12 +179,12 @@ export default function ProductsPage() {
                     onChange={(e) => handleSelectAll(e.target.checked)}
                   />
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Product</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Category</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Price</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Stock</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Status</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Actions</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Sản Phẩm</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Danh Mục</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Giá</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Tồn Kho</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Trạng Thái</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Hành Động</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -252,17 +252,17 @@ export default function ProductsPage() {
 
         {/* Pagination */}
         <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-          <p className="text-sm text-gray-600">Showing 1-3 of 300</p>
+          <p className="text-sm text-gray-600">Hiển thị 1-3 trong tổng số 300</p>
           <div className="flex gap-2">
             <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
-              Previous
+              Trước
             </button>
             <button className="px-4 py-2 bg-[#4880FF] text-white rounded-lg">1</button>
             <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
               2
             </button>
             <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
-              Next
+              Tiếp
             </button>
           </div>
         </div>

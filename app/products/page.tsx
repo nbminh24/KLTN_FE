@@ -16,7 +16,7 @@ export default function ProductsPage() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<number[]>([]);
   const [selectedColors, setSelectedColors] = useState<number[]>([]);
-  const [priceRange, setPriceRange] = useState([0, 500]);
+  const [priceRange, setPriceRange] = useState([0, 12500]);
   const [selectedRatings, setSelectedRatings] = useState<number[]>([]);
   const [sortBy, setSortBy] = useState<string>('newest');
   const [currentPage, setCurrentPage] = useState(1);
@@ -108,7 +108,7 @@ export default function ProductsPage() {
       setTotalProducts(response.data.metadata.total);
     } catch (err: any) {
       console.error('Error fetching products:', err);
-      setError('Failed to load products. Please try again.');
+      setError('Không thể tải sản phẩm. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -148,9 +148,9 @@ export default function ProductsPage() {
         <div className="container mx-auto px-6 md:px-12 py-6">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm mb-6">
-            <span className="text-gray-500">Home</span>
+            <span className="text-gray-500">Trang Chủ</span>
             <ChevronRight className="w-4 h-4 text-gray-500" />
-            <span className="font-medium">Shop</span>
+            <span className="font-medium">Cửa Hàng</span>
           </div>
 
           <div className="flex gap-6">
@@ -158,7 +158,7 @@ export default function ProductsPage() {
             <aside className="hidden lg:block w-64 flex-shrink-0">
               <div className="border border-gray-200 rounded-2xl p-5 space-y-5 sticky top-6">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold">Filters</h3>
+                  <h3 className="text-lg font-bold">Bộ Lọc</h3>
                   <SlidersHorizontal className="w-5 h-5 text-gray-400" />
                 </div>
 
@@ -166,7 +166,7 @@ export default function ProductsPage() {
 
                 {/* Categories */}
                 <div className="space-y-3">
-                  <h4 className="font-bold text-sm">Category</h4>
+                  <h4 className="font-bold text-sm">Danh Mục</h4>
                   {filtersLoading ? (
                     <div className="flex justify-center py-4">
                       <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
@@ -191,17 +191,17 @@ export default function ProductsPage() {
                 {/* Price Range */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-bold">Price</h4>
+                    <h4 className="font-bold">Giá</h4>
                     <ChevronDown className="w-4 h-4" />
                   </div>
                   <div className="space-y-3">
                     <div className="space-y-1">
-                      <label className="text-xs text-gray-600">Min: ${priceRange[0]}</label>
+                      <label className="text-xs text-gray-600">Tối thiểu: {priceRange[0].toLocaleString('vi-VN')}k₫</label>
                       <input
                         type="range"
                         min="0"
-                        max="500"
-                        step="10"
+                        max="12500"
+                        step="100"
                         value={priceRange[0]}
                         onChange={(e) => {
                           const newMin = parseInt(e.target.value);
@@ -213,12 +213,12 @@ export default function ProductsPage() {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs text-gray-600">Max: ${priceRange[1]}</label>
+                      <label className="text-xs text-gray-600">Tối đa: {priceRange[1].toLocaleString('vi-VN')}k₫</label>
                       <input
                         type="range"
                         min="0"
-                        max="500"
-                        step="10"
+                        max="12500"
+                        step="100"
                         value={priceRange[1]}
                         onChange={(e) => {
                           const newMax = parseInt(e.target.value);
@@ -230,8 +230,8 @@ export default function ProductsPage() {
                       />
                     </div>
                     <div className="flex justify-between text-sm font-medium">
-                      <span>${priceRange[0]}</span>
-                      <span>${priceRange[1]}</span>
+                      <span>{priceRange[0].toLocaleString('vi-VN')}k₫</span>
+                      <span>{priceRange[1].toLocaleString('vi-VN')}k₫</span>
                     </div>
                   </div>
                 </div>
@@ -241,7 +241,7 @@ export default function ProductsPage() {
                 {/* Colors */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-bold">Colors</h4>
+                    <h4 className="font-bold">Màu Sắc</h4>
                     <ChevronDown className="w-4 h-4" />
                   </div>
                   {filtersLoading ? (
@@ -270,7 +270,7 @@ export default function ProductsPage() {
 
                 {/* Size */}
                 <div className="space-y-3">
-                  <h4 className="font-bold text-sm">Size</h4>
+                  <h4 className="font-bold text-sm">Kích Thước</h4>
                   {filtersLoading ? (
                     <div className="flex justify-center py-4">
                       <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
@@ -297,7 +297,7 @@ export default function ProductsPage() {
 
                 {/* Rating */}
                 <div className="space-y-3">
-                  <h4 className="font-bold text-sm">Rating</h4>
+                  <h4 className="font-bold text-sm">Đánh Giá</h4>
                   <div className="space-y-2">
                     {[5, 4, 3, 2, 1].map((rating) => (
                       <label key={rating} className="flex items-center gap-2 cursor-pointer">
@@ -318,7 +318,7 @@ export default function ProductsPage() {
                           {[...Array(rating)].map((_, i) => (
                             <span key={i} className="text-yellow-400 text-sm">★</span>
                           ))}
-                          <span className="text-sm text-gray-600">& Up</span>
+                          <span className="text-sm text-gray-600">Trở Lên</span>
                         </div>
                       </label>
                     ))}
@@ -332,14 +332,14 @@ export default function ProductsPage() {
                     setSelectedCategories([]);
                     setSelectedSizes([]);
                     setSelectedColors([]);
-                    setPriceRange([0, 500]);
+                    setPriceRange([0, 12500]);
                     setSelectedRatings([]);
                     setSortBy('newest');
                     setCurrentPage(1);
                   }}
                   className="w-full border border-gray-300 py-2 rounded-full text-sm font-medium hover:bg-gray-50 transition"
                 >
-                  Clear All Filters
+                  Xóa Tất Cả Bộ Lọc
                 </button>
               </div>
             </aside>
@@ -347,20 +347,20 @@ export default function ProductsPage() {
             {/* Products Grid */}
             <div className="flex-1">
               <div className="flex items-center justify-between mb-6">
-                <h1 className="text-xl md:text-2xl font-bold">All Products</h1>
+                <h1 className="text-xl md:text-2xl font-bold">Tất Cả Sản Phẩm</h1>
                 <div className="flex items-center gap-4">
                   <span className="text-gray-600 text-sm hidden md:block">
-                    Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, totalProducts)} of {totalProducts} Products
+                    Hiển thị {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, totalProducts)} trong {totalProducts} Sản phẩm
                   </span>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
                     className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black"
                   >
-                    <option value="newest">Newest</option>
-                    <option value="price_asc">Price: Low to High</option>
-                    <option value="price_desc">Price: High to Low</option>
-                    <option value="rating">Top Rated</option>
+                    <option value="newest">Mới Nhất</option>
+                    <option value="price_asc">Giá: Thấp đến Cao</option>
+                    <option value="price_desc">Giá: Cao đến Thấp</option>
+                    <option value="rating">Đánh Giá Cao</option>
                   </select>
                   <button className="lg:hidden" onClick={() => setShowFilters(!showFilters)}>
                     <SlidersHorizontal className="w-6 h-6" />
@@ -383,7 +383,7 @@ export default function ProductsPage() {
                     onClick={() => fetchProducts()}
                     className="mt-2 text-red-600 hover:underline font-medium"
                   >
-                    Try Again
+                    Thử Lại
                   </button>
                 </div>
               )}

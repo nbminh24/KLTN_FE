@@ -101,7 +101,9 @@ export default function ChatPage() {
                 const blob = await response.blob();
                 const file = new File([blob], 'uploaded-image.jpg', { type: 'image/jpeg' });
                 const uploadResponse = await chatService.uploadImage(file);
-                imageUrl = uploadResponse.data.image_url;
+                console.log('[Chat] Upload response:', uploadResponse.data);
+                imageUrl = uploadResponse.data.url;
+                console.log('[Chat] Extracted imageUrl:', imageUrl);
             } catch (error) {
                 console.error('Failed to upload image:', error);
             } finally {
@@ -111,6 +113,7 @@ export default function ChatPage() {
 
         // Send message via store
         const messageText = inputValue || (imageUrl ? 'Sản phẩm tương tự với ảnh này?' : '');
+        console.log('[Chat] Before sendMessage - messageText:', messageText, 'imageUrl:', imageUrl);
         await sendMessage(messageText, imageUrl || undefined);
 
         // Clear input

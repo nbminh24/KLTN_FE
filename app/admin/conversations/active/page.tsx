@@ -87,7 +87,7 @@ function ActiveConversationsContent() {
 
             const adminData = localStorage.getItem('admin');
             if (!adminData) {
-                showToast('Admin session not found', 'error');
+                showToast('Không tìm thấy phiên quản trị', 'error');
                 return;
             }
 
@@ -96,7 +96,7 @@ function ActiveConversationsContent() {
 
             setAdminMessage('');
             await loadMessages(selectedSession);
-            showToast('Message sent', 'success');
+            showToast('Đã gửi tin nhắn', 'success');
         } catch (error) {
             console.error('Failed to send message:', error);
             showToast('Failed to send message', 'error');
@@ -189,8 +189,8 @@ function ActiveConversationsContent() {
                                     key={conv.session_id}
                                     onClick={() => handleOpenConversation(conv.session_id)}
                                     className={`p-4 cursor-pointer transition ${selectedSession === conv.session_id
-                                            ? 'bg-blue-50 border-l-4 border-blue-600'
-                                            : 'hover:bg-gray-50'
+                                        ? 'bg-blue-50 border-l-4 border-blue-600'
+                                        : 'hover:bg-gray-50'
                                         }`}
                                 >
                                     <div className="flex items-start justify-between">
@@ -260,10 +260,10 @@ function ActiveConversationsContent() {
                                         >
                                             <div
                                                 className={`max-w-[70%] rounded-lg px-4 py-2 ${msg.sender === 'customer'
-                                                        ? 'bg-gray-100 text-gray-900'
-                                                        : msg.sender === 'admin'
-                                                            ? 'bg-blue-600 text-white'
-                                                            : 'bg-green-100 text-green-900'
+                                                    ? 'bg-gray-100 text-gray-900'
+                                                    : msg.sender === 'admin'
+                                                        ? 'bg-blue-600 text-white'
+                                                        : 'bg-green-100 text-green-900'
                                                     }`}
                                             >
                                                 <div className="text-xs font-semibold mb-1 opacity-70">

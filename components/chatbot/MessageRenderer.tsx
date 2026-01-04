@@ -8,6 +8,7 @@ import OrderTimeline from './OrderTimeline';
 import TicketConfirmation from './TicketConfirmation';
 import RasaButtons from './RasaButtons';
 import ProductActionsCard from './ProductActionsCard';
+import ImageSearchResults from './ImageSearchResults';
 
 interface MessageRendererProps {
     message: ChatMessage;
@@ -143,6 +144,14 @@ export default function MessageRenderer({
                                     }
                                 }}
                             />
+                        </>
+                    );
+
+                case 'image_search_results':
+                    return (
+                        <>
+                            {/* Don't render backend text - ImageSearchResults has its own friendly header */}
+                            <ImageSearchResults data={message.custom} />
                         </>
                     );
 

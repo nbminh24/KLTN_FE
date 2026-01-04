@@ -91,13 +91,13 @@ export default function CartPage() {
 
                 if (err.response?.status === 401) {
                     console.error('❌ 401 Unauthorized - Token expired or invalid');
-                    setError('Session expired. Please login again.');
+                    setError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
                     setIsAuthenticated(false);
                     // Clear invalid token
                     localStorage.removeItem('access_token');
                     localStorage.removeItem('refresh_token');
                 } else {
-                    setError('Failed to load cart. Please try again.');
+                    setError('Không thể tải giỏ hàng. Vui lòng thử lại.');
                 }
             } else {
                 setError('Failed to load cart. Please try again.');
@@ -110,69 +110,69 @@ export default function CartPage() {
     const updateQuantity = async (cartItemId: number, delta: number, currentQuantity: number, maxStock: number) => {
         const newQuantity = currentQuantity + delta;
 
-        if (newQuantity <= 0) {
-            handleRemoveItem(cartItemId);
+        if (newQuantity < 1) {
+            showToast('Số lượng tối thiểu là 1', 'warning');
             return;
         }
 
         if (newQuantity > maxStock) {
-            showToast(`Only ${maxStock} items available in stock`, 'error');
+            showToast(`Chỉ còn ${maxStock} sản phẩm trong kho`, 'error');
             return;
         }
 
         try {
             await cartService.updateCartItem(cartItemId, { quantity: newQuantity });
             await fetchCart();
-            showToast('Cart updated', 'success');
+            showToast('Đã cập nhật giỏ hàng', 'success');
         } catch (err: any) {
             if (axios.isAxiosError(err) && err.response?.status === 400) {
-                showToast(err.response.data.message || 'Cannot exceed available stock', 'error');
+                showToast(err.response.data.message || 'Không thể vượt quá số lượng tồn kho', 'error');
             } else {
-                showToast('Failed to update cart', 'error');
+                showToast('Không thể cập nhật giỏ hàng', 'error');
             }
         }
     };
 
     const handleRemoveItem = async (cartItemId: number) => {
-        if (!confirm('Remove this item from cart?')) return;
+        if (!confirm('Xóa sản phẩm này khỏi giỏ hàng?')) return;
 
         try {
             await cartService.removeCartItem(cartItemId);
             await fetchCart();
-            showToast('Item removed from cart', 'info');
+            showToast('Đã xóa sản phẩm khỏi giỏ hàng', 'info');
         } catch (err) {
-            showToast('Failed to remove item', 'error');
+            showToast('Không thể xóa sản phẩm', 'error');
         }
     };
 
     const handleClearCart = async () => {
-        if (!confirm('Clear all items from cart?')) return;
+        if (!confirm('Xóa tất cả sản phẩm khỏi giỏ hàng?')) return;
 
         try {
             await cartService.clearCart();
             await fetchCart();
-            showToast('Cart cleared', 'info');
+            showToast('Đã xóa giỏ hàng', 'info');
         } catch (err) {
-            showToast('Failed to clear cart', 'error');
+            showToast('Không thể xóa giỏ hàng', 'error');
         }
     };
 
     const handleApplyPromo = async () => {
         if (!promoCode.trim()) {
-            showToast('Please enter a promo code', 'warning');
+            showToast('Vui lòng nhập mã giảm giá', 'warning');
             return;
         }
 
         try {
             await cartService.applyCoupon({ code: promoCode });
             await fetchCart();
-            showToast('Promo code applied!', 'success');
+            showToast('Đã áp dụng mã giảm giá!', 'success');
             setPromoCode('');
         } catch (err: any) {
             if (axios.isAxiosError(err)) {
-                showToast(err.response?.data?.message || 'Invalid promo code', 'error');
+                showToast(err.response?.data?.message || 'Mã giảm giá không hợp lệ', 'error');
             } else {
-                showToast('Failed to apply promo code', 'error');
+                showToast('Không thể áp dụng mã giảm giá', 'error');
             }
         }
     };
@@ -185,10 +185,10 @@ export default function CartPage() {
                 <main className="flex-1 flex items-center justify-center py-20">
                     <div className="text-center max-w-md">
                         <ShoppingBag className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                        <h2 className="text-2xl font-bold mb-2">Your Cart is Empty</h2>
-                        <p className="text-gray-600 mb-6">Please login to view your cart</p>
+                        <h2 className="text-2xl font-bold mb-2">Giỏ Hàng Trống</h2>
+                        <p className="text-gray-600 mb-6">Vui lòng đăng nhập để xem giỏ hàng</p>
                         <Link href="/login?redirect=/cart" className="inline-block bg-black text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition">
-                            Login to Continue
+                            Đăng Nhập Để Tiếp Tục
                         </Link>
                     </div>
                 </main>
@@ -218,10 +218,10 @@ export default function CartPage() {
                 <main className="flex-1 flex items-center justify-center py-20">
                     <div className="text-center max-w-md">
                         <AlertCircle className="w-16 h-16 mx-auto mb-4 text-red-500" />
-                        <h2 className="text-2xl font-bold mb-2">Error Loading Cart</h2>
+                        <h2 className="text-2xl font-bold mb-2">Lỗi Tải Giỏ Hàng</h2>
                         <p className="text-gray-600 mb-6">{error}</p>
                         <button onClick={fetchCart} className="bg-black text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition">
-                            Try Again
+                            Thử Lại
                         </button>
                     </div>
                 </main>
@@ -238,10 +238,10 @@ export default function CartPage() {
                 <main className="flex-1 flex items-center justify-center py-20">
                     <div className="text-center max-w-md">
                         <ShoppingBag className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                        <h2 className="text-2xl font-bold mb-2">Your Cart is Empty</h2>
-                        <p className="text-gray-600 mb-6">Start shopping to add items to your cart!</p>
+                        <h2 className="text-2xl font-bold mb-2">Giỏ Hàng Trống</h2>
+                        <p className="text-gray-600 mb-6">Bắt đầu mua sắm để thêm sản phẩm vào giỏ hàng!</p>
                         <Link href="/products" className="inline-block bg-black text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition">
-                            Continue Shopping
+                            Tiếp Tục Mua Sắm
                         </Link>
                     </div>
                 </main>
@@ -260,26 +260,26 @@ export default function CartPage() {
                 <div className="container mx-auto px-6 md:px-12 py-6">
                     {/* Breadcrumb */}
                     <div className="flex items-center gap-2 text-sm mb-6">
-                        <Link href="/" className="text-gray-500">Home</Link>
+                        <Link href="/" className="text-gray-500">Trang Chủ</Link>
                         <ChevronRight className="w-4 h-4 text-gray-500" />
-                        <span className="font-medium">Cart</span>
+                        <span className="font-medium">Giỏ Hàng</span>
                     </div>
 
                     <div className="flex items-center justify-between mb-6">
-                        <h1 className="text-2xl md:text-3xl font-integral font-bold">Your Cart</h1>
+                        <h1 className="text-2xl md:text-3xl font-integral font-bold">Giỏ Hàng Của Bạn</h1>
                         <div className="flex items-center gap-4">
                             <button
                                 onClick={handleClearCart}
                                 className="text-sm text-gray-600 hover:text-red-500 transition"
                             >
-                                Clear All
+                                Xóa Tất Cả
                             </button>
                             <Link
                                 href="/products"
                                 className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-black transition"
                             >
                                 <ShoppingBag className="w-4 h-4" />
-                                Continue Shopping
+                                Tiếp Tục Mua Sắm
                             </Link>
                         </div>
                     </div>
@@ -288,7 +288,7 @@ export default function CartPage() {
                     {(cart.unavailable_items || 0) > 0 && (
                         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
                             <p className="text-sm text-yellow-800">
-                                <strong>{cart.unavailable_items || 0}</strong> item(s) in your cart are currently unavailable or out of stock.
+                                <strong>{cart.unavailable_items || 0}</strong> sản phẩm trong giỏ hàng hiện không có sẵn hoặc hết hàng.
                             </p>
                         </div>
                     )}
@@ -317,7 +317,7 @@ export default function CartPage() {
                                                 </Link>
                                                 <div className="text-xs space-y-1">
                                                     <p>
-                                                        <span className="font-medium">Size:</span>{' '}
+                                                        <span className="font-medium">Kích thước:</span>{' '}
                                                         <span className="text-gray-600">
                                                             {typeof item.variant?.size === 'object' && item.variant?.size?.name
                                                                 ? item.variant.size.name
@@ -325,7 +325,7 @@ export default function CartPage() {
                                                         </span>
                                                     </p>
                                                     <p>
-                                                        <span className="font-medium">Color:</span>{' '}
+                                                        <span className="font-medium">Màu sắc:</span>{' '}
                                                         <span className="text-gray-600">
                                                             {typeof item.variant?.color === 'object' && item.variant?.color?.name
                                                                 ? item.variant.color.name
@@ -337,7 +337,7 @@ export default function CartPage() {
                                                         <span className="text-gray-600">{item.variant?.sku || 'N/A'}</span>
                                                     </p>
                                                 </div>
-                                                <p className="text-xl font-bold">${Number(item.variant?.price || 0).toFixed(2)}</p>
+                                                <p className="text-xl font-bold">{(Number(item.variant?.price || 0) * 25000).toLocaleString('vi-VN')}₫</p>
 
                                                 {/* Stock message */}
                                                 {!item.is_available && item.stock_message && (
@@ -377,7 +377,7 @@ export default function CartPage() {
                                                 {/* Stock info */}
                                                 {item.is_available && (
                                                     <p className="text-xs text-gray-500">
-                                                        {item.variant?.available_stock || 0} in stock
+                                                        Còn {item.variant?.available_stock || 0} sản phẩm
                                                     </p>
                                                 )}
                                             </div>
@@ -390,43 +390,43 @@ export default function CartPage() {
                         {/* Order Summary */}
                         <div className="lg:col-span-1">
                             <div className="border border-gray-200 rounded-2xl p-5 space-y-5 sticky top-6">
-                                <h2 className="text-xl font-bold">Order Summary</h2>
+                                <h2 className="text-xl font-bold">Tóm Tắt Đơn Hàng</h2>
 
                                 <div className="space-y-4">
                                     <div className="flex justify-between">
-                                        <span className="text-gray-600">Subtotal ({summary?.items_count || 0} items)</span>
-                                        <span className="font-bold">${Number(summary?.subtotal || 0).toFixed(2)}</span>
+                                        <span className="text-gray-600">Tạm tính ({summary?.items_count || 0} sản phẩm)</span>
+                                        <span className="font-bold">{(Number(summary?.subtotal || 0) * 25000).toLocaleString('vi-VN')}₫</span>
                                     </div>
 
                                     {Number(summary?.discount || 0) > 0 && (
                                         <div className="flex justify-between">
-                                            <span className="text-gray-600">Discount</span>
-                                            <span className="font-bold text-green-600">-${Number(summary?.discount || 0).toFixed(2)}</span>
+                                            <span className="text-gray-600">Giảm giá</span>
+                                            <span className="font-bold text-green-600">-{(Number(summary?.discount || 0) * 25000).toLocaleString('vi-VN')}₫</span>
                                         </div>
                                     )}
 
                                     <div className="flex justify-between">
-                                        <span className="text-gray-600">Shipping Fee</span>
-                                        <span className="font-bold">${Number(summary?.shipping_fee || 0).toFixed(2)}</span>
+                                        <span className="text-gray-600">Phí vận chuyển</span>
+                                        <span className="font-bold">{(Number(summary?.shipping_fee || 0) * 25000).toLocaleString('vi-VN')}₫</span>
                                     </div>
 
                                     <hr className="border-gray-200" />
 
                                     <div className="flex justify-between text-lg">
-                                        <span className="font-medium">Total</span>
-                                        <span className="font-bold">${Number(summary?.total || 0).toFixed(2)}</span>
+                                        <span className="font-medium">Tổng cộng</span>
+                                        <span className="font-bold">{(Number(summary?.total || 0) * 25000).toLocaleString('vi-VN')}₫</span>
                                     </div>
                                 </div>
 
                                 {/* Promo Code */}
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Have a promo code?</label>
+                                    <label className="text-sm font-medium">Có mã giảm giá?</label>
                                     <div className="flex gap-3">
                                         <div className="flex-1 relative">
                                             <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                                             <input
                                                 type="text"
-                                                placeholder="Enter code"
+                                                placeholder="Nhập mã"
                                                 value={promoCode}
                                                 onChange={(e) => setPromoCode(e.target.value)}
                                                 onKeyPress={(e) => e.key === 'Enter' && handleApplyPromo()}
@@ -437,7 +437,7 @@ export default function CartPage() {
                                             onClick={handleApplyPromo}
                                             className="bg-black text-white px-6 py-3 rounded-full font-medium hover:bg-gray-800 transition"
                                         >
-                                            Apply
+                                            Áp Dụng
                                         </button>
                                     </div>
                                 </div>
@@ -449,17 +449,17 @@ export default function CartPage() {
                                     onClick={(e) => {
                                         if ((cart.unavailable_items || 0) > 0) {
                                             e.preventDefault();
-                                            showToast('Please remove unavailable items before checkout', 'warning');
+                                            showToast('Vui lòng xóa sản phẩm không có sẵn trước khi thanh toán', 'warning');
                                         }
                                     }}
                                 >
-                                    Go to Checkout
+                                    Tiến Hành Thanh Toán
                                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                 </Link>
 
                                 {(cart.unavailable_items || 0) > 0 && (
                                     <p className="text-xs text-center text-red-500">
-                                        Remove unavailable items to proceed
+                                        Xóa sản phẩm không có sẵn để tiếp tục
                                     </p>
                                 )}
                             </div>

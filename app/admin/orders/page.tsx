@@ -85,7 +85,7 @@ export default function OrdersPage() {
       setTotalOrders(response.data.meta?.total || response.data.total || 0);
     } catch (error) {
       console.error('❌ Failed to fetch orders:', error);
-      showToast('Failed to load orders', 'error');
+      showToast('Không thể tải đơn hàng', 'error');
       setOrders([]);
     } finally {
       setLoading(false);
@@ -145,8 +145,8 @@ export default function OrdersPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-[#202224]">Orders</h1>
-          <p className="text-gray-600 mt-1">Manage customer orders</p>
+          <h1 className="text-3xl font-bold text-[#202224]">Đơn Hàng</h1>
+          <p className="text-gray-600 mt-1">Quản lý đơn hàng khách hàng</p>
         </div>
         <button className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
           <Download className="w-4 h-4" />

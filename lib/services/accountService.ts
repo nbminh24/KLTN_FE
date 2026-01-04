@@ -25,9 +25,16 @@ export interface ChangePasswordData {
 export interface Address {
     id?: number;
     address_type?: 'Home' | 'Office';
-    detailed_address: string;
+    detailed_address?: string; // Old format (backward compatible)
     phone_number: string;
     is_default: boolean;
+    // New format (post-merger 7/2025)
+    province?: string;
+    ward?: string;
+    street_address?: string;
+    latitude?: number;
+    longitude?: number;
+    address_source?: 'gps' | 'manual';
 }
 
 // ========== ACCOUNT SERVICE ==========

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Search, ShoppingCart, User, Menu, X, Camera, Heart } from 'lucide-react';
 import { getCartCount } from '@/lib/cart';
@@ -45,37 +46,48 @@ export default function Header() {
   return (
     <>
       {/* Top Banner */}
-      <div className="bg-black text-white text-center py-2 text-xs md:text-sm">
+      <div className="bg-gradient-to-r from-gray-900 via-black to-gray-900 text-white text-center py-2.5 text-xs md:text-sm">
         <p>
-          Sign up and get 20% off to your first order.{' '}
-          <Link href="/signup" className="underline font-medium">
-            Sign Up Now
+          Đăng ký và nhận giảm 20% cho đơn hàng đầu tiên.{' '}
+          <Link href="/signup" className="underline font-medium hover:text-gray-300 transition">
+            Đăng Ký Ngay
           </Link>
         </p>
       </div>
 
-      {/* Main Header */}
-      <header className="border-b">
+      {/* Main Header - Sticky */}
+      <header className="sticky top-0 z-50 bg-white shadow-md">
         <div className="container mx-auto px-6 md:px-12 py-4">
           <div className="flex items-center justify-between gap-8">
-            {/* Logo */}
-            <Link href="/" className="text-xl md:text-2xl font-integral font-bold">
-              LeCas
+            {/* Logo with Image */}
+            <Link href="/" className="flex items-center gap-3 group">
+              <div className="relative w-10 h-10 md:w-12 md:h-12">
+                <Image
+                  src="/lecas_logo.png"
+                  alt="LeCas Logo"
+                  fill
+                  className="object-contain group-hover:scale-105 transition-transform"
+                  priority
+                />
+              </div>
+              <span className="text-xl md:text-2xl font-integral font-bold group-hover:text-gray-700 transition">
+                LeCas
+              </span>
             </Link>
 
             {/* Navigation - Hidden on mobile */}
-            <nav className="hidden md:flex items-center gap-6 text-sm">
-              <Link href="/products" className="hover:text-gray-600 transition">
-                Shop
+            <nav className="hidden md:flex items-center gap-8 font-medium" style={{ fontSize: '17px' }}>
+              <Link href="/products" className="hover:text-gray-700 transition-colors duration-200">
+                Cửa Hàng
               </Link>
-              <Link href="/sale" className="hover:text-gray-600 transition">
-                On Sale
+              <Link href="/sale" className="hover:text-gray-700 transition-colors duration-200">
+                Giảm Giá
               </Link>
-              <Link href="/new-arrivals" className="hover:text-gray-600 transition">
-                New Arrivals
+              <Link href="/new-arrivals" className="hover:text-gray-700 transition-colors duration-200">
+                Hàng Mới
               </Link>
-              <Link href="/chat" className="hover:text-gray-600 transition">
-                LeCas Assistant
+              <Link href="/chat" className="hover:text-gray-700 transition-colors duration-200">
+                Trợ Lý LeCas
               </Link>
             </nav>
 
@@ -88,7 +100,7 @@ export default function Header() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search for products..."
+                    placeholder="Tìm kiếm sản phẩm..."
                     className="w-full pl-12 pr-4 py-2.5 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-black text-sm"
                   />
                 </div>
@@ -96,7 +108,7 @@ export default function Header() {
                   type="button"
                   onClick={handleImageSearch}
                   className="p-2.5 bg-gray-100 rounded-full hover:bg-gray-200 transition"
-                  title="Search by image"
+                  title="Tìm kiếm bằng hình ảnh"
                 >
                   <Camera className="w-5 h-5 text-gray-600" />
                 </button>
@@ -104,28 +116,18 @@ export default function Header() {
             </div>
 
             {/* Icons */}
-            <div className="flex items-center gap-3 md:gap-4">
-              <button className="md:hidden">
-                <Search className="w-6 h-6" />
+            <div className="flex items-center gap-4 md:gap-5">
+              <button className="md:hidden hover:text-gray-700 transition">
+                <Search className="w-7 h-7" />
               </button>
-              <Link href="/wishlist" className="relative hover:text-gray-600 transition" title="Wishlist">
-                <Heart className="w-6 h-6" />
-                {wishlistCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                    {wishlistCount}
-                  </span>
-                )}
+              <Link href="/wishlist" className="relative hover:text-gray-700 transition-colors duration-200" title="Yêu thích">
+                <Heart className="w-7 h-7" />
               </Link>
-              <Link href="/cart" className="relative hover:text-gray-600 transition" title="Shopping Cart">
-                <ShoppingCart className="w-6 h-6" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-black text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                    {cartCount}
-                  </span>
-                )}
+              <Link href="/cart" className="relative hover:text-gray-700 transition-colors duration-200" title="Giỏ hàng">
+                <ShoppingCart className="w-7 h-7" />
               </Link>
-              <Link href="/profile" className="hover:text-gray-600 transition" title="Profile">
-                <User className="w-6 h-6" />
+              <Link href="/profile" className="hover:text-gray-700 transition-colors duration-200" title="Tài khoản">
+                <User className="w-7 h-7" />
               </Link>
             </div>
           </div>

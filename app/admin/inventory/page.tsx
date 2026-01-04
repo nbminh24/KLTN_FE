@@ -92,9 +92,9 @@ function InventoryContent() {
       // Handle backend 500 error gracefully
       if (error?.response?.status === 500) {
         console.warn('⚠️ Inventory API unavailable (500). Showing empty list.');
-        showToast('Inventory API temporarily unavailable', 'warning');
+        showToast('API tồn kho tạm thời không khả dụng', 'warning');
       } else {
-        showToast('Failed to load inventory', 'error');
+        showToast('Không thể tải danh sách tồn kho', 'error');
       }
       setInventory([]);
     } finally {

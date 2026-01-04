@@ -100,18 +100,18 @@ export default function SupportPage() {
         <div className="container mx-auto px-6 md:px-12 py-6">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm mb-6">
-            <Link href="/" className="text-gray-500">Home</Link>
+            <Link href="/" className="text-gray-500">Trang Chủ</Link>
             <ChevronRight className="w-4 h-4 text-gray-500" />
-            <span className="font-medium">Customer Support</span>
+            <span className="font-medium">Hỗ Trợ Khách Hàng</span>
           </div>
 
           {/* Hero */}
           <div className="text-center mb-12">
             <h1 className="text-3xl md:text-5xl font-integral font-bold mb-6">
-              WE'RE HERE TO HELP YOU
+              CHÚNG TÔI SẴN SÀNG HỖ TRỢ BẠN
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-6">
-              Our dedicated team provides thoughtful and detailed assistance
+              Đội ngũ của chúng tôi luôn sẵn sàng cung cấp sự hỗ trợ tận tình và chi tiết
             </p>
           </div>
 
@@ -120,21 +120,21 @@ export default function SupportPage() {
             {[
               {
                 icon: Mail,
-                title: 'Email Us',
+                title: 'Gửi Email',
                 info: 'lecas.office@gmail.com',
-                description: 'Response within 24 hours',
+                description: 'Phản hồi trong vòng 24 giờ',
               },
               {
                 icon: Phone,
-                title: 'Call Us',
+                title: 'Gọi Điện',
                 info: '0342343591',
-                description: 'Everyday, 8AM-8PM',
+                description: 'Hàng ngày, 8AM-8PM',
               },
               {
                 icon: MessageCircle,
-                title: 'Email Support',
-                info: 'Get in touch',
-                description: 'Guaranteed reply within 4 Hrs',
+                title: 'Hỗ Trợ Email',
+                info: 'Liên hệ ngay',
+                description: 'Đảm bảo phản hồi trong vòng 4 giờ',
               },
             ].map((contact, index) => (
               <div key={index} className="border border-gray-200 rounded-2xl p-6 text-center hover:shadow-lg transition">
@@ -151,29 +151,29 @@ export default function SupportPage() {
           {/* Contact Form */}
           <div className="max-w-3xl mx-auto">
             <div className="border border-gray-200 rounded-2xl p-8">
-              <h2 className="text-2xl font-bold mb-6">Contact Us for Support</h2>
+              <h2 className="text-2xl font-bold mb-6">Liên Hệ Hỗ Trợ</h2>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Subject</label>
+                  <label className="block text-sm font-medium mb-2">Chủ Đề</label>
                   <input
                     type="text"
                     value={formData.subject}
                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                    placeholder="What is this regarding?"
+                    placeholder="Vấn đề của bạn là gì?"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Message</label>
+                  <label className="block text-sm font-medium mb-2">Nội Dung</label>
                   <textarea
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     required
                     rows={6}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                    placeholder="Tell us more about your inquiry..."
+                    placeholder="Mô tả chi tiết vấn đề của bạn..."
                   />
                 </div>
                 <button
@@ -184,12 +184,12 @@ export default function SupportPage() {
                   {submitting ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      Sending...
+                      Đang gửi...
                     </>
                   ) : (
                     <>
                       <Send className="w-5 h-5" />
-                      Send Message
+                      Gửi Tin Nhắn
                     </>
                   )}
                 </button>

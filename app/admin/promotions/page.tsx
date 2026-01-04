@@ -49,9 +49,9 @@ export default function PromotionsPage() {
       // Handle backend 500 error gracefully
       if (error?.response?.status === 500) {
         console.warn('⚠️ Promotions API unavailable (500). Showing empty list.');
-        showToast('Promotions API temporarily unavailable', 'warning');
+        showToast('API khuyến mãi tạm thời không khả dụng', 'warning');
       } else {
-        showToast('Failed to load promotions', 'error');
+        showToast('Không thể tải danh sách khuyến mãi', 'error');
       }
       setPromotions([]);
     } finally {
@@ -64,17 +64,17 @@ export default function PromotionsPage() {
     try {
       if (editMode && selectedPromotion) {
         await adminPromotionService.updatePromotion(selectedPromotion.id, formData);
-        showToast('Promotion updated successfully', 'success');
+        showToast('Đã cập nhật khuyến mãi thành công', 'success');
       } else {
         await adminPromotionService.createPromotion(formData);
-        showToast('Promotion created successfully', 'success');
+        showToast('Đã tạo khuyến mãi thành công', 'success');
       }
       setShowModal(false);
       resetForm();
       fetchPromotions();
     } catch (error: any) {
       console.error('Error saving promotion:', error);
-      showToast(error.response?.data?.message || 'Failed to save promotion', 'error');
+      showToast(error.response?.data?.message || 'Không thể lưu khuyến mãi', 'error');
     }
   };
 
@@ -94,10 +94,10 @@ export default function PromotionsPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Delete this promotion?')) return;
+    if (!confirm('Xóa khuyến mãi này?')) return;
     try {
       await adminPromotionService.deletePromotion(id);
-      showToast('Promotion deleted successfully', 'success');
+      showToast('Đã xóa khuyến mãi thành công', 'success');
       fetchPromotions();
     } catch (error) {
       console.error('Error deleting promotion:', error);

@@ -101,7 +101,7 @@ export default function ProductDetailPage() {
       }
     } catch (err: any) {
       console.error('Error fetching product:', err);
-      setError('Failed to load product. Please try again.');
+      setError('Không thể tải sản phẩm. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -161,7 +161,7 @@ export default function ProductDetailPage() {
     }
 
     if (!selectedVariant.available_stock || selectedVariant.available_stock < quantity) {
-      showToast('Not enough stock available', 'error');
+      showToast('Không đủ hàng trong kho', 'error');
       return;
     }
 
@@ -170,10 +170,10 @@ export default function ProductDetailPage() {
         variant_id: selectedVariant.id,
         quantity: quantity
       });
-      showToast(`Added ${quantity} item(s) to cart!`, 'success');
+      showToast(`Đã thêm ${quantity} sản phẩm vào giỏ hàng!`, 'success');
     } catch (err: any) {
       if (err.response?.status === 401) {
-        showToast('Please login to add to cart', 'warning');
+        showToast('Vui lòng đăng nhập để thêm vào giỏ hàng', 'warning');
       } else if (err.response?.data?.message) {
         showToast(err.response.data.message, 'error');
       } else {
@@ -186,12 +186,12 @@ export default function ProductDetailPage() {
     if (!product) return;
 
     if (!selectedVariant) {
-      showToast('Please select size and color', 'warning');
+      showToast('Vui lòng chọn kích thước và màu sắc', 'warning');
       return;
     }
 
     if (!selectedVariant.available_stock || selectedVariant.available_stock < quantity) {
-      showToast('Not enough stock available', 'error');
+      showToast('Không đủ hàng trong kho', 'error');
       return;
     }
 
@@ -203,7 +203,7 @@ export default function ProductDetailPage() {
       router.push('/cart');
     } catch (err: any) {
       if (err.response?.status === 401) {
-        showToast('Please login to continue', 'warning');
+        showToast('Vui lòng đăng nhập để tiếp tục', 'warning');
         router.push('/login?redirect=/cart');
       } else if (err.response?.data?.message) {
         showToast(err.response.data.message, 'error');
@@ -216,13 +216,13 @@ export default function ProductDetailPage() {
   const handleWishlistToggle = async () => {
     const token = localStorage.getItem('access_token');
     if (!token) {
-      showToast('Please login to add to wishlist', 'error');
+      showToast('Vui lòng đăng nhập để thêm vào yêu thích', 'error');
       router.push('/login?redirect=/products/' + productId);
       return;
     }
 
     if (!selectedVariant) {
-      showToast('Please select size and color first', 'warning');
+      showToast('Vui lòng chọn kích thước và màu sắc trước', 'warning');
       return;
     }
 
@@ -237,13 +237,13 @@ export default function ProductDetailPage() {
         console.log('❤️ Removing from wishlist...');
         await wishlistService.removeFromWishlist(selectedVariant.id);
         setIsInWishlist(false);
-        showToast('Removed from wishlist', 'info');
+        showToast('Đã xóa khỏi yêu thích', 'info');
       } else {
         // Add to wishlist
         console.log('❤️ Adding to wishlist...');
         await wishlistService.addToWishlist(selectedVariant.id);
         setIsInWishlist(true);
-        showToast('Added to wishlist!', 'success');
+        showToast('Đã thêm vào yêu thích!', 'success');
       }
     } catch (err: any) {
       console.error('❌ Wishlist error:', err);
@@ -255,15 +255,15 @@ export default function ProductDetailPage() {
         console.error('❌ Request data:', err.config?.data);
 
         if (err.response?.status === 401) {
-          showToast('Please login to add to wishlist', 'error');
+          showToast('Vui lòng đăng nhập để thêm vào yêu thích', 'error');
           router.push('/login?redirect=/products/' + productId);
         } else if (err.response?.status === 404) {
-          showToast('Wishlist endpoint not found. Please contact support.', 'error');
+          showToast('Không tìm thấy tính năng yêu thích. Vui lòng liên hệ hỗ trợ.', 'error');
         } else {
-          showToast(err.response?.data?.message || 'Failed to update wishlist', 'error');
+          showToast(err.response?.data?.message || 'Không thể cập nhật danh sách yêu thích', 'error');
         }
       } else {
-        showToast('Failed to update wishlist', 'error');
+        showToast('Không thể cập nhật danh sách yêu thích', 'error');
       }
     } finally {
       setWishlistLoading(false);
@@ -282,11 +282,11 @@ export default function ProductDetailPage() {
         window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
         break;
       case 'instagram':
-        showToast('Copy link to share on Instagram!', 'info');
+        showToast('Sao chép link để chia sẻ trên Instagram!', 'info');
         break;
       case 'copy':
         navigator.clipboard.writeText(url);
-        showToast('Link copied to clipboard!', 'success');
+        showToast('Đã sao chép link!', 'success');
         break;
     }
   };
@@ -336,10 +336,10 @@ export default function ProductDetailPage() {
         <Header />
         <main className="flex-1 flex items-center justify-center py-20">
           <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4">Product Not Found</h2>
-            <p className="text-gray-600 mb-6">{error || 'The product you are looking for does not exist.'}</p>
+            <h2 className="text-2xl font-bold mb-4">Không Tìm Thấy Sản Phẩm</h2>
+            <p className="text-gray-600 mb-6">{error || 'Sản phẩm bạn đang tìm không tồn tại.'}</p>
             <Link href="/products" className="bg-black text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition">
-              Back to Products
+              Quay Lại Sản Phẩm
             </Link>
           </div>
         </main>
@@ -356,9 +356,9 @@ export default function ProductDetailPage() {
         <div className="container mx-auto px-6 md:px-12 py-6">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm mb-6">
-            <Link href="/" className="text-gray-500">Home</Link>
+            <Link href="/" className="text-gray-500">Trang Chủ</Link>
             <ChevronRight className="w-4 h-4 text-gray-500" />
-            <Link href="/products" className="text-gray-500">Shop</Link>
+            <Link href="/products" className="text-gray-500">Cửa Hàng</Link>
             <ChevronRight className="w-4 h-4 text-gray-500" />
             <span className="font-medium">{product.name}</span>
           </div>
@@ -379,7 +379,7 @@ export default function ProductDetailPage() {
                   className="object-cover"
                 />
                 <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1.5 rounded-full text-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                  Click to zoom
+                  Nhấn để phóng to
                 </div>
               </div>
               <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
@@ -420,13 +420,13 @@ export default function ProductDetailPage() {
                     <span className="font-medium">{Number(product.average_rating).toFixed(1)}</span>
                     <span className="text-gray-500">/5</span>
                   </span>
-                  <span className="text-sm text-gray-500">({product.total_reviews || 0} reviews)</span>
+                  <span className="text-sm text-gray-500">({product.total_reviews || 0} đánh giá)</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl font-bold">${Number(product.selling_price).toFixed(2)}</span>
+                  <span className="text-2xl font-bold">{(Number(product.selling_price) * 25000).toLocaleString('vi-VN')}₫</span>
                   {discountPercentage > 0 && (
                     <>
-                      <span className="text-2xl font-bold text-gray-400 line-through">${Number(product.cost_price).toFixed(2)}</span>
+                      <span className="text-2xl font-bold text-gray-400 line-through">{(Number(product.cost_price) * 25000).toLocaleString('vi-VN')}₫</span>
                       <span className="bg-red-100 text-red-600 text-xs font-medium px-2.5 py-1 rounded-full">
                         -{discountPercentage}%
                       </span>
@@ -441,9 +441,9 @@ export default function ProductDetailPage() {
               {(!product.variants || product.variants.length === 0) && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                   <p className="text-sm text-yellow-800">
-                    <span className="font-medium">⚠️ Size/Color selection temporarily unavailable.</span>
+                    <span className="font-medium">⚠️ Lựa chọn kích thước/màu sắc tạm thời không khả dụng.</span>
                     <br />
-                    Product variants data is not loaded from server. Please contact support.
+                    Dữ liệu biến thể sản phẩm không được tải từ máy chủ. Vui lòng liên hệ hỗ trợ.
                   </p>
                 </div>
               )}
@@ -451,7 +451,7 @@ export default function ProductDetailPage() {
               {/* Color Selection */}
               {availableColors.length > 0 && (
                 <div>
-                  <p className="text-gray-600 mb-3 text-sm">Select Colors</p>
+                  <p className="text-gray-600 mb-3 text-sm">Chọn Màu Sắc</p>
                   <div className="flex gap-3">
                     {availableColors.map((color) => (
                       <button
@@ -474,7 +474,7 @@ export default function ProductDetailPage() {
               {/* Size Selection */}
               {availableSizes.length > 0 && (
                 <div>
-                  <p className="text-gray-600 mb-3 text-sm">Choose Size</p>
+                  <p className="text-gray-600 mb-3 text-sm">Chọn Kích Thước</p>
                   <div className="flex flex-wrap gap-2">
                     {availableSizes.map((size) => (
                       <button
@@ -491,7 +491,7 @@ export default function ProductDetailPage() {
                   </div>
                   {selectedVariant && (
                     <p className="text-sm text-gray-600 mt-2">
-                      Stock: {selectedVariant.available_stock || 0} available
+                      Kho: {selectedVariant.available_stock || 0} có sẵn
                     </p>
                   )}
                 </div>
@@ -521,7 +521,7 @@ export default function ProductDetailPage() {
                     onClick={handleAddToCart}
                     className="flex-1 bg-black text-white py-4 rounded-full font-medium hover:bg-gray-800 transition"
                   >
-                    Add to Cart
+                    Thêm Vào Giỏ
                   </button>
                   {/* Wishlist Button */}
                   <button
@@ -531,7 +531,7 @@ export default function ProductDetailPage() {
                       ? 'bg-red-50 border-red-500 text-red-500 hover:bg-red-100'
                       : 'border-gray-300 text-gray-600 hover:border-red-500 hover:text-red-500'
                       } ${wishlistLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+                    title={isInWishlist ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích'}
                   >
                     <Heart className={`w-6 h-6 ${isInWishlist ? 'fill-current' : ''}`} />
                   </button>
@@ -540,7 +540,7 @@ export default function ProductDetailPage() {
                   onClick={handleBuyNow}
                   className="w-full border-2 border-black text-black py-4 rounded-full font-medium hover:bg-gray-50 transition"
                 >
-                  Buy Now
+                  Mua Ngay
                 </button>
               </div>
 
@@ -550,34 +550,34 @@ export default function ProductDetailPage() {
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <Share2 className="w-5 h-5 text-gray-600" />
-                  <p className="text-gray-600 text-sm font-medium">Share this product</p>
+                  <p className="text-gray-600 text-sm font-medium">Chia sẻ sản phẩm</p>
                 </div>
                 <div className="flex gap-3">
                   <button
                     onClick={() => handleShare('facebook')}
                     className="flex items-center justify-center w-10 h-10 bg-[#1877F2] text-white rounded-full hover:opacity-90 transition"
-                    title="Share on Facebook"
+                    title="Chia sẻ trên Facebook"
                   >
                     <Facebook className="w-5 h-5 fill-current" />
                   </button>
                   <button
                     onClick={() => handleShare('twitter')}
                     className="flex items-center justify-center w-10 h-10 bg-[#1DA1F2] text-white rounded-full hover:opacity-90 transition"
-                    title="Share on Twitter"
+                    title="Chia sẻ trên Twitter"
                   >
                     <Twitter className="w-5 h-5 fill-current" />
                   </button>
                   <button
                     onClick={() => handleShare('instagram')}
                     className="flex items-center justify-center w-10 h-10 bg-gradient-to-tr from-[#FD5949] via-[#D6249F] to-[#285AEB] text-white rounded-full hover:opacity-90 transition"
-                    title="Share on Instagram"
+                    title="Chia sẻ trên Instagram"
                   >
                     <Instagram className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => handleShare('copy')}
                     className="flex items-center justify-center w-10 h-10 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition"
-                    title="Copy link"
+                    title="Sao chép link"
                   >
                     <LinkIcon className="w-5 h-5" />
                   </button>
@@ -593,19 +593,19 @@ export default function ProductDetailPage() {
                 onClick={() => setSelectedTab('details')}
                 className={`pb-4 ${selectedTab === 'details' ? 'border-b-2 border-black font-medium' : 'text-gray-600'}`}
               >
-                Product Details
+                Chi Tiết Sản Phẩm
               </button>
               <button
                 onClick={() => setSelectedTab('reviews')}
                 className={`pb-4 ${selectedTab === 'reviews' ? 'border-b-2 border-black font-medium' : 'text-gray-600'}`}
               >
-                Rating & Reviews
+                Đánh Giá & Nhận Xét
               </button>
               <button
                 onClick={() => setSelectedTab('sizeguide')}
                 className={`pb-4 ${selectedTab === 'sizeguide' ? 'border-b-2 border-black font-medium' : 'text-gray-600'}`}
               >
-                Size Guide
+                Hướng Dẫn Kích Thước
               </button>
             </div>
           </div>
@@ -614,9 +614,9 @@ export default function ProductDetailPage() {
           {selectedTab === 'details' && (
             <div className="mb-12">
               <div className="prose max-w-none">
-                <h3 className="text-xl font-bold mb-4">Product Description</h3>
+                <h3 className="text-xl font-bold mb-4">Mô Tả Sản Phẩm</h3>
                 <div className="text-gray-600 whitespace-pre-line">
-                  {product.full_description || product.description || 'No detailed description available.'}
+                  {product.full_description || product.description || 'Không có mô tả chi tiết.'}
                 </div>
               </div>
             </div>
@@ -625,7 +625,7 @@ export default function ProductDetailPage() {
           {/* Size Guide Section */}
           {selectedTab === 'sizeguide' && (
             <div className="mb-12">
-              <h3 className="text-xl font-bold mb-6">Size Guide</h3>
+              <h3 className="text-xl font-bold mb-6">Hướng Dẫn Kích Thước</h3>
               <div className="max-w-4xl mx-auto">
                 <Image
                   src="/size_chart.jpg"
@@ -642,12 +642,12 @@ export default function ProductDetailPage() {
           {selectedTab === 'reviews' && (
             <div className="mb-12">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-bold">All Reviews <span className="text-gray-600">({reviews.length})</span></h3>
+                <h3 className="text-2xl font-bold">Tất Cả Đánh Giá <span className="text-gray-600">({reviews.length})</span></h3>
                 <button
                   onClick={() => setShowReviewForm(!showReviewForm)}
                   className="bg-black text-white px-6 py-3 rounded-full font-medium hover:bg-gray-800 transition"
                 >
-                  {showReviewForm ? 'Cancel' : 'Write a Review'}
+                  {showReviewForm ? 'Hủy' : 'Viết Đánh Giá'}
                 </button>
               </div>
 
@@ -680,29 +680,31 @@ export default function ProductDetailPage() {
                         <p className="font-bold">{review.customer_name || 'Anonymous'}</p>
                         <span className="text-green-500">✓</span>
                       </div>
-                      <p className="text-gray-600">{review.comment || 'No comment provided.'}</p>
-                      <p className="text-sm text-gray-500">Posted on {new Date(review.created_at).toLocaleDateString()}</p>
+                      <p className="text-gray-600">{review.comment || 'Không có bình luận.'}</p>
+                      <p className="text-sm text-gray-500">Đăng vào {new Date(review.created_at).toLocaleDateString('vi-VN')}</p>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <p className="text-gray-500">No reviews yet. Be the first to review!</p>
+                  <p className="text-gray-500">Chưa có đánh giá. Hãy là người đầu tiên đánh giá!</p>
                 </div>
               )}
 
-              <div className="flex justify-center mt-8">
-                <button className="border border-gray-300 px-12 py-3 rounded-full font-medium hover:bg-gray-50 transition">
-                  Load More Reviews
-                </button>
-              </div>
+              {reviews.length > 0 && (
+                <div className="flex justify-center mt-8">
+                  <button className="border border-gray-300 px-12 py-3 rounded-full font-medium hover:bg-gray-50 transition">
+                    Tải Thêm Đánh Giá
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
           {/* You Might Also Like */}
           <section>
             <h2 className="text-2xl md:text-3xl font-integral font-bold text-center mb-10">
-              You might also like
+              Bạn Có Thể Thích
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
               {relatedProducts.map((relatedProduct) => (
@@ -723,7 +725,7 @@ export default function ProductDetailPage() {
                 href="/products"
                 className="border border-black bg-white text-black px-12 py-3 rounded-full font-medium hover:bg-gray-50 transition"
               >
-                View More
+                Xem Thêm
               </Link>
             </div>
           </section>
