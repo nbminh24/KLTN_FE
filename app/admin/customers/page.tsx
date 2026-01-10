@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, Filter, Loader2 } from 'lucide-react';
+import { Search, Filter, Loader2, ChevronDown } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import adminCustomerService, { AdminCustomer } from '@/lib/services/admin/customerService';
 import { showToast } from '@/components/Toast';
 
@@ -149,38 +150,34 @@ export default function CustomersPage() {
           >
             Tìm Kiếm
           </button>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-          >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="blocked">Blocked</option>
-          </select>
-          <select
-            value={sortField}
-            onChange={(e) => {
-              setSortField(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-          >
-            <option value="created_at">Sort by: Joined</option>
-            <option value="total_orders">Sort by: Orders</option>
-            <option value="total_spent">Sort by: Total Spent</option>
-          </select>
-          <select
-            value={sortOrder}
-            onChange={(e) => {
-              setSortOrder(e.target.value as 'asc' | 'desc');
-              setCurrentPage(1);
-            }}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-          >
-            <option value="desc">High to Low</option>
-            <option value="asc">Low to High</option>
-          </select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Trạng thái" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả</SelectItem>
+              <SelectItem value="active">Hoạt động</SelectItem>
+              <SelectItem value="blocked">Khóa</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortField} onValueChange={(value) => { setSortField(value); setCurrentPage(1); }}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Sắp xếp theo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="created_at">Ngày tham gia</SelectItem>
+              <SelectItem value="name">Tên</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortOrder} onValueChange={(value) => { setSortOrder(value as 'asc' | 'desc'); setCurrentPage(1); }}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Thứ tự" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="desc">Mới nhất</SelectItem>
+              <SelectItem value="asc">Cũ nhất</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -201,13 +198,10 @@ export default function CustomersPage() {
               <table className="w-full">
                 <thead>
                   <tr className="bg-[#F1F4F9] border-b border-gray-200">
-                    <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Customer</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Khách hàng</th>
                     <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Email</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Phone</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Orders</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Total Spent</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Joined</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Status</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Ngày tham gia</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Trạng thái</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -226,9 +220,6 @@ export default function CustomersPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">{customer.email}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{customer.phone || 'N/A'}</td>
-                      <td className="px-6 py-4 text-sm font-semibold text-[#202224]">{customer.total_orders || 0}</td>
-                      <td className="px-6 py-4 text-sm font-semibold text-[#202224]">{formatCurrency(customer.total_spent || 0)}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{formatDate(customer.created_at)}</td>
                       <td className="px-6 py-4">
                         <span
@@ -237,7 +228,7 @@ export default function CustomersPage() {
                             : 'bg-red-100 text-red-700'
                             }`}
                         >
-                          {customer.status === 'active' ? 'Active' : 'Inactive'}
+                          {customer.status === 'active' ? 'Hoạt động' : 'Khóa'}
                         </span>
                       </td>
                     </tr>

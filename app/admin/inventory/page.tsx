@@ -40,7 +40,30 @@ function InventoryContent() {
 
   useEffect(() => {
     fetchInventory();
+    fetchStats();
   }, [activeTab, currentPage, searchQuery]);
+
+  const fetchStats = async () => {
+    try {
+      console.log('📊 Fetching inventory stats...');
+      const response = await adminInventoryService.getInventory({ page: 1, limit: 1 });
+      const summary = response.data.summary || response.data.meta?.summary;
+
+      console.log('📊 Stats response:', summary);
+
+      if (summary) {
+        setStats({
+          total_variants: summary.total_variants || 0,
+          in_stock: summary.in_stock || 0,
+          low_stock: summary.low_stock_variants || summary.low_stock || 0,
+          out_of_stock: summary.out_of_stock_variants || summary.out_of_stock || 0,
+          total_value: 0
+        });
+      }
+    } catch (error) {
+      console.error('❌ Failed to fetch stats:', error);
+    }
+  };
 
   const fetchInventory = async () => {
     try {
@@ -58,6 +81,8 @@ function InventoryContent() {
         params.low_stock = true;
       } else if (activeTab === 'out_of_stock') {
         params.out_of_stock = true;
+      } else if (activeTab === 'in_stock') {
+        params.in_stock = true;
       }
 
       const response = await adminInventoryService.getInventory(params);
@@ -74,18 +99,6 @@ function InventoryContent() {
       const total = response.data.meta?.total || response.data.total || 0;
       const limit = response.data.meta?.limit || response.data.limit || 20;
       setTotalPages(Math.ceil(total / limit));
-
-      // Update stats
-      const summary = response.data.summary || response.data.meta?.summary;
-      if (summary) {
-        setStats({
-          total_variants: summary.total_variants || 0,
-          in_stock: summary.in_stock || 0,
-          low_stock: summary.low_stock_variants || 0,
-          out_of_stock: summary.out_of_stock_variants || 0,
-          total_value: 0 // Calculate if needed
-        });
-      }
     } catch (error: any) {
       console.error('❌ Failed to fetch inventory:', error);
 
@@ -103,18 +116,18 @@ function InventoryContent() {
   };
 
   const getStockStatus = (item: InventoryItem): string => {
-    if (item.current_stock === 0) return 'Out of Stock';
-    if (item.available_stock <= item.reorder_level) return 'Low Stock';
-    return 'In Stock';
+    if (item.current_stock === 0) return 'Hết hàng';
+    if (item.available_stock <= item.reorder_level) return 'Sắp hết';
+    return 'Còn hàng';
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'In Stock':
+      case 'Còn hàng':
         return 'bg-green-100 text-green-700';
-      case 'Low Stock':
+      case 'Sắp hết':
         return 'bg-yellow-100 text-yellow-700';
-      case 'Out of Stock':
+      case 'Hết hàng':
         return 'bg-red-100 text-red-700';
       default:
         return 'bg-gray-100 text-gray-700';
@@ -123,9 +136,9 @@ function InventoryContent() {
 
   const getTabLabel = (tab: StockStatus): string => {
     switch (tab) {
-      case 'in_stock': return 'In Stock';
-      case 'low_stock': return 'Low Stock';
-      case 'out_of_stock': return 'Out of Stock';
+      case 'in_stock': return 'Còn Hàng';
+      case 'low_stock': return 'Sắp Hết Hàng';
+      case 'out_of_stock': return 'Hết Hàng';
       default: return tab;
     }
   };
@@ -135,8 +148,8 @@ function InventoryContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-[#202224]">Inventory Management</h1>
-          <p className="text-gray-600 mt-1">Track and manage product stock levels</p>
+          <h1 className="text-3xl font-bold text-[#202224]">Quản Lý Tồn Kho</h1>
+          <p className="text-gray-600 mt-1">Theo dõi và quản lý mức tồn kho sản phẩm</p>
         </div>
         <div className="flex gap-3">
           <button
@@ -144,14 +157,14 @@ function InventoryContent() {
             className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
           >
             <History className="w-4 h-4" />
-            <span className="font-semibold text-sm">Restock History</span>
+            <span className="font-semibold text-sm">Lịch Sử Nhập Kho</span>
           </button>
           <button
             onClick={() => router.push('/admin/inventory/restock')}
             className="flex items-center gap-2 px-4 py-2.5 bg-[#4880FF] text-white rounded-lg hover:bg-blue-600 transition"
           >
             <Upload className="w-4 h-4" />
-            <span className="font-semibold text-sm">Restock</span>
+            <span className="font-semibold text-sm">Nhập Kho</span>
           </button>
         </div>
       </div>
@@ -163,7 +176,7 @@ function InventoryContent() {
             <div className="bg-blue-500 text-white p-2 rounded-lg">
               <Package className="w-6 h-6" />
             </div>
-            <p className="text-sm text-gray-600">Total Variants</p>
+            <p className="text-sm text-gray-600">Tổng Phiên Bản</p>
           </div>
           <p className="text-2xl font-bold text-[#202224]">{stats.total_variants}</p>
         </div>
@@ -172,7 +185,7 @@ function InventoryContent() {
             <div className="bg-green-500 text-white p-2 rounded-lg">
               <Package className="w-6 h-6" />
             </div>
-            <p className="text-sm text-gray-600">In Stock</p>
+            <p className="text-sm text-gray-600">Còn Hàng</p>
           </div>
           <p className="text-2xl font-bold text-[#202224]">{stats.in_stock}</p>
         </div>
@@ -181,7 +194,7 @@ function InventoryContent() {
             <div className="bg-yellow-500 text-white p-2 rounded-lg">
               <AlertTriangle className="w-6 h-6" />
             </div>
-            <p className="text-sm text-gray-600">Low Stock Items</p>
+            <p className="text-sm text-gray-600">Sắp Hết Hàng</p>
           </div>
           <p className="text-2xl font-bold text-[#202224]">{stats.low_stock}</p>
         </div>
@@ -190,7 +203,7 @@ function InventoryContent() {
             <div className="bg-red-500 text-white p-2 rounded-lg">
               <AlertTriangle className="w-6 h-6" />
             </div>
-            <p className="text-sm text-gray-600">Out of Stock</p>
+            <p className="text-sm text-gray-600">Hết Hàng</p>
           </div>
           <p className="text-2xl font-bold text-[#202224]">{stats.out_of_stock}</p>
         </div>
@@ -199,14 +212,14 @@ function InventoryContent() {
       {/* Stock Alerts */}
       {(stats.low_stock > 0 || stats.out_of_stock > 0) && (
         <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <h2 className="text-xl font-bold mb-4">Stock Alerts</h2>
+          <h2 className="text-xl font-bold mb-4">Cảnh Báo Tồn Kho</h2>
           <div className="space-y-3">
             {stats.low_stock > 0 && (
               <div className="flex items-center gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-yellow-900">{stats.low_stock} variants are running low on stock</p>
-                  <p className="text-xs text-yellow-700">Consider restocking these items soon</p>
+                  <p className="text-sm font-semibold text-yellow-900">{stats.low_stock} phiên bản sắp hết hàng</p>
+                  <p className="text-xs text-yellow-700">Cần nhập kho sớm cho các mặt hàng này</p>
                 </div>
               </div>
             )}
@@ -214,8 +227,8 @@ function InventoryContent() {
               <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
                 <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0" />
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-red-900">{stats.out_of_stock} variants are out of stock</p>
-                  <p className="text-xs text-red-700">These items need immediate attention</p>
+                  <p className="text-sm font-semibold text-red-900">{stats.out_of_stock} phiên bản đã hết hàng</p>
+                  <p className="text-xs text-red-700">Các mặt hàng này cần xử lý ngay</p>
                 </div>
               </div>
             )}
@@ -251,7 +264,7 @@ function InventoryContent() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Search by product name, variant, or SKU..."
+            placeholder="Tìm theo tên sản phẩm, phiên bản hoặc SKU..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
@@ -268,7 +281,7 @@ function InventoryContent() {
         ) : inventory.length === 0 ? (
           <div className="text-center py-20">
             <Package className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <p className="text-gray-600">No inventory items found</p>
+            <p className="text-gray-600">Không tìm thấy sản phẩm tồn kho</p>
           </div>
         ) : (
           <>
@@ -276,12 +289,12 @@ function InventoryContent() {
               <table className="w-full">
                 <thead>
                   <tr className="bg-[#F1F4F9] border-b border-gray-200">
-                    <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Product / Variant</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Total Stock</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Reserved</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Available</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Reorder Level</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Status</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Sản Phẩm / Phiên Bản</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Tổng Tồn</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Đã Đặt</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Có Sẵn</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Mức Đặt Lại</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Trạng Thái</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">

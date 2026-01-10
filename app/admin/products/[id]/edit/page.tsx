@@ -90,8 +90,9 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         setDescription(product.description || '');
         setDetailedDescription(product.full_description || '');
         setCategoryId(product.category_id?.toString() || '');
-        setCostPrice(product.cost_price?.toString() || '');
-        setSellingPrice(product.selling_price?.toString() || '');
+        // Convert USD to VND for display (multiply by 25000)
+        setCostPrice(product.cost_price ? (Number(product.cost_price) * 25000).toString() : '');
+        setSellingPrice(product.selling_price ? (Number(product.selling_price) * 25000).toString() : '');
         setIsActive(product.status === 'active');
 
         // Set selected size and color IDs from product
@@ -197,13 +198,14 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
       console.log('💾 Updating product and variants...');
 
       // Step 1: Update product basic info
+      // Convert VND back to USD for API (divide by 25000)
       await adminProductService.updateProduct(Number(id), {
         name: productName,
         description: description,
         full_description: detailedDescription,
         category_id: Number(categoryId),
-        cost_price: Number(costPrice),
-        selling_price: Number(sellingPrice),
+        cost_price: Number(costPrice) / 25000,
+        selling_price: Number(sellingPrice) / 25000,
         status: isActive ? 'active' : 'inactive',
       });
       console.log('✅ Product updated');
@@ -256,7 +258,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         alert('Product and variants updated successfully!');
       }
 
-      router.push('/admin/products');
+      router.push(`/admin/products/${id}`);
     } catch (err: any) {
       console.error('❌ Failed to update:', err);
       alert(err.response?.data?.message || 'Failed to update product');
@@ -289,7 +291,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-8 h-8 animate-spin text-[#4880FF]" />
-        <p className="ml-3 text-gray-600">Loading product data...</p>
+        <p className="ml-3 text-gray-600">Đang tải dữ liệu sản phẩm...</p>
       </div>
     );
   }
@@ -299,7 +301,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
       <div className="flex flex-col items-center justify-center min-h-screen">
         <p className="text-red-600 mb-4">{error}</p>
         <Link href="/admin/products" className="text-[#4880FF] hover:underline">
-          Back to Products
+          Quay lại danh sách
         </Link>
       </div>
     );
@@ -313,8 +315,8 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-[#202224]">Edit Product</h1>
-            <p className="text-sm text-gray-600 mt-1">Product ID: {id} • Step {step} of 2</p>
+            <h1 className="text-3xl font-bold text-[#202224]">Sửa sản phẩm</h1>
+            <p className="text-sm text-gray-600 mt-1">Mã SP: {id} • Bước {step}/2</p>
           </div>
         </div>
         <button
@@ -324,7 +326,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           className="flex items-center gap-2 px-4 py-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-          <span className="font-semibold text-sm">Delete Product</span>
+          <span className="font-semibold text-sm">Xóa sản phẩm</span>
         </button>
       </div>
 
@@ -332,37 +334,37 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         <div className="max-w-4xl space-y-6">
           {/* Basic Info */}
           <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <h2 className="text-xl font-bold mb-4">Basic Information</h2>
+            <h2 className="text-xl font-bold mb-4">Thông tin cơ bản</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold mb-2">Product Name *</label>
+                <label className="block text-sm font-semibold mb-2">Tên sản phẩm *</label>
                 <input
                   type="text"
                   required
                   value={productName}
                   onChange={(e) => setProductName(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-                  placeholder="e.g. Gradient Graphic T-shirt"
+                  placeholder="VD: Áo thun Graphic Gradient"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-2">Description</label>
+                <label className="block text-sm font-semibold mb-2">Mô tả ngắn</label>
                 <textarea
                   rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-                  placeholder="Short product description..."
+                  placeholder="Mô tả ngắn về sản phẩm..."
                 ></textarea>
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-2">Detailed Description</label>
+                <label className="block text-sm font-semibold mb-2">Mô tả chi tiết</label>
                 <textarea
                   rows={5}
                   value={detailedDescription}
                   onChange={(e) => setDetailedDescription(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-                  placeholder="Detailed information: fabric, care instructions, etc..."
+                  placeholder="Thông tin chi tiết: chất liệu, hướng dẫn bảo quản..."
                 ></textarea>
               </div>
             </div>
@@ -370,35 +372,35 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
           {/* Pricing */}
           <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <h2 className="text-xl font-bold mb-4">Pricing</h2>
+            <h2 className="text-xl font-bold mb-4">Giá cả</h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold mb-2">Cost Price *</label>
+                <label className="block text-sm font-semibold mb-2">Cost Price (Nghìn Đồng) *</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">₫</span>
                   <input
                     type="number"
                     required
-                    step="0.01"
+                    step="1000"
                     value={costPrice}
                     onChange={(e) => setCostPrice(e.target.value)}
-                    className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-                    placeholder="0.00"
+                    className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
+                    placeholder="0"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-2">Selling Price *</label>
+                <label className="block text-sm font-semibold mb-2">Selling Price (Nghìn Đồng) *</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">₫</span>
                   <input
                     type="number"
                     required
-                    step="0.01"
+                    step="1000"
                     value={sellingPrice}
                     onChange={(e) => setSellingPrice(e.target.value)}
-                    className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-                    placeholder="0.00"
+                    className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
+                    placeholder="0"
                   />
                 </div>
               </div>
@@ -407,14 +409,14 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
           {/* Category */}
           <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <h2 className="text-xl font-bold mb-4">Category</h2>
+            <h2 className="text-xl font-bold mb-4">Danh mục</h2>
             <select
               required
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
             >
-              <option value="">Select Category</option>
+              <option value="">Chọn danh mục</option>
               {categories.map((cat) => (
                 <option key={cat.id} value={cat.id}>
                   {cat.name}
@@ -425,11 +427,11 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
           {/* Variants */}
           <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <h2 className="text-xl font-bold mb-4">Variants *</h2>
-            <p className="text-sm text-gray-600 mb-4">Note: Unchecking existing variants will disable them (not delete)</p>
+            <h2 className="text-xl font-bold mb-4">Biến thể *</h2>
+            <p className="text-sm text-gray-600 mb-4">Lưu ý: Bỏ chọn biến thể hiện có sẽ vô hiệu hóa chúng (không xóa)</p>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold mb-3">Select Sizes *</label>
+                <label className="block text-sm font-semibold mb-3">Chọn kích thước *</label>
                 <div className="flex flex-wrap gap-2">
                   {availableSizes.map((size) => (
                     <label
@@ -458,7 +460,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-3">Select Colors *</label>
+                <label className="block text-sm font-semibold mb-3">Chọn màu sắc *</label>
                 <div className="flex flex-wrap gap-2">
                   {availableColors.map((color) => (
                     <label
@@ -495,7 +497,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
           {/* Status */}
           <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <h2 className="text-xl font-bold mb-4">Product Status</h2>
+            <h2 className="text-xl font-bold mb-4">Trạng thái sản phẩm</h2>
             <div className="flex items-center gap-3">
               <input
                 type="checkbox"
@@ -505,7 +507,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 className="w-5 h-5"
               />
               <label htmlFor="active" className="text-sm font-semibold">
-                Active (Product will be visible on store)
+                Kích hoạt (Sản phẩm sẽ hiển thị trên cửa hàng)
               </label>
             </div>
           </div>
@@ -516,32 +518,31 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
               onClick={handleStep1Next}
               className="px-8 py-3 bg-[#4880FF] text-white rounded-lg font-semibold hover:bg-blue-600 transition"
             >
-              Next: Configure Variants
+              Tiếp tục: Cấu hình biến thể
             </button>
             <Link
               href="/admin/products"
               className="px-8 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition"
             >
-              Cancel
+              Thoát
             </Link>
           </div>
         </div>
       ) : (
         <div className="max-w-6xl space-y-6">
-          {/* Variants Matrix */}
           <div className="bg-white rounded-xl p-6 border border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-xl font-bold">Variants Matrix</h2>
+                <h2 className="text-xl font-bold">Bảng biến thể</h2>
                 <p className="text-sm text-gray-600 mt-1">
-                  {variants.filter(v => v.enabled).length} active • {variants.filter(v => !v.enabled && v.existsInDb).length} disabled
+                  {variants.filter(v => v.enabled).length} kích hoạt • {variants.filter(v => !v.enabled && v.existsInDb).length} vô hiệu
                 </p>
               </div>
               <button
                 onClick={() => setStep(1)}
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm font-semibold"
               >
-                Back to Step 1
+                Quay lại Bước 1
               </button>
             </div>
             <div className="overflow-x-auto">
@@ -550,11 +551,11 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">SKU</th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Size</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Color</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Stock</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Images</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Status</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Active</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Màu</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Tồn kho</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Hình ảnh</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Trạng thái</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Kích hoạt</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -580,14 +581,14 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                           className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Upload className="w-4 h-4" />
-                          {variant.mainImage ? 'Change' : 'Upload'}
+                          {variant.mainImage ? 'Đổi ảnh' : 'Tải lên'}
                         </button>
                       </td>
                       <td className="px-6 py-4 text-xs">
                         {variant.existsInDb ? (
-                          <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-semibold">Existing</span>
+                          <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-semibold">Có sẵn</span>
                         ) : (
-                          <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full font-semibold">New</span>
+                          <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full font-semibold">Mới</span>
                         )}
                       </td>
                       <td className="px-6 py-4">
@@ -613,28 +614,28 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           {showImageUpload && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowImageUpload(null)}>
               <div className="bg-white rounded-xl p-6 max-w-2xl w-full mx-4" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-xl font-bold mb-4">Upload Variant Images</h3>
+                <h3 className="text-xl font-bold mb-4">Tải ảnh biến thể</h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-semibold mb-2">Main Image *</label>
+                    <label className="block text-sm font-semibold mb-2">Ảnh chính *</label>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#4880FF] transition cursor-pointer">
                       <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm text-gray-600">Upload main product image</p>
+                      <p className="text-sm text-gray-600">Tải ảnh sản phẩm chính</p>
                       <input type="file" accept="image/*" className="hidden" />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold mb-2">Secondary Images</label>
+                    <label className="block text-sm font-semibold mb-2">Ảnh phụ</label>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#4880FF] transition cursor-pointer">
                       <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm text-gray-600">Upload additional images</p>
+                      <p className="text-sm text-gray-600">Tải thêm ảnh</p>
                       <input type="file" accept="image/*" multiple className="hidden" />
                     </div>
                   </div>
                 </div>
                 <div className="flex gap-3 mt-6">
-                  <button className="px-6 py-2 bg-[#4880FF] text-white rounded-lg hover:bg-blue-600 transition">Save</button>
-                  <button onClick={() => setShowImageUpload(null)} className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
+                  <button className="px-6 py-2 bg-[#4880FF] text-white rounded-lg hover:bg-blue-600 transition">Lưu</button>
+                  <button onClick={() => setShowImageUpload(null)} className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">Hủy</button>
                 </div>
               </div>
             </div>
@@ -648,19 +649,19 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
               className="flex items-center gap-2 px-8 py-3 bg-[#4880FF] text-white rounded-lg font-semibold hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              Update Product
+              Cập nhật sản phẩm
             </button>
             <button
               onClick={() => setStep(1)}
               className="px-8 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition"
             >
-              Back
+              Quay lại
             </button>
             <Link
               href="/admin/products"
               className="px-8 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition"
             >
-              Cancel
+              Hủy
             </Link>
           </div>
         </div>

@@ -4,13 +4,14 @@ import { useState, use, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, Edit2, Trash2, Package, DollarSign, TrendingUp, Eye, EyeOff, Upload, Search, Warehouse, Loader2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import adminProductService from '@/lib/services/admin/productService';
 import type { AdminProduct } from '@/lib/services/admin/productService';
 import { showToast } from '@/components/Toast';
 
 export default function AdminProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const [activeTab, setActiveTab] = useState<'overview' | 'variants' | 'analytics'>('overview');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'information' | 'variants'>('analytics');
   const [analyticsTab, setAnalyticsTab] = useState<'sales' | 'variants' | 'ratings' | 'reviews'>('sales');
   const [variantSearch, setVariantSearch] = useState('');
   const [variantStockFilter, setVariantStockFilter] = useState('all');
@@ -123,6 +124,10 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
       setVariantsAnalytics(response.data);
     } catch (err: any) {
       console.error('❌ Failed to fetch variants analytics:', err);
+      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        console.warn('⚠️ Variants analytics timed out - skipping');
+        setVariantsAnalytics({ variants: [], total_sold: 0 });
+      }
     }
   };
 
@@ -179,7 +184,7 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin mx-auto text-blue-600 mb-4" />
-          <p className="text-gray-600">Loading product details...</p>
+          <p className="text-gray-600">Đang tải thông tin sản phẩm...</p>
         </div>
       </div>
     );
@@ -195,13 +200,13 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
           </Link>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <p className="text-red-600 font-semibold mb-2">Error loading product</p>
-          <p className="text-gray-600 mb-4">{error || 'Product not found'}</p>
+          <p className="text-red-600 font-semibold mb-2">Lỗi tải sản phẩm</p>
+          <p className="text-gray-600 mb-4">{error || 'Không tìm thấy sản phẩm'}</p>
           <button
             onClick={fetchProductData}
             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
           >
-            Try Again
+            Thử lại
           </button>
         </div>
       </div>
@@ -227,18 +232,18 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
             className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
           >
             <Eye className="w-4 h-4" />
-            <span className="font-semibold text-sm">View on Store</span>
+            <span className="font-semibold text-sm">Xem trên cửa hàng</span>
           </Link>
           <Link
             href={`/admin/products/${product.id}/edit`}
             className="flex items-center gap-2 px-4 py-2.5 bg-[#4880FF] text-white rounded-lg hover:bg-blue-600 transition"
           >
             <Edit2 className="w-4 h-4" />
-            <span className="font-semibold text-sm">Edit Product</span>
+            <span className="font-semibold text-sm">Sửa sản phẩm</span>
           </Link>
           <button className="flex items-center gap-2 px-4 py-2.5 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition">
             <Trash2 className="w-4 h-4" />
-            <span className="font-semibold text-sm">Delete</span>
+            <span className="font-semibold text-sm">Xóa</span>
           </button>
         </div>
       </div>
@@ -250,7 +255,7 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
             <div className="p-2 bg-blue-100 rounded-lg">
               <Package className="w-5 h-5 text-blue-600" />
             </div>
-            <p className="text-sm text-gray-600">Total Stock</p>
+            <p className="text-sm text-gray-600">Tổng tồn kho</p>
           </div>
           <p className="text-2xl font-bold">{totalStock}</p>
         </div>
@@ -259,7 +264,7 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
             <div className="p-2 bg-green-100 rounded-lg">
               <TrendingUp className="w-5 h-5 text-green-600" />
             </div>
-            <p className="text-sm text-gray-600">Sold</p>
+            <p className="text-sm text-gray-600">Đã bán</p>
           </div>
           <p className="text-2xl font-bold">{(product.total_sold || 0).toLocaleString()}</p>
         </div>
@@ -268,13 +273,13 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
             <div className="p-2 bg-purple-100 rounded-lg">
               <DollarSign className="w-5 h-5 text-purple-600" />
             </div>
-            <p className="text-sm text-gray-600">Base Price</p>
+            <p className="text-sm text-gray-600">Giá bán</p>
           </div>
-          <p className="text-2xl font-bold">{Number(product.selling_price || 0).toLocaleString('vi-VN')} VND</p>
+          <p className="text-2xl font-bold">{(Number(product.selling_price || 0) * 25000).toLocaleString('vi-VN')}₫</p>
         </div>
         <div className="bg-white rounded-xl p-5 border border-gray-200">
           <div className="flex items-center gap-3 mb-2">
-            <p className="text-sm text-gray-600">Status</p>
+            <p className="text-sm text-gray-600">Trạng thái</p>
           </div>
           <p className="text-2xl font-bold">
             <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
@@ -287,56 +292,46 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
       {/* Tabs */}
       <div className="border-b border-gray-200">
         <div className="flex gap-8">
-          {['overview', 'variants', 'analytics'].map((tab) => (
+          {[{ key: 'analytics', label: 'Phân tích' }, { key: 'information', label: 'Thông tin' }, { key: 'variants', label: 'Biến thể' }].map((tab) => (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab as any)}
-              className={`pb-3 capitalize ${activeTab === tab ? 'border-b-2 border-[#4880FF] text-[#4880FF] font-semibold' : 'text-gray-600'
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key as any)}
+              className={`pb-3 ${activeTab === tab.key ? 'border-b-2 border-[#4880FF] text-[#4880FF] font-semibold' : 'text-gray-600'
                 }`}
             >
-              {tab}
+              {tab.label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Overview Tab */}
-      {activeTab === 'overview' && (
+      {/* Information Tab */}
+      {activeTab === 'information' && (
         <div className="space-y-6">
           {/* Product Info */}
           <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <h2 className="text-xl font-bold mb-4">Product Information</h2>
+            <h2 className="text-xl font-bold mb-4">Thông tin sản phẩm</h2>
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-semibold text-gray-600">Product Name</label>
+                <label className="text-sm font-semibold text-gray-600">Tên sản phẩm</label>
                 <p className="text-base mt-1">{product.name}</p>
               </div>
               <div>
-                <label className="text-sm font-semibold text-gray-600">Description</label>
+                <label className="text-sm font-semibold text-gray-600">Mô tả</label>
                 <p className="text-base mt-1 text-gray-700">{product.description}</p>
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="text-sm font-semibold text-gray-600">Category</label>
+                  <label className="text-sm font-semibold text-gray-600">Danh mục</label>
                   <p className="text-base mt-1">{product.category?.name || `Category ID: ${product.category_id}`}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-semibold text-gray-600">Cost Price</label>
-                  <p className="text-base mt-1">{Number(product.cost_price || 0).toLocaleString('vi-VN')} VND</p>
+                  <label className="text-sm font-semibold text-gray-600">Giá vốn</label>
+                  <p className="text-base mt-1">{(Number(product.cost_price || 0) * 25000).toLocaleString('vi-VN')}₫</p>
                 </div>
                 <div>
-                  <label className="text-sm font-semibold text-gray-600">Selling Price</label>
-                  <p className="text-base mt-1 font-semibold">{Number(product.selling_price || 0).toLocaleString('vi-VN')} VND</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-gray-600">Created</label>
-                  <p className="text-base mt-1">{product.created_at ? new Date(product.created_at).toLocaleDateString('vi-VN') : 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-gray-600">Last Updated</label>
-                  <p className="text-base mt-1">{product.updated_at ? new Date(product.updated_at).toLocaleDateString('vi-VN') : 'N/A'}</p>
+                  <label className="text-sm font-semibold text-gray-600">Giá bán</label>
+                  <p className="text-base mt-1 font-semibold">{(Number(product.selling_price || 0) * 25000).toLocaleString('vi-VN')}₫</p>
                 </div>
               </div>
             </div>
@@ -344,10 +339,10 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
 
           {/* Product Details */}
           <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <h2 className="text-xl font-bold mb-4">Product Details</h2>
+            <h2 className="text-xl font-bold mb-4">Chi tiết sản phẩm</h2>
             <div>
-              <label className="text-sm font-semibold text-gray-600">Detailed Description</label>
-              <p className="text-base mt-2 text-gray-700 whitespace-pre-wrap">{product.full_description || product.description || 'No detailed description'}</p>
+              <label className="text-sm font-semibold text-gray-600">Mô tả chi tiết</label>
+              <p className="text-base mt-2 text-gray-700 whitespace-pre-wrap">{product.full_description || product.description || 'Chưa có mô tả chi tiết'}</p>
             </div>
           </div>
         </div>
@@ -363,37 +358,39 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search variants by SKU, size, or color..."
+                  placeholder="Tìm kiếm theo SKU, size hoặc màu..."
                   value={variantSearch}
                   onChange={(e) => setVariantSearch(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
                 />
               </div>
-              <select
-                value={variantStockFilter}
-                onChange={(e) => setVariantStockFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-              >
-                <option value="all">All Stock</option>
-                <option value="in-stock">In Stock</option>
-                <option value="low-stock">Low Stock</option>
-                <option value="out-of-stock">Out of Stock</option>
-              </select>
-              <select
-                value={variantSortBy}
-                onChange={(e) => setVariantSortBy(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-              >
-                <option value="sku">Sort by SKU</option>
-                <option value="stock-asc">Stock: Low to High</option>
-                <option value="stock-desc">Stock: High to Low</option>
-              </select>
+              <Select value={variantStockFilter} onValueChange={setVariantStockFilter}>
+                <SelectTrigger className="w-[180px] h-10">
+                  <SelectValue placeholder="Tất cả tồn kho" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả</SelectItem>
+                  <SelectItem value="in-stock">Còn hàng</SelectItem>
+                  <SelectItem value="low-stock">Sắp hết</SelectItem>
+                  <SelectItem value="out-of-stock">Hết hàng</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={variantSortBy} onValueChange={setVariantSortBy}>
+                <SelectTrigger className="w-[200px] h-10">
+                  <SelectValue placeholder="Sắp xếp theo SKU" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sku">Theo SKU</SelectItem>
+                  <SelectItem value="stock-asc">Tồn kho: Thấp đến cao</SelectItem>
+                  <SelectItem value="stock-desc">Tồn kho: Cao đến thấp</SelectItem>
+                </SelectContent>
+              </Select>
               <Link
                 href="/admin/inventory"
                 className="flex items-center gap-2 px-4 py-2 bg-[#4880FF] text-white rounded-lg hover:bg-blue-600 transition whitespace-nowrap"
               >
                 <Warehouse className="w-4 h-4" />
-                <span className="font-semibold text-sm">Manage Inventory</span>
+                <span className="font-semibold text-sm">Quản lý kho</span>
               </Link>
             </div>
           </div>
@@ -404,13 +401,13 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
               <table className="w-full">
                 <thead className="bg-[#F1F4F9]">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Images</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Hình ảnh</th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">SKU</th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Size</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Color</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Stock</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Status</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Active</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Màu</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Tồn kho</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Trạng thái</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Kích hoạt</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -418,8 +415,8 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
                     <tr>
                       <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
                         <Package className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                        <p>No variants found</p>
-                        <p className="text-xs mt-1">Backend may not return variants data yet</p>
+                        <p>Không tìm thấy biến thể</p>
+                        <p className="text-xs mt-1">Backend có thể chưa trả về dữ liệu biến thể</p>
                       </td>
                     </tr>
                   ) : (
@@ -448,7 +445,7 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
                               <button
                                 onClick={() => setShowImageUpload(String(variant.id))}
                                 className="ml-2 p-1.5 hover:bg-gray-100 rounded transition"
-                                title="Upload Images"
+                                title="Tải ảnh lên"
                               >
                                 <Upload className="w-4 h-4 text-gray-600" />
                               </button>
@@ -477,14 +474,14 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
                               stock > 0 ? 'bg-yellow-100 text-yellow-700' :
                                 'bg-red-100 text-red-700'
                               }`}>
-                              {stock > 50 ? 'In Stock' : stock > 0 ? 'Low Stock' : 'Out of Stock'}
+                              {stock > 50 ? 'Còn hàng' : stock > 0 ? 'Sắp hết' : 'Hết hàng'}
                             </span>
                           </td>
                           <td className="px-6 py-4">
                             <button
                               onClick={() => toggleVariantActive(String(variant.id))}
                               className="p-2 hover:bg-gray-100 rounded-lg transition"
-                              title={isActive ? 'Disable variant' : 'Enable variant'}
+                              title={isActive ? 'Vô hiệu hóa' : 'Kích hoạt'}
                             >
                               {isActive ? (
                                 <Eye className="w-5 h-5 text-green-600" />
@@ -506,28 +503,28 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
           {showImageUpload && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowImageUpload(null)}>
               <div className="bg-white rounded-xl p-6 max-w-2xl w-full mx-4" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-xl font-bold mb-4">Upload Variant Images</h3>
+                <h3 className="text-xl font-bold mb-4">Tải ảnh biến thể</h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-semibold mb-2">Main Image</label>
+                    <label className="block text-sm font-semibold mb-2">Ảnh chính</label>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#4880FF] transition">
                       <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm text-gray-600">Upload main product image</p>
+                      <p className="text-sm text-gray-600">Tải ảnh sản phẩm chính</p>
                       <input type="file" accept="image/*" className="hidden" />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold mb-2">Secondary Images</label>
+                    <label className="block text-sm font-semibold mb-2">Ảnh phụ</label>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#4880FF] transition">
                       <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm text-gray-600">Upload additional images</p>
+                      <p className="text-sm text-gray-600">Tải thêm ảnh</p>
                       <input type="file" accept="image/*" multiple className="hidden" />
                     </div>
                   </div>
                 </div>
                 <div className="flex gap-3 mt-6">
-                  <button className="px-6 py-2 bg-[#4880FF] text-white rounded-lg hover:bg-blue-600 transition">Save</button>
-                  <button onClick={() => setShowImageUpload(null)} className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
+                  <button className="px-6 py-2 bg-[#4880FF] text-white rounded-lg hover:bg-blue-600 transition">Lưu</button>
+                  <button onClick={() => setShowImageUpload(null)} className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">Hủy</button>
                 </div>
               </div>
             </div>
@@ -547,35 +544,35 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
               {/* Analytics Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="bg-white rounded-xl p-5 border border-gray-200">
-                  <p className="text-sm text-gray-600 mb-1">Total Revenue</p>
+                  <p className="text-sm text-gray-600 mb-1">Tổng doanh thu</p>
                   <p className="text-2xl font-bold text-green-600">
-                    {(analytics?.sales?.total_revenue || 0).toLocaleString('vi-VN')} VND
+                    {((analytics?.sales?.total_revenue || 0) * 25000).toLocaleString('vi-VN')}₫
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">All time revenue</p>
+                  <p className="text-xs text-gray-500 mt-1">Tất cả thời gian</p>
                 </div>
                 <div className="bg-white rounded-xl p-5 border border-gray-200">
-                  <p className="text-sm text-gray-600 mb-1">Units Sold</p>
+                  <p className="text-sm text-gray-600 mb-1">Số lượng bán</p>
                   <p className="text-2xl font-bold">
                     {(analytics?.sales?.total_units_sold || 0).toLocaleString()}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">All time sales</p>
+                  <p className="text-xs text-gray-500 mt-1">Tất cả thời gian</p>
                 </div>
                 <div className="bg-white rounded-xl p-5 border border-gray-200">
-                  <p className="text-sm text-gray-600 mb-1">Total Orders</p>
+                  <p className="text-sm text-gray-600 mb-1">Tổng đơn hàng</p>
                   <p className="text-2xl font-bold">
                     {(analytics?.sales?.total_orders || 0).toLocaleString()}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    Avg {(analytics?.sales?.average_order_value || 0).toLocaleString('vi-VN')} VND
+                    Avg {((analytics?.sales?.average_order_value || 0) * 25000).toLocaleString('vi-VN')}₫
                   </p>
                 </div>
                 <div className="bg-white rounded-xl p-5 border border-gray-200">
-                  <p className="text-sm text-gray-600 mb-1">Avg. Rating</p>
+                  <p className="text-sm text-gray-600 mb-1">Đánh giá TB</p>
                   <p className="text-2xl font-bold text-yellow-600">
                     {(analytics?.ratings?.average_rating || 0).toFixed(1)} / 5
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    From {analytics?.ratings?.total_reviews || 0} reviews
+                    Từ {analytics?.ratings?.total_reviews || 0} đánh giá
                   </p>
                 </div>
               </div>
@@ -586,14 +583,14 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
           <div className="bg-white rounded-xl border border-gray-200">
             <div className="border-b border-gray-200 px-6">
               <div className="flex gap-6">
-                {['sales', 'variants', 'ratings', 'reviews'].map((tab) => (
+                {[{ key: 'sales', label: 'Doanh số' }, { key: 'variants', label: 'Biến thể' }, { key: 'ratings', label: 'Đánh giá' }, { key: 'reviews', label: 'Nhận xét' }].map((tab) => (
                   <button
-                    key={tab}
-                    onClick={() => setAnalyticsTab(tab as any)}
-                    className={`py-4 capitalize ${analyticsTab === tab ? 'border-b-2 border-[#4880FF] text-[#4880FF] font-semibold' : 'text-gray-600'
+                    key={tab.key}
+                    onClick={() => setAnalyticsTab(tab.key as any)}
+                    className={`py-4 ${analyticsTab === tab.key ? 'border-b-2 border-[#4880FF] text-[#4880FF] font-semibold' : 'text-gray-600'
                       }`}
                   >
-                    {tab}
+                    {tab.label}
                   </button>
                 ))}
               </div>
@@ -604,49 +601,49 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
               {analyticsTab === 'sales' && (
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold">Sales Trend</h3>
+                    <h3 className="text-lg font-bold">Xu hướng doanh số</h3>
                     <select
                       value={salesPeriod}
                       onChange={(e) => setSalesPeriod(e.target.value as any)}
                       className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
                     >
-                      <option value="7days">Last 7 Days</option>
-                      <option value="30days">Last 30 Days</option>
-                      <option value="3months">Last 3 Months</option>
-                      <option value="1year">Last Year</option>
+                      <option value="7days">7 ngày qua</option>
+                      <option value="30days">30 ngày qua</option>
+                      <option value="3months">3 tháng qua</option>
+                      <option value="1year">1 năm qua</option>
                     </select>
                   </div>
                   {salesTrend?.data?.length > 0 ? (
                     <div className="space-y-4">
                       <div className="grid grid-cols-3 gap-4 mb-4">
                         <div className="bg-blue-50 p-4 rounded-lg">
-                          <p className="text-xs text-gray-600 mb-1">Total Revenue</p>
-                          <p className="text-lg font-bold">{(salesTrend.total_revenue || 0).toLocaleString('vi-VN')} VND</p>
+                          <p className="text-xs text-gray-600 mb-1">Tổng doanh thu</p>
+                          <p className="text-lg font-bold">{((salesTrend.total_revenue || 0) * 25000).toLocaleString('vi-VN')}₫</p>
                         </div>
                         <div className="bg-green-50 p-4 rounded-lg">
-                          <p className="text-xs text-gray-600 mb-1">Total Units</p>
+                          <p className="text-xs text-gray-600 mb-1">Tổng số lượng</p>
                           <p className="text-lg font-bold">{(salesTrend.total_units_sold || 0).toLocaleString()}</p>
                         </div>
                         <div className="bg-purple-50 p-4 rounded-lg">
-                          <p className="text-xs text-gray-600 mb-1">Avg. Daily</p>
-                          <p className="text-lg font-bold">{Math.round((salesTrend.total_revenue || 0) / (salesTrend.data?.length || 1)).toLocaleString('vi-VN')} VND</p>
+                          <p className="text-xs text-gray-600 mb-1">Trung bình/ngày</p>
+                          <p className="text-lg font-bold">{(Math.round((salesTrend.total_revenue || 0) / (salesTrend.data?.length || 1)) * 25000).toLocaleString('vi-VN')}₫</p>
                         </div>
                       </div>
                       <div className="overflow-x-auto">
                         <table className="w-full">
                           <thead className="bg-gray-50">
                             <tr>
-                              <th className="px-4 py-2 text-left text-xs font-semibold">Date</th>
-                              <th className="px-4 py-2 text-right text-xs font-semibold">Revenue</th>
-                              <th className="px-4 py-2 text-right text-xs font-semibold">Units</th>
-                              <th className="px-4 py-2 text-right text-xs font-semibold">Orders</th>
+                              <th className="px-4 py-2 text-left text-xs font-semibold">Ngày</th>
+                              <th className="px-4 py-2 text-right text-xs font-semibold">Doanh thu</th>
+                              <th className="px-4 py-2 text-right text-xs font-semibold">Số lượng</th>
+                              <th className="px-4 py-2 text-right text-xs font-semibold">Đơn hàng</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y">
                             {salesTrend.data.map((item: any, idx: number) => (
                               <tr key={idx} className="hover:bg-gray-50">
                                 <td className="px-4 py-2 text-sm">{new Date(item.date).toLocaleDateString('vi-VN')}</td>
-                                <td className="px-4 py-2 text-sm text-right font-semibold">{(item.revenue || 0).toLocaleString('vi-VN')} VND</td>
+                                <td className="px-4 py-2 text-sm text-right font-semibold">{((item.revenue || 0) * 25000).toLocaleString('vi-VN')}₫</td>
                                 <td className="px-4 py-2 text-sm text-right">{item.units_sold || 0}</td>
                                 <td className="px-4 py-2 text-sm text-right">{item.orders || 0}</td>
                               </tr>
@@ -659,7 +656,7 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
                     <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center border border-gray-200">
                       <div className="text-center text-gray-500">
                         <TrendingUp className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                        <p className="text-sm">No sales data available</p>
+                        <p className="text-sm">Không có dữ liệu doanh số</p>
                       </div>
                     </div>
                   )}
@@ -669,11 +666,11 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
               {/* Top Selling Variants Tab */}
               {analyticsTab === 'variants' && (
                 <div>
-                  <h3 className="text-lg font-bold mb-4">Top Selling Variants</h3>
+                  <h3 className="text-lg font-bold mb-4">Biến thể bán chạy nhất</h3>
                   {variantsAnalytics?.variants?.length > 0 ? (
                     <div className="space-y-3">
                       <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                        <p className="text-xs text-gray-600">Total Units Sold (All Variants)</p>
+                        <p className="text-xs text-gray-600">Tổng số lượng bán (Tất cả biến thể)</p>
                         <p className="text-2xl font-bold">{(variantsAnalytics.total_sold || 0).toLocaleString()}</p>
                       </div>
                       {variantsAnalytics.variants.slice(0, 10).map((item: any, idx: number) => (
@@ -694,9 +691,9 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
                             </div>
                           </div>
                           <div className="ml-4 text-right space-y-1">
-                            <p className="text-sm font-bold">{item.total_sold} units</p>
-                            <p className="text-xs text-green-600 font-semibold">{(item.revenue || 0).toLocaleString('vi-VN')} VND</p>
-                            <p className="text-xs text-gray-500">Stock: {item.current_stock}</p>
+                            <p className="text-sm font-bold">{item.total_sold} sản phẩm</p>
+                            <p className="text-xs text-green-600 font-semibold">{((item.revenue || 0) * 25000).toLocaleString('vi-VN')}₫</p>
+                            <p className="text-xs text-gray-500">Tồn kho: {item.current_stock}</p>
                           </div>
                         </div>
                       ))}
@@ -705,7 +702,7 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
                     <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center border border-gray-200">
                       <div className="text-center text-gray-500">
                         <Package className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                        <p className="text-sm">No sales data available for variants</p>
+                        <p className="text-sm">Không có dữ liệu bán hàng cho biến thể</p>
                       </div>
                     </div>
                   )}
@@ -715,7 +712,7 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
               {/* Ratings Distribution Tab */}
               {analyticsTab === 'ratings' && (
                 <div>
-                  <h3 className="text-lg font-bold mb-4">Rating Distribution</h3>
+                  <h3 className="text-lg font-bold mb-4">Phân bố đánh giá</h3>
                   {analytics?.ratings?.rating_distribution ? (
                     <div className="space-y-3">
                       {[5, 4, 3, 2, 1].map((stars) => {
@@ -723,7 +720,7 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
                         return (
                           <div key={stars} className="flex items-center gap-4">
                             <div className="w-20 text-sm font-semibold text-gray-700">
-                              {stars} stars
+                              {stars} sao
                             </div>
                             <div className="flex-1 bg-gray-200 h-8 rounded-lg overflow-hidden">
                               <div
@@ -740,7 +737,7 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
                     </div>
                   ) : (
                     <div className="text-center py-8 text-gray-500">
-                      <p>No ratings data available</p>
+                      <p>Không có dữ liệu đánh giá</p>
                     </div>
                   )}
                 </div>
@@ -750,29 +747,29 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
               {analyticsTab === 'reviews' && (
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold">Customer Reviews</h3>
+                    <h3 className="text-lg font-bold">Đánh giá khách hàng</h3>
                     <div className="flex gap-2">
                       <select
                         value={reviewsFilter.rating}
                         onChange={(e) => setReviewsFilter({ ...reviewsFilter, rating: e.target.value, page: 1 })}
                         className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
                       >
-                        <option value="all">All Ratings</option>
-                        <option value="5">5 Stars</option>
-                        <option value="4">4 Stars</option>
-                        <option value="3">3 Stars</option>
-                        <option value="2">2 Stars</option>
-                        <option value="1">1 Star</option>
+                        <option value="all">Tất cả đánh giá</option>
+                        <option value="5">5 sao</option>
+                        <option value="4">4 sao</option>
+                        <option value="3">3 sao</option>
+                        <option value="2">2 sao</option>
+                        <option value="1">1 sao</option>
                       </select>
                       <select
                         value={reviewsFilter.status}
                         onChange={(e) => setReviewsFilter({ ...reviewsFilter, status: e.target.value, page: 1 })}
                         className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
                       >
-                        <option value="approved">Approved</option>
-                        <option value="pending">Pending</option>
-                        <option value="rejected">Rejected</option>
-                        <option value="all">All Status</option>
+                        <option value="approved">Đã duyệt</option>
+                        <option value="pending">Chờ duyệt</option>
+                        <option value="rejected">Đã từ chối</option>
+                        <option value="all">Tất cả trạng thái</option>
                       </select>
                     </div>
                   </div>
@@ -788,7 +785,7 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
                               <div>
                                 <p className="font-semibold text-sm">{review.customer_name}</p>
                                 <p className="text-xs text-gray-500">{review.customer_email}</p>
-                                <p className="text-xs text-gray-500">Order: {review.order_number || review.order_id}</p>
+                                <p className="text-xs text-gray-500">Đơn hàng: {review.order_number || review.order_id}</p>
                                 <p className="text-xs text-gray-500">SKU: {review.variant_sku}</p>
                               </div>
                               <div className="text-right">
@@ -798,8 +795,8 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
                                   ))}
                                 </div>
                                 <span className={`text-xs px-2 py-1 rounded-full ${review.status === 'approved' ? 'bg-green-100 text-green-700' :
-                                    review.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                                      'bg-red-100 text-red-700'
+                                  review.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                    'bg-red-100 text-red-700'
                                   }`}>
                                   {review.status}
                                 </span>
@@ -817,24 +814,24 @@ export default function AdminProductDetailPage({ params }: { params: Promise<{ i
                             disabled={reviewsFilter.page === 1}
                             className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition disabled:opacity-50"
                           >
-                            Previous
+                            Trước
                           </button>
                           <span className="px-4 py-2 text-sm text-gray-600">
-                            Page {reviewsMeta.page} of {reviewsMeta.total_pages}
+                            Trang {reviewsMeta.page} / {reviewsMeta.total_pages}
                           </span>
                           <button
                             onClick={() => setReviewsFilter({ ...reviewsFilter, page: Math.min(reviewsMeta.total_pages, reviewsFilter.page + 1) })}
                             disabled={reviewsFilter.page >= reviewsMeta.total_pages}
                             className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition disabled:opacity-50"
                           >
-                            Next
+                            Sau
                           </button>
                         </div>
                       )}
                     </>
                   ) : (
                     <div className="text-center py-12 text-gray-500">
-                      <p>No reviews found</p>
+                      <p>Không tìm thấy đánh giá</p>
                     </div>
                   )}
                 </div>

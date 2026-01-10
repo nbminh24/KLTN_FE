@@ -34,14 +34,14 @@ export default function AdminLoginPage() {
         } catch (err: any) {
             if (axios.isAxiosError(err)) {
                 if (err.response?.status === 401) {
-                    setError('Invalid email or password');
+                    setError('Email hoặc mật khẩu không đúng');
                 } else if (err.response?.status === 403) {
-                    setError('Access denied. Admin privileges required.');
+                    setError('Truy cập bị từ chối. Yêu cầu quyền quản trị viên.');
                 } else {
-                    setError(err.response?.data?.message || 'Login failed. Please try again.');
+                    setError(err.response?.data?.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
                 }
             } else {
-                setError('Network error. Please check your connection.');
+                setError('Lỗi kết nối. Vui lòng kiểm tra đường truyền.');
             }
         } finally {
             setLoading(false);
@@ -59,9 +59,9 @@ export default function AdminLoginPage() {
                             <ShieldCheck className="w-8 h-8 text-white" />
                         </div>
                         <h1 className="text-3xl font-integral font-bold mb-2">
-                            Admin Portal
+                            Cổng Quản Trị
                         </h1>
-                        <p className="text-gray-600">Sign in to access admin dashboard</p>
+                        <p className="text-gray-600">Đăng nhập để truy cập bảng điều khiển quản trị</p>
                     </div>
 
                     {error && (
@@ -88,7 +88,7 @@ export default function AdminLoginPage() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-2">Password</label>
+                            <label className="block text-sm font-medium mb-2">Mật Khẩu</label>
                             <div className="relative">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                                 <input
@@ -112,7 +112,7 @@ export default function AdminLoginPage() {
                         <div className="flex items-center justify-between text-sm">
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input type="checkbox" className="w-4 h-4 rounded" />
-                                <span>Remember me</span>
+                                <span>Ghi nhớ đăng nhập</span>
                             </label>
                         </div>
 
@@ -121,13 +121,13 @@ export default function AdminLoginPage() {
                             disabled={loading}
                             className="w-full bg-black text-white py-3 rounded-full font-medium hover:bg-gray-800 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
                         >
-                            {loading ? 'Signing in...' : 'Sign In'}
+                            {loading ? 'Đang đăng nhập...' : 'Đăng Nhập'}
                         </button>
                     </form>
 
                     <div className="mt-6 text-center">
                         <p className="text-xs text-gray-500">
-                            Authorized personnel only. All access is logged.
+                            Chỉ dành cho nhân viên được uỷ quyền. Mọi truy cập đều được ghi lại.
                         </p>
                     </div>
                 </div>

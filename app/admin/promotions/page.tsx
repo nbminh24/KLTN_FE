@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Copy, Tag, Calendar, X, Loader2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Copy, Tag, Calendar, X, Loader2, Search } from 'lucide-react';
 import adminPromotionService, { AdminPromotion } from '@/lib/services/admin/promotionService';
+import adminProductService, { AdminProduct } from '@/lib/services/admin/productService';
 import { showToast } from '@/components/Toast';
 
 export default function PromotionsPage() {
@@ -21,41 +22,52 @@ export default function PromotionsPage() {
     start_date: '',
     end_date: '',
   });
+  const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
+  const [productSearch, setProductSearch] = useState('');
+  const [loadingProducts, setLoadingProducts] = useState(false);
+
+  // Filtered products based on search
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(productSearch.toLowerCase())
+  );
 
   useEffect(() => {
     fetchPromotions();
   }, [activeTab]);
 
+  useEffect(() => {
+    if (showModal) {
+      fetchProducts();
+    }
+  }, [showModal]);
+
   const fetchPromotions = async () => {
     try {
       setLoading(true);
-      console.log('🎁 Fetching promotions...', { status: activeTab });
-
-      const response = await adminPromotionService.getPromotions({
-        status: activeTab,
-        page: 1,
-        limit: 100,
-      });
-      console.log('✅ Promotions response:', response.data);
-
-      const promotionsData = response.data.data || response.data.promotions || response.data;
-      const promotionsArray = Array.isArray(promotionsData) ? promotionsData : [];
-
-      console.log('🎁 Parsed promotions:', promotionsArray.length, 'items');
-      setPromotions(promotionsArray);
+      const response = await adminPromotionService.getPromotions({ status: activeTab });
+      const promotionsList = response.data.promotions || [];
+      setPromotions(promotionsList);
     } catch (error: any) {
-      console.error('❌ Error fetching promotions:', error);
-
-      // Handle backend 500 error gracefully
-      if (error?.response?.status === 500) {
-        console.warn('⚠️ Promotions API unavailable (500). Showing empty list.');
-        showToast('API khuyến mãi tạm thời không khả dụng', 'warning');
-      } else {
-        showToast('Không thể tải danh sách khuyến mãi', 'error');
-      }
+      showToast('Không thể tải danh sách khuyến mãi', 'error');
       setPromotions([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      setLoadingProducts(true);
+      const response = await adminProductService.getProducts({ limit: 100, status: 'active' });
+      const backendData: any = response.data;
+      const productsList = backendData.data || backendData.products || [];
+      setProducts(productsList);
+    } catch (error: any) {
+      showToast('Không thể tải danh sách sản phẩm', 'error');
+      setProducts([]);
+    } finally {
+      setLoadingProducts(false);
     }
   };
 
@@ -63,18 +75,35 @@ export default function PromotionsPage() {
     e.preventDefault();
     try {
       if (editMode && selectedPromotion) {
-        await adminPromotionService.updatePromotion(selectedPromotion.id, formData);
+        // Include status for updates
+        const updateData = {
+          ...formData,
+          status: selectedPromotion.status,
+          product_ids: selectedProductIds.length > 0 ? selectedProductIds : undefined
+        };
+        await adminPromotionService.updatePromotion(selectedPromotion.id, updateData);
         showToast('Đã cập nhật khuyến mãi thành công', 'success');
       } else {
-        await adminPromotionService.createPromotion(formData);
+        // Don't send status field when creating
+        const createData = {
+          name: formData.name,
+          type: formData.type,
+          discount_value: formData.discount_value,
+          discount_type: formData.discount_type,
+          number_limited: formData.number_limited,
+          start_date: formData.start_date,
+          end_date: formData.end_date,
+          product_ids: selectedProductIds.length > 0 ? selectedProductIds : undefined
+        };
+        await adminPromotionService.createPromotion(createData);
         showToast('Đã tạo khuyến mãi thành công', 'success');
       }
       setShowModal(false);
       resetForm();
       fetchPromotions();
     } catch (error: any) {
-      console.error('Error saving promotion:', error);
-      showToast(error.response?.data?.message || 'Không thể lưu khuyến mãi', 'error');
+      const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Không thể lưu khuyến mãi';
+      showToast(errorMsg, 'error');
     }
   };
 
@@ -99,9 +128,9 @@ export default function PromotionsPage() {
       await adminPromotionService.deletePromotion(id);
       showToast('Đã xóa khuyến mãi thành công', 'success');
       fetchPromotions();
-    } catch (error) {
-      console.error('Error deleting promotion:', error);
-      showToast('Failed to delete promotion', 'error');
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.message || 'Không thể xóa khuyến mãi';
+      showToast(errorMsg, 'error');
     }
   };
 
@@ -115,6 +144,8 @@ export default function PromotionsPage() {
       start_date: '',
       end_date: '',
     });
+    setSelectedProductIds([]);
+    setProductSearch('');
     setEditMode(false);
     setSelectedPromotion(null);
   };
@@ -343,8 +374,8 @@ export default function PromotionsPage() {
                   <input
                     type="number"
                     required
-                    value={formData.discount_value}
-                    onChange={(e) => setFormData({ ...formData, discount_value: parseFloat(e.target.value) })}
+                    value={formData.discount_value || ''}
+                    onChange={(e) => setFormData({ ...formData, discount_value: parseFloat(e.target.value) || 0 })}
                     placeholder="20"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
                   />
@@ -355,7 +386,7 @@ export default function PromotionsPage() {
                 <label className="block text-sm font-semibold mb-2">Usage Limit</label>
                 <input
                   type="number"
-                  value={formData.number_limited}
+                  value={formData.number_limited || ''}
                   onChange={(e) => setFormData({ ...formData, number_limited: parseInt(e.target.value) || 0 })}
                   placeholder="0 = unlimited"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
@@ -392,14 +423,14 @@ export default function PromotionsPage() {
                   onClick={() => setShowModal(false)}
                   className="flex-1 px-6 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition"
                 >
-                  Cancel
+                  Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
                   className="flex-1 px-6 py-3 bg-[#4880FF] text-white rounded-lg font-semibold hover:bg-blue-600 transition disabled:opacity-50"
                 >
-                  {loading ? 'Saving...' : (editMode ? 'Update' : 'Create')}
+                  {loading ? 'Đang lưu...' : (editMode ? 'Cập nhật' : 'Tạo mới')}
                 </button>
               </div>
             </form>

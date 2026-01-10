@@ -26,7 +26,9 @@ apiClient.interceptors.request.use(
         // Get token from localStorage (only in browser)
         if (typeof window !== 'undefined') {
             // Check if request is for admin API
-            const isAdminRequest = config.url?.includes('/admin/');
+            // Admin endpoints: /admin/* OR /api/v1/promotions (admin-only resource)
+            const isAdminRequest = config.url?.includes('/admin/') ||
+                config.url?.includes('/api/v1/promotions');
             const token = isAdminRequest
                 ? localStorage.getItem('admin_access_token')
                 : localStorage.getItem('access_token');

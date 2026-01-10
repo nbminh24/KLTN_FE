@@ -13,6 +13,7 @@ export interface AdminPromotion {
     status: 'scheduled' | 'active' | 'expired';
     // Extended fields for display
     used_count?: number;
+    product_count?: number;
 }
 
 export interface CreatePromotionData {
@@ -24,19 +25,23 @@ export interface CreatePromotionData {
     start_date: string;
     end_date: string;
     status?: 'scheduled' | 'active' | 'expired';
+    product_ids?: number[];
 }
 
 export interface PromotionsListResponse {
     promotions: AdminPromotion[];
-    total: number;
-    page: number;
-    limit: number;
+    pagination: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    };
 }
 
 const adminPromotionService = {
     /**
      * Get all promotions
-     * GET /admin/promotions
+     * GET /api/v1/promotions
      */
     getPromotions: async (params?: {
         page?: number;
@@ -45,39 +50,39 @@ const adminPromotionService = {
         search?: string;
         active?: boolean;
     }): Promise<AxiosResponse<PromotionsListResponse>> => {
-        return apiClient.get('/admin/promotions', { params });
+        return apiClient.get('/api/v1/promotions', { params });
     },
 
     /**
      * Get promotion by ID
-     * GET /admin/promotions/:id
+     * GET /api/v1/promotions/:id
      */
     getPromotionById: async (id: number): Promise<AxiosResponse<AdminPromotion>> => {
-        return apiClient.get(`/admin/promotions/${id}`);
+        return apiClient.get(`/api/v1/promotions/${id}`);
     },
 
     /**
      * Create promotion
-     * POST /admin/promotions
+     * POST /api/v1/promotions
      */
     createPromotion: async (data: CreatePromotionData): Promise<AxiosResponse<AdminPromotion>> => {
-        return apiClient.post('/admin/promotions', data);
+        return apiClient.post('/api/v1/promotions', data);
     },
 
     /**
      * Update promotion
-     * PUT /admin/promotions/:id
+     * PUT /api/v1/promotions/:id
      */
     updatePromotion: async (id: number, data: Partial<CreatePromotionData>): Promise<AxiosResponse<AdminPromotion>> => {
-        return apiClient.put(`/admin/promotions/${id}`, data);
+        return apiClient.put(`/api/v1/promotions/${id}`, data);
     },
 
     /**
      * Delete promotion
-     * DELETE /admin/promotions/:id
+     * DELETE /api/v1/promotions/:id
      */
     deletePromotion: async (id: number): Promise<AxiosResponse<void>> => {
-        return apiClient.delete(`/admin/promotions/${id}`);
+        return apiClient.delete(`/api/v1/promotions/${id}`);
     },
 };
 

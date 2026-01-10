@@ -9,23 +9,43 @@ import { ChevronRight, Package, Truck, MapPin, CheckCircle, Clock, Phone, AlertT
 import orderService from '@/lib/services/orderService';
 import axios from 'axios';
 
-// Status mapping
-const STATUS_LABELS: Record<string, string> = {
-  pending: 'Order Placed',
-  confirmed: 'Order Confirmed',
-  processing: 'Processing',
-  shipped: 'Shipped',
-  delivered: 'Delivered',
-  cancelled: 'Cancelled',
+// Status flow
+const STATUS_FLOW = [
+  {
+    key: 'pending',
+    label: 'Đã Tiếp Nhận',
+    description: 'Đơn hàng của bạn đã được tiếp nhận và đang chờ xác nhận',
+  },
+  {
+    key: 'confirmed',
+    label: 'Đã Xác Nhận',
+    description: 'Đơn hàng đã được xác nhận và đang được chuẩn bị',
+  },
+  {
+    key: 'shipped',
+    label: 'Đang Giao Hàng',
+    description: 'Đơn hàng đã được giao cho đơn vị vận chuyển',
+  },
+  {
+    key: 'delivered',
+    label: 'Đã Giao',
+    description: 'Đơn hàng đã được giao thành công',
+  },
+];
+
+const CANCELLED_STEP = {
+  key: 'cancelled',
+  label: 'Đã Hủy',
+  description: 'Đơn hàng đã bị hủy',
 };
 
-const STATUS_DESCRIPTIONS: Record<string, string> = {
-  pending: 'Your order has been received and is pending confirmation',
-  confirmed: 'Your order has been confirmed and is being prepared',
-  processing: 'Your order is being processed in our warehouse',
-  shipped: 'Your package has been shipped and is on the way',
-  delivered: 'Your package has been delivered',
-  cancelled: 'Your order has been cancelled',
+const STATUS_LABELS: Record<string, string> = {
+  pending: 'Đã Tiếp Nhận',
+  confirmed: 'Đã Xác Nhận',
+  processing: 'Đang Xử Lý',
+  shipped: 'Đang Giao Hàng',
+  delivered: 'Đã Giao Hàng',
+  cancelled: 'Đã Hủy',
 };
 
 export default function OrderTrackingPage({ params }: { params: Promise<{ id: string }> }) {
@@ -124,6 +144,21 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
   }
 
   const currentStatus = order.fulfillment_status?.toLowerCase() || 'pending';
+  const isCancelled = currentStatus === 'cancelled';
+
+  // Determine which steps to show
+  const displaySteps = isCancelled ? [STATUS_FLOW[0], CANCELLED_STEP] : STATUS_FLOW;
+
+  // Find current step index
+  const currentStepIndex = displaySteps.findIndex(step => step.key === currentStatus);
+
+  // Get history data mapped by status
+  const historyMap = new Map<string, any>();
+  timeline.forEach(item => {
+    if (!historyMap.has(item.status)) {
+      historyMap.set(item.status, item);
+    }
+  });
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -133,75 +168,97 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
         <div className="container mx-auto px-6 md:px-12 py-6">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm mb-6">
-            <Link href="/" className="text-gray-500">Home</Link>
+            <Link href="/" className="text-gray-500">Trang Chủ</Link>
             <ChevronRight className="w-4 h-4 text-gray-500" />
-            <Link href="/orders" className="text-gray-500">My Orders</Link>
+            <Link href="/orders" className="text-gray-500">Đơn Hàng</Link>
             <ChevronRight className="w-4 h-4 text-gray-500" />
             <Link href={`/orders/${orderId}`} className="text-gray-500">{orderId}</Link>
             <ChevronRight className="w-4 h-4 text-gray-500" />
-            <span className="font-medium">Track Order</span>
+            <span className="font-medium">Theo Dõi Đơn</span>
           </div>
 
-          <h1 className="text-2xl md:text-3xl font-integral font-bold mb-8">Track Your Order</h1>
+          <h1 className="text-2xl md:text-3xl font-integral font-bold mb-8">Theo Dõi Đơn Hàng</h1>
 
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Tracking Timeline */}
             <div className="lg:col-span-2">
               <div className="border border-gray-200 rounded-2xl p-6 md:p-8 mb-6">
-                <h2 className="text-xl font-bold mb-6">Shipping Timeline</h2>
+                <h2 className="text-xl font-bold mb-6">Tiến Trình Vận Chuyển</h2>
 
                 <div className="relative">
                   {/* Vertical line */}
                   <div className="absolute left-[19px] top-8 bottom-8 w-0.5 bg-gray-200"></div>
 
                   <div className="space-y-8">
-                    {timeline.map((step, index) => {
-                      const isLast = index === timeline.length - 1;
-                      const stepStatus = step.status?.toLowerCase();
-                      const isCurrent = stepStatus === currentStatus;
+                    {displaySteps.map((step, index) => {
+                      const isCompleted = index < currentStepIndex;
+                      const isCurrent = index === currentStepIndex;
+                      const isPending = index > currentStepIndex;
+                      const isCancelledStep = step.key === 'cancelled';
+                      const historyData = historyMap.get(step.key);
+
+                      // Determine colors
+                      let iconColor = 'bg-gray-300 text-gray-500'; // pending
+                      let textColor = 'text-gray-500';
+                      let ringClass = '';
+
+                      if (isCancelledStep) {
+                        iconColor = 'bg-red-500 text-white';
+                        textColor = 'text-red-600';
+                        ringClass = 'ring-4 ring-red-100';
+                      } else if (isCurrent) {
+                        iconColor = 'bg-green-500 text-white';
+                        textColor = 'text-green-600';
+                        ringClass = 'ring-4 ring-green-100';
+                      } else if (isCompleted) {
+                        iconColor = 'bg-green-500 text-white';
+                        textColor = 'text-black';
+                      }
 
                       return (
-                        <div key={step.id} className="relative flex gap-5">
+                        <div key={step.key} className="relative flex gap-5">
                           {/* Icon */}
-                          <div className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isCurrent
-                            ? 'bg-blue-500 text-white ring-4 ring-blue-100'
-                            : 'bg-green-500 text-white'
-                            }`}>
-                            <CheckCircle className="w-5 h-5" />
+                          <div className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${iconColor} ${ringClass}`}>
+                            {isPending ? (
+                              <Clock className="w-5 h-5" />
+                            ) : (
+                              <CheckCircle className="w-5 h-5" />
+                            )}
                           </div>
 
                           {/* Content */}
                           <div className="flex-1 pb-8">
                             <div className="flex items-start justify-between mb-2">
                               <div>
-                                <h3 className={`font-bold text-base ${isCurrent ? 'text-blue-600' : 'text-black'
-                                  }`}>
-                                  {STATUS_LABELS[stepStatus] || step.status}
-                                  {isCurrent && (
-                                    <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">
-                                      Current
+                                <h3 className={`font-bold text-base ${textColor}`}>
+                                  {step.label}
+                                  {isCurrent && !isCancelledStep && (
+                                    <span className="ml-2 text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full">
+                                      Hiện tại
                                     </span>
                                   )}
                                 </h3>
                                 <p className="text-sm text-gray-600 mt-1">
-                                  {step.note || STATUS_DESCRIPTIONS[stepStatus] || 'Status updated'}
+                                  {historyData?.note || step.description}
                                 </p>
-                                {step.admin && (
+                                {historyData?.admin && (
                                   <p className="text-xs text-gray-500 mt-1">
-                                    Updated by: {step.admin.name}
+                                    Cập nhật bởi: {historyData.admin.name}
                                   </p>
                                 )}
                               </div>
                             </div>
-                            <p className="text-xs text-gray-500 mt-2">
-                              {new Date(step.created_at).toLocaleString('en-US', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </p>
+                            {historyData?.created_at && (
+                              <p className="text-xs text-gray-500 mt-2">
+                                {new Date(historyData.created_at).toLocaleString('vi-VN', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </p>
+                            )}
                           </div>
                         </div>
                       );
@@ -212,15 +269,15 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
 
               {/* Contact & Support */}
               <div className="border border-gray-200 rounded-2xl p-6">
-                <h3 className="font-bold text-lg mb-4">Need Help?</h3>
+                <h3 className="font-bold text-lg mb-4">Cần Hỗ Trợ?</h3>
                 <div className="space-y-3">
                   <Link href="/support" className="w-full flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition group">
                     <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center group-hover:bg-blue-500 transition">
                       <Phone className="w-5 h-5 text-blue-600 group-hover:text-white" />
                     </div>
                     <div className="text-left">
-                      <p className="font-medium">Contact Support</p>
-                      <p className="text-sm text-gray-600">Get help with your order</p>
+                      <p className="font-medium">Liên Hệ Hỗ Trợ</p>
+                      <p className="text-sm text-gray-600">Nhận hỗ trợ về đơn hàng</p>
                     </div>
                   </Link>
                   <button className="w-full flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-red-500 hover:bg-red-50 transition group">
@@ -228,8 +285,8 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
                       <AlertTriangle className="w-5 h-5 text-red-600 group-hover:text-white" />
                     </div>
                     <div className="text-left">
-                      <p className="font-medium">Report Issue</p>
-                      <p className="text-sm text-gray-600">Having problems?</p>
+                      <p className="font-medium">Báo Cáo Vấn Đề</p>
+                      <p className="text-sm text-gray-600">Gặp vấn đề?</p>
                     </div>
                   </button>
                 </div>
@@ -247,30 +304,30 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
                   {STATUS_LABELS[currentStatus] || order.fulfillment_status}
                 </h3>
                 <p className="text-center text-sm text-gray-600 mb-4">
-                  Order #{order.id}
+                  Đơn hàng #{order.id}
                 </p>
                 <div className="bg-white rounded-lg p-3 text-center">
-                  <p className="text-xs text-gray-600 mb-1">Payment Status</p>
+                  <p className="text-xs text-gray-600 mb-1">Trạng thái thanh toán</p>
                   <p className={`text-sm font-medium ${order.payment_status === 'paid' ? 'text-green-600' : 'text-orange-600'
                     }`}>
-                    {order.payment_status === 'paid' ? 'Paid' : 'Unpaid'}
+                    {order.payment_status === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}
                   </p>
                 </div>
               </div>
 
               {/* Order Details */}
               <div className="border border-gray-200 rounded-2xl p-5">
-                <h3 className="font-bold mb-4">Order Details</h3>
+                <h3 className="font-bold mb-4">Chi Tiết Đơn Hàng</h3>
                 <div className="space-y-3 text-sm">
                   <div>
-                    <p className="text-gray-600">Order ID</p>
+                    <p className="text-gray-600">Mã đơn</p>
                     <p className="font-medium">#{order?.id || orderId}</p>
                   </div>
                   <div>
-                    <p className="text-gray-600">Order Date</p>
+                    <p className="text-gray-600">Ngày đằt</p>
                     <p className="font-medium">
                       {order?.created_at
-                        ? new Date(order.created_at).toLocaleDateString('en-US', {
+                        ? new Date(order.created_at).toLocaleDateString('vi-VN', {
                           year: 'numeric',
                           month: 'short',
                           day: 'numeric'
@@ -280,15 +337,15 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
                     </p>
                   </div>
                   <div>
-                    <p className="text-gray-600">Total Amount</p>
+                    <p className="text-gray-600">Tổng tiền</p>
                     <p className="font-medium">
-                      ${Number(order?.total_amount || order?.total || 0).toFixed(2)}
+                      {(Number(order?.total_amount || order?.total || 0) * 25000).toLocaleString('vi-VN')}₫
                     </p>
                   </div>
                   <div>
-                    <p className="text-gray-600">Payment Method</p>
+                    <p className="text-gray-600">Phương thức thanh toán</p>
                     <p className="font-medium capitalize">
-                      {order?.payment_method || 'COD'}
+                      {order?.payment_method === 'cod' ? 'COD' : order?.payment_method || 'COD'}
                     </p>
                   </div>
                 </div>
@@ -300,20 +357,20 @@ export default function OrderTrackingPage({ params }: { params: Promise<{ id: st
                   href={`/orders/${orderId}`}
                   className="w-full bg-black text-white py-3 rounded-full font-medium hover:bg-gray-800 transition text-center block"
                 >
-                  View Order Details
+                  Xem Chi Tiết Đơn Hàng
                 </Link>
                 <Link
                   href="/support"
                   className="w-full border border-gray-300 text-black py-3 rounded-full font-medium hover:bg-gray-50 transition text-center block"
                 >
-                  Contact Support
+                  Liên Hệ Hỗ Trợ
                 </Link>
               </div>
 
               {/* Delivery Info */}
               <div className="bg-gray-50 rounded-xl p-4 text-sm">
                 <p className="text-gray-700">
-                  <strong>Note:</strong> Please ensure someone is available to receive the package. Valid ID may be required.
+                  <strong>Lưu ý:</strong> Vui lòng đảm bảo có người nhận hàng. Có thể yêu cầu CMND/CCCD.
                 </p>
               </div>
             </div>

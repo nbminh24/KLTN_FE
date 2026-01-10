@@ -10,10 +10,11 @@ import orderService from '@/lib/services/orderService';
 import type { Order } from '@/lib/types/backend';
 import axios from 'axios';
 
-type OrderStatus = 'All' | 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+type OrderStatus = 'All' | 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
 const STATUS_LABELS = {
-    pending: 'Chờ Xử Lý',
+    pending: 'Đã Tiếp Nhận',
+    confirmed: 'Đã Xác Nhận',
     processing: 'Đang Xử Lý',
     shipped: 'Đang Giao Hàng',
     delivered: 'Đã Giao',
@@ -22,23 +23,21 @@ const STATUS_LABELS = {
 
 const STATUS_COLORS = {
     pending: 'bg-yellow-100 text-yellow-800',
-    processing: 'bg-blue-100 text-blue-800',
-    shipped: 'bg-purple-100 text-purple-800',
+    confirmed: 'bg-blue-100 text-blue-800',
+    processing: 'bg-purple-100 text-purple-800',
+    shipped: 'bg-indigo-100 text-indigo-800',
     delivered: 'bg-green-100 text-green-800',
     cancelled: 'bg-red-100 text-red-800',
 };
 
 export default function OrdersPage() {
     const router = useRouter();
-    const [orders, setOrders] = useState<any[]>([]);
+    const [allOrders, setAllOrders] = useState<any[]>([]); // All orders for counting
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<OrderStatus>('All');
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalOrders, setTotalOrders] = useState(0);
 
     useEffect(() => {
         const token = localStorage.getItem('access_token');
@@ -49,30 +48,26 @@ export default function OrdersPage() {
         } else {
             setLoading(false);
         }
-    }, [statusFilter, currentPage]);
+    }, []);
 
     const fetchOrders = async () => {
         try {
             setLoading(true);
             setError('');
+            // Fetch all orders without status filter to get accurate counts
             const response = await orderService.getMyOrders({
-                page: currentPage,
-                limit: 10,
-                status: statusFilter === 'All' ? undefined : statusFilter,
+                page: 1,
+                limit: 100, // Get all orders
             });
 
             console.log('📦 Orders API Response:', response.data);
 
             // Handle multiple possible response structures
             const ordersList = response.data.data || response.data.orders || response.data || [];
-            const metadata = response.data.metadata || response.data.pagination || {};
 
             console.log('📦 Orders List:', ordersList);
-            console.log('📦 Metadata:', metadata);
 
-            setOrders(Array.isArray(ordersList) ? ordersList : []);
-            setTotalPages(metadata.totalPages || metadata.total_pages || 1);
-            setTotalOrders(metadata.total || ordersList.length || 0);
+            setAllOrders(Array.isArray(ordersList) ? ordersList : []);
         } catch (err: any) {
             console.error('❌ Error fetching orders:', err);
             if (axios.isAxiosError(err)) {
@@ -86,7 +81,7 @@ export default function OrdersPage() {
             } else {
                 setError('Failed to load orders. Please try again.');
             }
-            setOrders([]);
+            setAllOrders([]);
         } finally {
             setLoading(false);
         }
@@ -145,20 +140,34 @@ export default function OrdersPage() {
         );
     }
 
-    // Filter orders by search (with safe check)
-    const filteredOrders = (orders || []).filter((order) =>
-        order.order_number?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    // Status counts (with safe check)
+    // Status counts from all orders
+    // Backend returns capitalized status (Shipped), convert to lowercase for comparison
     const statusCounts = {
-        All: totalOrders,
-        pending: (orders || []).filter((o) => o.fulfillment_status === 'pending').length,
-        processing: (orders || []).filter((o) => o.fulfillment_status === 'processing').length,
-        shipped: (orders || []).filter((o) => o.fulfillment_status === 'shipped').length,
-        delivered: (orders || []).filter((o) => o.fulfillment_status === 'delivered').length,
-        cancelled: (orders || []).filter((o) => o.fulfillment_status === 'cancelled').length,
+        All: allOrders.length,
+        pending: allOrders.filter((o) => o.fulfillment_status?.toLowerCase() === 'pending').length,
+        confirmed: allOrders.filter((o) => o.fulfillment_status?.toLowerCase() === 'confirmed').length,
+        processing: allOrders.filter((o) => o.fulfillment_status?.toLowerCase() === 'processing').length,
+        shipped: allOrders.filter((o) => o.fulfillment_status?.toLowerCase() === 'shipped').length,
+        delivered: allOrders.filter((o) => o.fulfillment_status?.toLowerCase() === 'delivered').length,
+        cancelled: allOrders.filter((o) => o.fulfillment_status?.toLowerCase() === 'cancelled').length,
     };
+
+    // Filter by status tab
+    let orders = allOrders;
+    if (statusFilter !== 'All') {
+        orders = allOrders.filter((o) => o.fulfillment_status?.toLowerCase() === statusFilter);
+    }
+
+    // Helper function to format order number
+    const formatOrderNumber = (orderId: number) => {
+        return `#LCS-${String(orderId).padStart(6, '0')}`;
+    };
+
+    // Filter by search query
+    const filteredOrders = orders.filter((order) => {
+        const formattedNumber = formatOrderNumber(order.id);
+        return formattedNumber.toLowerCase().includes(searchQuery.toLowerCase());
+    });
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -178,13 +187,10 @@ export default function OrdersPage() {
                     {/* Status Filter Tabs */}
                     <div className="border-b border-gray-200 mb-6 overflow-x-auto">
                         <div className="flex gap-6">
-                            {(['All', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'] as OrderStatus[]).map((status) => (
+                            {(['All', 'pending', 'confirmed', 'shipped', 'delivered', 'cancelled'] as OrderStatus[]).map((status) => (
                                 <button
                                     key={status}
-                                    onClick={() => {
-                                        setStatusFilter(status);
-                                        setCurrentPage(1);
-                                    }}
+                                    onClick={() => setStatusFilter(status)}
                                     className={`pb-3 whitespace-nowrap font-medium transition border-b-2 ${statusFilter === status
                                         ? 'border-black text-black'
                                         : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -233,7 +239,7 @@ export default function OrdersPage() {
                                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                                         <div className="space-y-2">
                                             <div className="flex items-center gap-3">
-                                                <h3 className="font-bold text-lg">{order.order_number}</h3>
+                                                <h3 className="font-bold text-lg">{formatOrderNumber(order.id)}</h3>
                                                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[order.fulfillment_status as keyof typeof STATUS_COLORS]}`}>
                                                     {STATUS_LABELS[order.fulfillment_status as keyof typeof STATUS_LABELS]}
                                                 </span>
@@ -263,7 +269,7 @@ export default function OrdersPage() {
 
                                         <div className="text-right">
                                             <p className="text-2xl font-bold mb-2">
-                                                {order.total_amount.toLocaleString('vi-VN')}₫
+                                                {(Number(order.total_amount || 0) * 25000).toLocaleString('vi-VN')}₫
                                             </p>
                                             <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
                                                 Xem Chi Tiết →
@@ -275,28 +281,6 @@ export default function OrdersPage() {
                         </div>
                     )}
 
-                    {/* Pagination */}
-                    {totalPages > 1 && (
-                        <div className="flex items-center justify-center gap-2 mt-8">
-                            <button
-                                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                                disabled={currentPage === 1}
-                                className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition"
-                            >
-                                Trước
-                            </button>
-                            <span className="px-4 py-2">
-                                Trang {currentPage} / {totalPages}
-                            </span>
-                            <button
-                                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                                disabled={currentPage === totalPages}
-                                className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition"
-                            >
-                                Tiếp
-                            </button>
-                        </div>
-                    )}
                 </div>
             </main>
 

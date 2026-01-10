@@ -55,7 +55,8 @@ export interface OrdersListResponse {
 }
 
 export interface UpdateOrderStatusData {
-    fulfillment_status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+    status: 'Pending' | 'Confirmed' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+    note?: string;
 }
 
 const adminOrderService = {
@@ -91,6 +92,14 @@ const adminOrderService = {
      */
     updateOrderStatus: async (id: number, data: UpdateOrderStatusData): Promise<AxiosResponse<AdminOrder>> => {
         return apiClient.put(`/admin/orders/${id}/status`, data);
+    },
+
+    /**
+     * Update payment status
+     * PUT /admin/orders/:id/payment-status
+     */
+    updatePaymentStatus: async (id: number, paymentStatus: 'paid' | 'unpaid'): Promise<AxiosResponse<AdminOrder>> => {
+        return apiClient.put(`/admin/orders/${id}/payment-status`, { payment_status: paymentStatus });
     },
 
     /**

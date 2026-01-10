@@ -182,7 +182,7 @@ export default function ChatPage() {
 
     const handleDeleteSession = async (sessionId: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!confirm('Delete this chat session?')) return;
+        if (!confirm('Xóa cuộc trò chuyện này?')) return;
 
         try {
             await chatService.deleteSession(Number(sessionId));
@@ -283,23 +283,23 @@ export default function ChatPage() {
                             className="w-full flex items-center justify-center gap-2 bg-black text-white px-4 py-2.5 rounded-lg hover:bg-gray-800 transition"
                         >
                             <Plus className="w-5 h-5" />
-                            <span className="font-medium">New Chat</span>
+                            <span className="font-medium">Mới</span>
                         </button>
                     </div>
 
                     {/* Chat History */}
                     <div className="flex-1 overflow-y-auto p-3">
                         {loadingHistory ? (
-                            <p className="text-xs text-gray-500 text-center py-4">Loading...</p>
+                            <p className="text-xs text-gray-500 text-center py-4">Đang tải...</p>
                         ) : (
                             <>
-                                {renderSessionGroup('Today', sessionsHistory.today)}
-                                {renderSessionGroup('Yesterday', sessionsHistory.yesterday)}
-                                {renderSessionGroup('Last 7 Days', sessionsHistory.last_7_days)}
-                                {renderSessionGroup('Older', sessionsHistory.older)}
+                                {renderSessionGroup('Hôm Nay', sessionsHistory.today)}
+                                {renderSessionGroup('Hôm Qua', sessionsHistory.yesterday)}
+                                {renderSessionGroup('7 Ngày Qua', sessionsHistory.last_7_days)}
+                                {renderSessionGroup('Cũ Hơn', sessionsHistory.older)}
                                 {Object.values(sessionsHistory).flat().length === 0 && (
                                     <p className="text-xs text-gray-500 text-center py-4">
-                                        No chat history yet
+                                        Chưa có lịch sử trò chuyện
                                     </p>
                                 )}
                             </>
@@ -313,7 +313,7 @@ export default function ChatPage() {
                             className="w-full flex items-center justify-center gap-2 text-gray-600 hover:text-gray-900 transition"
                         >
                             <Menu className="w-5 h-5" />
-                            <span className="text-sm">Collapse</span>
+                            <span className="text-sm">Thu Gọn</span>
                         </button>
                     </div>
                 </div>
@@ -335,8 +335,8 @@ export default function ChatPage() {
                                 <Bot className="w-5 h-5 text-black" />
                             </div>
                             <div>
-                                <h3 className="font-bold">LeCas Assistant</h3>
-                                <p className="text-xs text-gray-300">Always here to help</p>
+                                <h3 className="font-bold">Trợ Lý LeCas</h3>
+                                <p className="text-xs text-gray-300">Luôn sẵn sàng hỗ trợ bạn</p>
                             </div>
                         </div>
                     </div>
@@ -366,28 +366,28 @@ export default function ChatPage() {
                         <div className="max-w-4xl mx-auto">
                             <div className="flex gap-2 flex-wrap">
                                 <button
-                                    onClick={() => setInputValue('Track my order')}
+                                    onClick={() => setInputValue('Theo dõi đơn hàng')}
                                     className="text-xs bg-white px-4 py-2 rounded-full hover:bg-gray-100 transition border border-gray-200"
                                 >
-                                    Track Order
+                                    Theo Dõi Đơn Hàng
                                 </button>
                                 <button
-                                    onClick={() => setInputValue('Show me new arrivals')}
+                                    onClick={() => setInputValue('Hiển thị hàng mới về')}
                                     className="text-xs bg-white px-4 py-2 rounded-full hover:bg-gray-100 transition border border-gray-200"
                                 >
-                                    New Arrivals
+                                    Hàng Mới Về
                                 </button>
                                 <button
-                                    onClick={() => setInputValue('Help with returns')}
+                                    onClick={() => setInputValue('Hỗ trợ đổi trả')}
                                     className="text-xs bg-white px-4 py-2 rounded-full hover:bg-gray-100 transition border border-gray-200"
                                 >
-                                    Returns
+                                    Đổi Trả
                                 </button>
                                 <button
-                                    onClick={() => setInputValue('Product recommendations')}
+                                    onClick={() => setInputValue('Gợi ý sản phẩm')}
                                     className="text-xs bg-white px-4 py-2 rounded-full hover:bg-gray-100 transition border border-gray-200"
                                 >
-                                    Recommendations
+                                    Gợi Ý Sản Phẩm
                                 </button>
                             </div>
                         </div>
@@ -427,7 +427,7 @@ export default function ChatPage() {
                                 <button
                                     onClick={() => fileInputRef.current?.click()}
                                     className="p-3 border border-gray-300 rounded-full hover:bg-gray-50 transition"
-                                    title="Upload image"
+                                    title="Tải ảnh lên"
                                 >
                                     <Camera className="w-5 h-5 text-gray-600" />
                                 </button>
@@ -436,7 +436,7 @@ export default function ChatPage() {
                                     value={inputValue}
                                     onChange={(e) => setInputValue(e.target.value)}
                                     onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                                    placeholder="Type your message..."
+                                    placeholder="Nhập tin nhắn của bạn..."
                                     className="flex-1 px-5 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-black text-sm"
                                 />
                                 <button

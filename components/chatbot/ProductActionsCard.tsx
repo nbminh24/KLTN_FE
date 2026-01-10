@@ -16,10 +16,9 @@ export default function ProductActionsCard({ data, onAddToCart }: ProductActions
     const [selectedSize, setSelectedSize] = useState<SizeOptionWithId | null>(null);
 
     const formatPrice = (price: number) => {
-        return new Intl.NumberFormat('vi-VN', {
-            style: 'currency',
-            currency: 'VND',
-        }).format(price);
+        // Format in thousands of VND
+        const priceInThousands = price / 1000;
+        return `${priceInThousands.toFixed(0)}k đ`;
     };
 
     const handleAddToCart = () => {

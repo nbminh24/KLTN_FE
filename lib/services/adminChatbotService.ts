@@ -53,6 +53,14 @@ const adminChatbotService = {
     },
 
     /**
+     * Get top intents statistics
+     * GET /admin/chatbot/top-intents
+     */
+    getTopIntents: async (limit: number = 10): Promise<AxiosResponse> => {
+        return apiClient.get(`/admin/chatbot/top-intents?limit=${limit}`);
+    },
+
+    /**
      * Get unanswered conversations
      * GET /admin/chatbot/unanswered
      */

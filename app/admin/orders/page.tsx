@@ -6,7 +6,7 @@ import { Search, Download, Package, Loader2 } from 'lucide-react';
 import adminOrderService, { AdminOrder } from '@/lib/services/admin/orderService';
 import { showToast } from '@/components/Toast';
 
-type FulfillmentStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+type FulfillmentStatus = 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
 type PaymentStatus = 'unpaid' | 'paid';
 
 export default function OrdersPage() {
@@ -24,7 +24,7 @@ export default function OrdersPage() {
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
-    processing: 0,
+    confirmed: 0,
     shipped: 0,
     delivered: 0,
     cancelled: 0
@@ -45,9 +45,9 @@ export default function OrdersPage() {
       setStats({
         total: response.data.total_orders || 0,
         pending: response.data.pending_orders || 0,
-        processing: response.data.processing_orders || 0,
-        shipped: 0, // Not in API response
-        delivered: response.data.completed_orders || 0,
+        confirmed: response.data.confirmed_orders || 0,
+        shipped: response.data.shipped_orders || 0,
+        delivered: response.data.delivered_orders || 0,
         cancelled: response.data.cancelled_orders || 0,
       });
     } catch (error: any) {
@@ -65,6 +65,7 @@ export default function OrdersPage() {
       setLoading(true);
       console.log('📦 Fetching orders...', { status: activeTab, page: currentPage });
 
+      // Query params use lowercase, only PUT body uses capitalized
       const response = await adminOrderService.getOrders({
         status: activeTab,
         page: currentPage,
@@ -109,7 +110,7 @@ export default function OrdersPage() {
         return 'bg-green-100 text-green-700';
       case 'shipped':
         return 'bg-blue-100 text-blue-700';
-      case 'processing':
+      case 'confirmed':
         return 'bg-purple-100 text-purple-700';
       case 'pending':
         return 'bg-yellow-100 text-yellow-700';
@@ -157,19 +158,19 @@ export default function OrdersPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl p-5 border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">Total Orders</p>
+          <p className="text-sm text-gray-600 mb-1">Tổng đơn hàng</p>
           <p className="text-2xl font-bold text-blue-600">{stats.total}</p>
         </div>
         <div className="bg-white rounded-xl p-5 border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">Pending</p>
+          <p className="text-sm text-gray-600 mb-1">Chờ xác nhận</p>
           <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
         </div>
         <div className="bg-white rounded-xl p-5 border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">Processing</p>
-          <p className="text-2xl font-bold text-blue-600">{stats.processing}</p>
+          <p className="text-sm text-gray-600 mb-1">Đã xác nhận</p>
+          <p className="text-2xl font-bold text-blue-600">{stats.confirmed}</p>
         </div>
         <div className="bg-white rounded-xl p-5 border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">Delivered</p>
+          <p className="text-sm text-gray-600 mb-1">Đã giao</p>
           <p className="text-2xl font-bold text-green-600">{stats.delivered}</p>
         </div>
       </div>
@@ -177,7 +178,7 @@ export default function OrdersPage() {
       {/* Tabs */}
       <div className="bg-white rounded-xl border border-gray-200">
         <div className="flex border-b border-gray-200">
-          {(['pending', 'processing', 'shipped', 'delivered', 'cancelled'] as FulfillmentStatus[]).map((status) => (
+          {(['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'] as FulfillmentStatus[]).map((status) => (
             <button
               key={status}
               onClick={() => {
@@ -190,7 +191,7 @@ export default function OrdersPage() {
                 }`}
             >
               <Package className="w-4 h-4" />
-              {status}
+              {status === 'pending' ? 'Chờ xác nhận' : status === 'confirmed' ? 'Đã xác nhận' : status === 'shipped' ? 'Đang giao' : status === 'delivered' ? 'Đã giao' : 'Đã hủy'}
             </button>
           ))}
         </div>
@@ -203,7 +204,7 @@ export default function OrdersPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search by Order ID or Customer name..."
+              placeholder="Tìm theo mã đơn hàng hoặc tên khách hàng..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -214,7 +215,7 @@ export default function OrdersPage() {
             onClick={handleSearch}
             className="px-4 py-2 bg-[#4880FF] text-white rounded-lg hover:bg-blue-600 transition font-semibold text-sm"
           >
-            Search
+            Tìm kiếm
           </button>
           <select
             value={sortOrder}
@@ -224,8 +225,8 @@ export default function OrdersPage() {
             }}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
           >
-            <option value="desc">Date: Newest</option>
-            <option value="asc">Date: Oldest</option>
+            <option value="desc">Ngày: Mới nhất</option>
+            <option value="asc">Ngày: Cũ nhất</option>
           </select>
           <button
             onClick={() => setShowBulkUpdateModal(true)}
@@ -236,7 +237,7 @@ export default function OrdersPage() {
               }`}
           >
             <Package className="w-4 h-4" />
-            Update Tracking ({selectedOrders.length})
+            Cập nhật ({selectedOrders.length})
           </button>
         </div>
       </div>
@@ -255,12 +256,12 @@ export default function OrdersPage() {
                     className="w-4 h-4 rounded border-gray-300 cursor-pointer"
                   />
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Order ID</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Customer</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Date Received</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Items</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Money Status</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Total</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Mã đơn</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Khách hàng</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Ngày đặt</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Sản phẩm</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Thanh toán</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Tổng tiền</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -273,7 +274,7 @@ export default function OrdersPage() {
               ) : filteredOrders.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
-                    No orders found
+                    Không tìm thấy đơn hàng
                   </td>
                 </tr>
               ) : (
@@ -296,8 +297,8 @@ export default function OrdersPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{order.customer_name || 'Guest'}</div>
-                        <div className="text-xs text-gray-500">{order.customer_email}</div>
+                        <div className="text-sm font-medium text-gray-900">{order.customer_name || order.customer_email || 'Khách'}</div>
+                        {order.customer_name && <div className="text-xs text-gray-500">{order.customer_email}</div>}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
@@ -312,7 +313,7 @@ export default function OrdersPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm font-semibold text-[#202224]">
-                      {order.total_amount.toLocaleString('vi-VN')} VND
+                      {(parseFloat(order.total_amount.toString()) * 25000).toLocaleString('vi-VN')} đ
                     </td>
                   </tr>
                 ))
@@ -332,7 +333,7 @@ export default function OrdersPage() {
               disabled={currentPage === 1}
               className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Previous
+              Trước
             </button>
             <button className="px-4 py-2 bg-[#4880FF] text-white rounded-lg">{currentPage}</button>
             {currentPage < totalPages && (
@@ -348,7 +349,7 @@ export default function OrdersPage() {
               disabled={currentPage === totalPages}
               className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Next
+              Sau
             </button>
           </div>
         </div>
@@ -359,21 +360,21 @@ export default function OrdersPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowBulkUpdateModal(false)}>
           <div className="bg-white rounded-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-xl font-bold text-[#202224] mb-4">
-              Update Tracking - {selectedOrders.length} order{selectedOrders.length > 1 ? 's' : ''} selected
+              Cập nhật trạng thái - {selectedOrders.length} đơn hàng đã chọn
             </h2>
 
             <p className="text-sm text-gray-600 mb-4">
-              Update status for selected orders:
+              Cập nhật trạng thái cho các đơn hàng đã chọn:
             </p>
 
             <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF] mb-4">
-              <option value="">Choose Status</option>
-              <option value="next">Next Status (Processing)</option>
-              <option value="cancel">Cancel Order</option>
+              <option value="">Chọn trạng thái</option>
+              <option value="next">Trạng thái tiếp theo</option>
+              <option value="cancel">Hủy đơn hàng</option>
             </select>
 
             <p className="text-xs text-gray-500 mb-6">
-              Note: Delivered orders will be skipped automatically
+              Lưu ý: Đơn hàng đã giao sẽ tự động bỏ qua
             </p>
 
             <div className="flex gap-3">
@@ -381,19 +382,19 @@ export default function OrdersPage() {
                 onClick={() => setShowBulkUpdateModal(false)}
                 className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-semibold"
               >
-                Cancel
+                Hủy
               </button>
               <button
                 onClick={() => {
-                  if (confirm(`Update ${selectedOrders.length} orders to next status?`)) {
-                    alert('Orders updated successfully!');
+                  if (confirm(`Cập nhật ${selectedOrders.length} đơn hàng sang trạng thái tiếp theo?`)) {
+                    alert('Cập nhật đơn hàng thành công!');
                     setSelectedOrders([]);
                     setShowBulkUpdateModal(false);
                   }
                 }}
                 className="flex-1 px-4 py-2.5 bg-[#4880FF] text-white rounded-lg hover:bg-blue-600 transition font-semibold"
               >
-                Confirm Update
+                Xác nhận
               </button>
             </div>
           </div>

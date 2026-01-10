@@ -16,6 +16,7 @@ function SupportInboxContent() {
     const [filterStatus, setFilterStatus] = useState<TicketStatus>('pending');
     const [searchQuery, setSearchQuery] = useState('');
     const [tickets, setTickets] = useState<SupportTicket[]>([]);
+    const [allTickets, setAllTickets] = useState<SupportTicket[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -32,8 +33,24 @@ function SupportInboxContent() {
     }, [searchParams]);
 
     useEffect(() => {
+        fetchAllTickets();
+    }, []);
+
+    useEffect(() => {
         fetchTickets();
     }, [filterStatus]);
+
+    const fetchAllTickets = async () => {
+        try {
+            const response = await adminSupportService.getTickets({
+                page: 1,
+                limit: 1000
+            });
+            setAllTickets(response.data.data || []);
+        } catch (error) {
+            console.error('Failed to fetch all tickets:', error);
+        }
+    };
 
     const fetchTickets = async () => {
         try {
@@ -110,6 +127,7 @@ function SupportInboxContent() {
     };
 
     const ticketsArray = Array.isArray(tickets) ? tickets : [];
+    const allTicketsArray = Array.isArray(allTickets) ? allTickets : [];
 
     const filteredTickets = ticketsArray.filter(ticket =>
         ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -118,10 +136,10 @@ function SupportInboxContent() {
     );
 
     const stats = {
-        pending: ticketsArray.filter(t => t.status === 'pending').length,
-        in_progress: ticketsArray.filter(t => t.status === 'in_progress').length,
-        resolved: ticketsArray.filter(t => t.status === 'resolved').length,
-        total: ticketsArray.length
+        pending: allTicketsArray.filter(t => t.status === 'pending').length,
+        in_progress: allTicketsArray.filter(t => t.status === 'in_progress').length,
+        resolved: allTicketsArray.filter(t => t.status === 'resolved').length,
+        total: allTicketsArray.length
     };
 
     return (

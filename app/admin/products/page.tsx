@@ -6,11 +6,14 @@ import Image from 'next/image';
 import { Search, Filter, Plus, Edit2, Trash2, Download, Upload, Sparkles, Eye, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import adminProductService, { AdminProduct } from '@/lib/services/admin/productService';
+import adminCategoryService, { AdminCategory } from '@/lib/services/admin/categoryService';
 import { showToast } from '@/components/Toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function ProductsPage() {
   const router = useRouter();
   const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -21,8 +24,22 @@ export default function ProductsPage() {
   const [sortBy, setSortBy] = useState('name');
 
   useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
     fetchProducts();
-  }, [currentPage, selectedCategory, selectedStockStatus]);
+  }, [currentPage, selectedCategory, selectedStockStatus, searchQuery]);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await adminCategoryService.getCategories();
+      const categoriesList = response.data.categories || response.data.data || [];
+      setCategories(categoriesList);
+    } catch (err) {
+      console.error('❌ Failed to load categories:', err);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -33,6 +50,7 @@ export default function ProductsPage() {
         limit: 20,
         category_id: selectedCategory !== 'all' ? parseInt(selectedCategory) : undefined,
         status: selectedStockStatus === 'all' ? undefined : (selectedStockStatus as 'active' | 'inactive'),
+        search: searchQuery || undefined,
       });
       console.log('📦 Products response:', response.data);
 
@@ -67,10 +85,8 @@ export default function ProductsPage() {
     }
   };
 
-  const filteredProducts = (products || []).filter((p) => {
-    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
+  // Products are already filtered by API, no need for client-side filtering
+  const filteredProducts = products || [];
 
   const handleSelectAll = (checked: boolean) => {
     setSelectedProducts(checked ? (products || []).map((p) => p.id) : []);
@@ -95,7 +111,7 @@ export default function ProductsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-[#202224]">Sản Phẩm</h1>
-          <p className="text-gray-600 mt-1">Quản lý kho sản phẩm của bạn</p>
+          <p className="text-gray-600 mt-1">Quản lý kho sản phẩm của LeCas</p>
         </div>
         <div className="flex gap-3">
           {selectedProducts.length > 0 && (
@@ -130,38 +146,41 @@ export default function ProductsPage() {
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
             />
           </div>
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-          >
-            <option value="all">Tất Cả Danh Mục</option>
-            <option value="T-Shirts">T-Shirts</option>
-            <option value="Shirts">Shirts</option>
-            <option value="Jeans">Jeans</option>
-            <option value="Hoodies">Hoodies</option>
-          </select>
-          <select
-            value={selectedStockStatus}
-            onChange={(e) => setSelectedStockStatus(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-          >
-            <option value="all">Tất Cả Trạng Thái</option>
-            <option value="in-stock">Còn Hàng</option>
-            <option value="low-stock">Sắp Hết</option>
-            <option value="out-of-stock">Hết Hàng</option>
-          </select>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-          >
-            <option value="name">Sắp Xếp Theo Tên</option>
-            <option value="price-asc">Giá: Thấp Đến Cao</option>
-            <option value="price-desc">Giá: Cao Đến Thấp</option>
-            <option value="stock-asc">Tồn Kho: Thấp Đến Cao</option>
-            <option value="stock-desc">Tồn Kho: Cao Đến Thấp</option>
-          </select>
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger className="w-[200px] h-10">
+              <SelectValue placeholder="Tất Cả Danh Mục" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất Cả Danh Mục</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category.id} value={category.id.toString()}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={selectedStockStatus} onValueChange={setSelectedStockStatus}>
+            <SelectTrigger className="w-[200px] h-10">
+              <SelectValue placeholder="Tất Cả Trạng Thái" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất Cả Trạng Thái</SelectItem>
+              <SelectItem value="active">Đang Hoạt Động</SelectItem>
+              <SelectItem value="inactive">Ngừng Bán</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[200px] h-10">
+              <SelectValue placeholder="Sắp Xếp" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name">Sắp Xếp Theo Tên</SelectItem>
+              <SelectItem value="price-asc">Giá: Thấp Đến Cao</SelectItem>
+              <SelectItem value="price-desc">Giá: Cao Đến Thấp</SelectItem>
+              <SelectItem value="stock-asc">Tồn Kho: Thấp Đến Cao</SelectItem>
+              <SelectItem value="stock-desc">Tồn Kho: Cao Đến Thấp</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -216,8 +235,8 @@ export default function ProductsPage() {
                       <span className="font-semibold text-sm text-[#202224]">{product.name}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{product.category?.name || 'N/A'}</td>
-                  <td className="px-6 py-4 text-sm font-semibold text-[#202224]">{product.selling_price.toLocaleString('vi-VN')}₫</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{product.category_name || 'N/A'}</td>
+                  <td className="px-6 py-4 text-sm font-semibold text-[#202224]">{(Number(product.selling_price) * 25000).toLocaleString('vi-VN')}₫</td>
                   <td className="px-6 py-4">
                     <span className={`text-sm font-semibold ${product.total_stock > 50 ? 'text-green-600' : product.total_stock > 0 ? 'text-yellow-600' : 'text-red-600'}`}>
                       {product.total_stock}
@@ -252,16 +271,25 @@ export default function ProductsPage() {
 
         {/* Pagination */}
         <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-          <p className="text-sm text-gray-600">Hiển thị 1-3 trong tổng số 300</p>
+          <p className="text-sm text-gray-600">
+            Hiển thị {((currentPage - 1) * 20) + 1}-{Math.min(currentPage * 20, products.length)} sản phẩm
+          </p>
           <div className="flex gap-2">
-            <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Trước
             </button>
-            <button className="px-4 py-2 bg-[#4880FF] text-white rounded-lg">1</button>
-            <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
-              2
-            </button>
-            <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+            <span className="px-4 py-2 bg-[#4880FF] text-white rounded-lg">
+              {currentPage}
+            </span>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Tiếp
             </button>
           </div>

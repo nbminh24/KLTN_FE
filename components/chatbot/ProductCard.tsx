@@ -30,7 +30,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                     {!product.in_stock && (
                         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                             <span className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold">
-                                Out of Stock
+                                Hết Hàng
                             </span>
                         </div>
                     )}

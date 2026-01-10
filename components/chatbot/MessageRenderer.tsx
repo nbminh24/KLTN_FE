@@ -9,6 +9,7 @@ import TicketConfirmation from './TicketConfirmation';
 import RasaButtons from './RasaButtons';
 import ProductActionsCard from './ProductActionsCard';
 import ImageSearchResults from './ImageSearchResults';
+import { useState, useEffect } from 'react';
 
 interface MessageRendererProps {
     message: ChatMessage;
@@ -21,6 +22,23 @@ interface MessageRendererProps {
     onAddToCartWithVariant?: (productId: number, colorId: number, sizeId: number) => void;
 }
 
+const STICKERS = [
+    '/sticker/elegant.png',
+    '/sticker/sale.png',
+    '/sticker/shipper.png',
+    '/sticker/shopping.png',
+    '/sticker/shopping2.png',
+    '/sticker/shopping3.png',
+    '/sticker/shopping4.png',
+    '/sticker/use my money.png',
+];
+
+const getRandomSticker = () => {
+    const shouldShowSticker = Math.random() < 0.3; // 30% chance
+    if (!shouldShowSticker) return null;
+    return STICKERS[Math.floor(Math.random() * STICKERS.length)];
+};
+
 export default function MessageRenderer({
     message,
     onAddToCart,
@@ -31,6 +49,13 @@ export default function MessageRenderer({
     onRasaButtonClick,
     onAddToCartWithVariant,
 }: MessageRendererProps) {
+    const [randomSticker, setRandomSticker] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (message.sender === 'bot') {
+            setRandomSticker(getRandomSticker());
+        }
+    }, [message.id, message.sender]);
     // Render based on message type
     const renderContent = () => {
         // If message has custom data, render rich content
@@ -170,21 +195,21 @@ export default function MessageRenderer({
                                                     <p className="font-medium text-gray-900">{item.product_name}</p>
                                                     <p className="text-xs text-gray-500">
                                                         {item.size && item.color && `${item.color} • ${item.size} • `}
-                                                        Qty: {item.quantity}
+                                                        SL: {item.quantity}
                                                     </p>
                                                 </div>
-                                                <p className="font-semibold text-gray-900">${item.price?.toFixed(2)}</p>
+                                                <p className="font-semibold text-gray-900">{(item.price / 1000).toFixed(0)}k đ</p>
                                             </div>
                                         ))}
                                         <div className="mt-3 pt-2 border-t border-gray-300">
                                             <div className="flex justify-between items-center">
-                                                <p className="font-bold text-gray-900">Total:</p>
-                                                <p className="font-bold text-lg text-black">${message.custom.total?.toFixed(2)}</p>
+                                                <p className="font-bold text-gray-900">Tổng:</p>
+                                                <p className="font-bold text-lg text-black">{(message.custom.total / 1000).toFixed(0)}k đ</p>
                                             </div>
                                         </div>
                                     </>
                                 ) : (
-                                    <p className="text-gray-500 text-center py-2">Your cart is empty</p>
+                                    <p className="text-gray-500 text-center py-2">Giỏ hàng trống</p>
                                 )}
                             </div>
                         </>
@@ -245,6 +270,20 @@ export default function MessageRenderer({
                         disabled={message.buttons_disabled}
                         onButtonClick={onRasaButtonClick}
                     />
+                )}
+
+                {/* Random Sticker (only for bot messages) */}
+                {message.sender === 'bot' && randomSticker && (
+                    <div className="mt-2 flex justify-center">
+                        <div className="relative w-20 h-20">
+                            <Image
+                                src={randomSticker}
+                                alt="sticker"
+                                fill
+                                className="object-contain"
+                            />
+                        </div>
+                    </div>
                 )}
 
                 {/* Timestamp */}

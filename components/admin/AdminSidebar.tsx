@@ -30,16 +30,15 @@ export default function AdminSidebar() {
     { name: 'Bảng Điều Khiển', path: '/admin', icon: <LayoutDashboard className="w-5 h-5" /> },
     { name: 'Sản Phẩm', path: '/admin/products', icon: <Package className="w-5 h-5" /> },
     { name: 'Danh Mục', path: '/admin/categories', icon: <Folder className="w-5 h-5" /> },
+    { name: 'Tồn Kho', path: '/admin/inventory', icon: <PackageSearch className="w-5 h-5" /> },
     { name: 'Đơn Hàng', path: '/admin/orders', icon: <ShoppingCart className="w-5 h-5" /> },
     { name: 'Khách Hàng', path: '/admin/customers', icon: <Users className="w-5 h-5" /> },
+    { name: 'Khuyến Mãi', path: '/admin/promotions', icon: <Tag className="w-5 h-5" /> },
   ];
 
-  const pagesItems: MenuItem[] = [
-    { name: 'Khuyến Mãi', path: '/admin/promotions', icon: <Tag className="w-5 h-5" /> },
-    { name: 'Tồn Kho', path: '/admin/inventory', icon: <PackageSearch className="w-5 h-5" /> },
+  const supportItems: MenuItem[] = [
     { name: 'Chatbot', path: '/admin/chatbot', icon: <MessageSquare className="w-5 h-5" /> },
     { name: 'Hỗ Trợ Khách Hàng', path: '/admin/support-inbox', icon: <Mail className="w-5 h-5" /> },
-    { name: 'Trang (CMS)', path: '/admin/pages', icon: <FileText className="w-5 h-5" /> },
   ];
 
   const isActive = (path: string) => {
@@ -80,12 +79,12 @@ export default function AdminSidebar() {
         {/* Divider */}
         <div className="my-4 border-t border-gray-200"></div>
 
-        {/* Pages Section */}
+        {/* Support Section */}
         <div className="px-6 mb-2">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Trang</p>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Hỗ Trợ</p>
         </div>
         <nav className="space-y-1 px-3">
-          {pagesItems.map((item) => (
+          {supportItems.map((item) => (
             <Link
               key={item.path}
               href={item.path}

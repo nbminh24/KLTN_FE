@@ -126,7 +126,7 @@ export default function AdminDashboard() {
   const statCards = [
     {
       title: 'Tổng Doanh Thu',
-      value: `${(stats?.total_revenue || 0).toLocaleString('vi-VN')} VND`,
+      value: `${(stats?.total_revenue || 0).toLocaleString('vi-VN')}₫`,
       subtitle: 'Tổng thu nhập',
       icon: <DollarSign className="w-7 h-7" />,
       color: 'bg-green-500',
@@ -156,8 +156,62 @@ export default function AdminDashboard() {
 
   const recentOrders = stats?.recent_orders || [];
 
-  // Line Chart Data - Use real data from API or fallback
-  const lineChartData = revenueTrendData?.dailyStats || [];
+  // Fill missing dates to create continuous timeline
+  const fillMissingDates = (data: any[], days: number) => {
+    if (!data || data.length === 0) {
+      // If no data, create empty array with all dates
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(endDate.getDate() - days + 1);
+
+      const filledData = [];
+      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        filledData.push({
+          date: new Date(d).toISOString(),
+          revenue: 0,
+          revenueInMillions: 0,
+          ordersCount: 0,
+          day: `Day ${filledData.length + 1}`
+        });
+      }
+      return filledData;
+    }
+
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - days + 1);
+
+    const filledData = [];
+    // Create map with normalized date keys (YYYY-MM-DD)
+    const dataMap = new Map(data.map(item => {
+      const normalizedDate = item.date.split('T')[0]; // Extract YYYY-MM-DD
+      return [normalizedDate, item];
+    }));
+
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      const dateStr = new Date(d).toISOString().split('T')[0]; // YYYY-MM-DD
+      const existing = dataMap.get(dateStr);
+
+      if (existing) {
+        filledData.push(existing);
+      } else {
+        // Create entry for missing date with 0 values
+        filledData.push({
+          date: new Date(d).toISOString(),
+          revenue: 0,
+          revenueInMillions: 0,
+          ordersCount: 0,
+          day: `Day ${filledData.length + 1}`
+        });
+      }
+    }
+
+    return filledData;
+  };
+
+  // Line Chart Data - Use real data from API with filled dates
+  const rawLineChartData = revenueTrendData?.dailyStats || [];
+  const lineChartData = fillMissingDates(rawLineChartData, parseInt(dateRange));
   const revenueGrowth = revenueTrendData?.summary?.revenueGrowth || 0;
 
   // Generate X-axis ticks based on date range
@@ -243,155 +297,86 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* Charts Row - 2 Columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sales Chart - Line Chart */}
-        <Card className="bg-white">
-          <CardHeader>
-            <CardTitle className="text-xl text-[#202224]">
-              Tổng Quan Bán Hàng
-              {revenueGrowth !== 0 && (
-                <Badge
-                  variant="outline"
-                  className={`${revenueGrowth >= 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'} border-none ml-2`}
-                >
-                  {revenueGrowth >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                  <span>{revenueGrowth >= 0 ? '+' : ''}{revenueGrowth.toFixed(1)}%</span>
-                </Badge>
-              )}
-            </CardTitle>
-            <CardDescription>Doanh thu hàng ngày trong {dateRange} ngày qua</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {chartsLoading ? (
-              <div className="flex items-center justify-center h-[300px]">
-                <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-              </div>
-            ) : lineChartData.length > 0 ? (
-              <ChartContainer config={chartConfig} className="h-[400px] w-full">
-                <LineChart
-                  data={lineChartData}
-                  margin={{
-                    top: 10,
-                    left: 12,
-                    right: 12,
-                    bottom: 10,
+      {/* Sales Chart - Full Width */}
+      <Card className="bg-white">
+        <CardHeader>
+          <CardTitle className="text-xl text-[#202224]">
+            Tổng Quan Bán Hàng
+            {revenueGrowth !== 0 && (
+              <Badge
+                variant="outline"
+                className={`${revenueGrowth >= 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'} border-none ml-2`}
+              >
+                {revenueGrowth >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                <span>{revenueGrowth >= 0 ? '+' : ''}{revenueGrowth.toFixed(1)}%</span>
+              </Badge>
+            )}
+          </CardTitle>
+          <CardDescription>Doanh thu hàng ngày trong {dateRange} ngày qua</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {chartsLoading ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            </div>
+          ) : lineChartData.length > 0 ? (
+            <ChartContainer config={chartConfig} className="h-[400px] w-full">
+              <LineChart
+                data={lineChartData}
+                margin={{
+                  top: 10,
+                  left: 12,
+                  right: 12,
+                  bottom: 60,
+                }}
+              >
+                <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="date"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                  interval={0}
+                  tickFormatter={(value) => {
+                    if (!value) return '';
+                    const date = new Date(value);
+                    return date.toLocaleDateString('vi-VN', {
+                      day: '2-digit',
+                      month: '2-digit'
+                    });
                   }}
-                >
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="day"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    interval="preserveStartEnd"
-                    minTickGap={30}
-                    tickFormatter={(value) => {
-                      if (typeof value === 'string' && value.startsWith('Day ')) {
-                        return value.replace('Day ', '');
-                      }
-                      return value;
-                    }}
-                  />
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent hideLabel />}
-                  />
-                  <Line
-                    dataKey="revenueInMillions"
-                    type="monotone"
-                    stroke="var(--color-revenue)"
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                  <Line
-                    dataKey="ordersCount"
-                    type="monotone"
-                    stroke="var(--color-orders)"
-                    strokeWidth={2}
-                    dot={false}
-                    strokeDasharray="5 5"
-                  />
-                </LineChart>
-              </ChartContainer>
-            ) : (
-              <div className="flex items-center justify-center h-[300px] text-gray-500">
-                Không có dữ liệu
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Order Status Distribution - Pie Chart */}
-        <Card className="bg-white">
-          <CardHeader>
-            <CardTitle className="text-xl text-[#202224]">
-              Phân Phối Trạng Thái Đơn Hàng
-            </CardTitle>
-            <CardDescription>Phân loại đơn hàng theo trạng thái hiện tại</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {chartsLoading ? (
-              <div className="flex items-center justify-center h-[350px]">
-                <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-              </div>
-            ) : pieChartData.length > 0 ? (
-              <>
-                <ChartContainer config={pieChartConfig} className="mx-auto h-[350px]">
-                  <PieChart>
-                    <ChartTooltip
-                      content={({ active, payload }) => {
-                        if (!active || !payload?.length) return null;
-                        const data = payload[0].payload;
-                        return (
-                          <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-lg">
-                            <p className="font-semibold text-sm">{data.statusLabel}</p>
-                            <p className="text-xs text-gray-600">{data.count} orders</p>
-                          </div>
-                        );
-                      }}
-                    />
-                    <Pie
-                      data={pieChartData as any}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={(props: any) => `${props.statusLabel}: ${props.count}`}
-                      outerRadius={110}
-                      innerRadius={60}
-                      fill="#8884d8"
-                      dataKey="count"
-                      paddingAngle={2}
-                    >
-                      {pieChartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ChartContainer>
-                {/* Legend */}
-                <div className="grid grid-cols-2 gap-3 mt-6">
-                  {pieChartData.map((item) => (
-                    <div key={item.status} className="flex items-center gap-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className="text-sm text-gray-700">
-                        <span className="font-semibold">{item.statusLabel}</span>: {item.count}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div className="flex items-center justify-center h-[350px] text-gray-500">
-                Không có dữ liệu
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                />
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent hideLabel />}
+                />
+                <Line
+                  dataKey="revenueInMillions"
+                  type="monotone"
+                  stroke="var(--color-revenue)"
+                  strokeWidth={2}
+                  dot={false}
+                />
+                <Line
+                  dataKey="ordersCount"
+                  type="monotone"
+                  stroke="var(--color-orders)"
+                  strokeWidth={2}
+                  dot={false}
+                  strokeDasharray="5 5"
+                />
+              </LineChart>
+            </ChartContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[300px] text-gray-500">
+              Không có dữ liệu
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Recent Orders Widget */}
       <div className="bg-white rounded-xl p-6 border border-gray-200">
@@ -422,7 +407,7 @@ export default function AdminDashboard() {
                   <span className="text-sm font-semibold text-[#202224]">{order.customer_name}</span>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="text-sm font-bold text-[#202224]">{order.total_amount.toLocaleString('vi-VN')} VND</span>
+                  <span className="text-sm font-bold text-[#202224]">{order.total_amount.toLocaleString('vi-VN')}₫</span>
                   <span className={`text-xs px-2 py-1 rounded-full ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
                     {order.status}
                   </span>

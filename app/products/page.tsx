@@ -196,7 +196,7 @@ export default function ProductsPage() {
                   </div>
                   <div className="space-y-3">
                     <div className="space-y-1">
-                      <label className="text-xs text-gray-600">Tối thiểu: {priceRange[0].toLocaleString('vi-VN')}k₫</label>
+                      <label className="text-xs text-gray-600">Tối thiểu: {(priceRange[0] * 1000).toLocaleString('vi-VN')}₫</label>
                       <input
                         type="range"
                         min="0"
@@ -213,7 +213,7 @@ export default function ProductsPage() {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs text-gray-600">Tối đa: {priceRange[1].toLocaleString('vi-VN')}k₫</label>
+                      <label className="text-xs text-gray-600">Tối đa: {(priceRange[1] * 1000).toLocaleString('vi-VN')}₫</label>
                       <input
                         type="range"
                         min="0"
@@ -230,8 +230,8 @@ export default function ProductsPage() {
                       />
                     </div>
                     <div className="flex justify-between text-sm font-medium">
-                      <span>{priceRange[0].toLocaleString('vi-VN')}k₫</span>
-                      <span>{priceRange[1].toLocaleString('vi-VN')}k₫</span>
+                      <span>{(priceRange[0] * 1000).toLocaleString('vi-VN')}₫</span>
+                      <span>{(priceRange[1] * 1000).toLocaleString('vi-VN')}₫</span>
                     </div>
                   </div>
                 </div>

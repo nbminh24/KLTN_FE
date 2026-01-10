@@ -3,24 +3,33 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Search, X, MessageSquare, Bot, User } from 'lucide-react';
+import { ArrowLeft, Search, X, MessageSquare, Bot, User, Loader2, Send } from 'lucide-react';
+import adminChatbotService from '@/lib/services/adminChatbotService';
+import handoffService from '@/lib/services/handoffService';
 
-type Tab = 'all' | 'unanswered';
+type Tab = 'all' | 'human_active';
 
 interface Message {
-  role: 'user' | 'bot';
-  text: string;
-  time: string;
+  id: number;
+  sender: 'customer' | 'bot' | 'admin';
+  message: string;
+  intent?: string | null;
+  created_at: string;
 }
 
 interface Conversation {
-  id: string;
-  customer: string;
+  id: number;
+  customer: {
+    id: number;
+    name: string;
+    email: string;
+  } | null;
+  visitor_id: string | null;
   status: string;
-  intents: string[];
-  messages: number;
-  time: string;
-  fullConversation: Message[];
+  message_count: number;
+  created_at: string;
+  updated_at: string;
+  messages?: Message[];
 }
 
 function ConversationsContent() {
@@ -31,122 +40,114 @@ function ConversationsContent() {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterIntent, setFilterIntent] = useState<string>('all');
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [messageInput, setMessageInput] = useState('');
+  const [sending, setSending] = useState(false);
 
   // Read tab from query parameter
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam === 'unanswered') {
-      setActiveTab('unanswered');
+    if (tabParam === 'human_active') {
+      setActiveTab('human_active');
     } else {
       setActiveTab('all');
     }
   }, [searchParams]);
 
-  const conversations: Conversation[] = [
-    {
-      id: '1',
-      customer: 'John Smith',
-      status: 'Resolved',
-      intents: ['Product Inquiry', 'Size Guide'],
-      messages: 12,
-      time: '2h ago',
-      fullConversation: [
-        { role: 'user', text: 'Hi! What sizes do you have for the t-shirts?', time: '10:30 AM' },
-        { role: 'bot', text: 'Hello! We have sizes ranging from XS to 3XL for our t-shirts. Which specific t-shirt are you interested in?', time: '10:30 AM' },
-        { role: 'user', text: 'The Gradient Graphic T-shirt', time: '10:31 AM' },
-        { role: 'bot', text: 'The Gradient Graphic T-shirt is available in Small, Medium, Large, and XL. Would you like to know about the fit or measurements?', time: '10:31 AM' },
-        { role: 'user', text: 'What are the measurements for Large?', time: '10:32 AM' },
-        { role: 'bot', text: 'For size Large:\n• Chest: 42 inches\n• Length: 29 inches\n• Shoulder: 18 inches', time: '10:32 AM' },
-      ],
-    },
-    {
-      id: '2',
-      customer: 'Sarah Johnson',
-      status: 'Unresolved',
-      intents: ['Shipping Info'],
-      messages: 5,
-      time: '3h ago',
-      fullConversation: [
-        { role: 'user', text: 'Do you ship internationally?', time: '09:15 AM' },
-        { role: 'bot', text: '[No answer - Fallback]', time: '09:15 AM' },
-        { role: 'user', text: 'What about shipping to Vietnam?', time: '09:16 AM' },
-        { role: 'bot', text: '[No answer - Fallback]', time: '09:16 AM' },
-      ],
-    },
-    {
-      id: '3',
-      customer: 'Mike Chen',
-      status: 'Resolved',
-      intents: ['Order Status', 'Payment'],
-      messages: 8,
-      time: '5h ago',
-      fullConversation: [
-        { role: 'user', text: 'Where is my order #12345?', time: '08:00 AM' },
-        { role: 'bot', text: 'Let me check that for you. Your order #12345 is currently in transit and expected to arrive in 2-3 business days.', time: '08:00 AM' },
-        { role: 'user', text: 'Can I change the payment method?', time: '08:02 AM' },
-        { role: 'bot', text: 'Unfortunately, payment methods cannot be changed after an order is placed. However, you can cancel and reorder if needed.', time: '08:02 AM' },
-      ],
-    },
-    {
-      id: '4',
-      customer: 'Emily Davis',
-      status: 'Unresolved',
-      intents: ['Return Policy'],
-      messages: 3,
-      time: '6h ago',
-      fullConversation: [
-        { role: 'user', text: 'Can I return after 45 days?', time: '07:30 AM' },
-        { role: 'bot', text: '[No answer - Fallback]', time: '07:30 AM' },
-      ],
-    },
-    {
-      id: '5',
-      customer: 'David Wilson',
-      status: 'Escalated',
-      intents: ['Payment', 'Order Status'],
-      messages: 15,
-      time: '8h ago',
-      fullConversation: [
-        { role: 'user', text: 'My payment was charged twice!', time: '06:00 AM' },
-        { role: 'bot', text: 'I apologize for the inconvenience. Let me escalate this to our support team immediately.', time: '06:00 AM' },
-        { role: 'user', text: 'This is urgent, I need a refund now!', time: '06:01 AM' },
-        { role: 'bot', text: 'I understand your concern. A support agent will contact you within 1 hour to resolve this issue.', time: '06:01 AM' },
-      ],
-    },
-    {
-      id: '6',
-      customer: 'Lisa Anderson',
-      status: 'Resolved',
-      intents: ['Product Inquiry'],
-      messages: 6,
-      time: '1d ago',
-      fullConversation: [
-        { role: 'user', text: 'Is the hoodie made of cotton?', time: 'Yesterday' },
-        { role: 'bot', text: 'Yes! Our hoodies are made of 100% premium cotton for maximum comfort.', time: 'Yesterday' },
-        { role: 'user', text: 'Great, thank you!', time: 'Yesterday' },
-        { role: 'bot', text: 'You\'re welcome! Let me know if you need anything else.', time: 'Yesterday' },
-      ],
-    },
-  ];
+  // Fetch conversations
+  useEffect(() => {
+    fetchConversations();
+  }, [activeTab, searchQuery, filterStatus]);
 
-  // Filter conversations
+  const fetchConversations = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      let response;
+      if (activeTab === 'human_active') {
+        // Fetch both pending and active human conversations
+        const adminData = localStorage.getItem('admin');
+        const adminId = adminData ? JSON.parse(adminData).id : 1;
+
+        const [pendingRes, activeRes] = await Promise.all([
+          handoffService.getPendingConversations(),
+          handoffService.getActiveConversations(adminId),
+        ]);
+        const allHumanConvs = [
+          ...(pendingRes.data.conversations || []),
+          ...(activeRes.data.conversations || []),
+        ];
+        response = { data: { data: allHumanConvs } };
+      } else {
+        response = await adminChatbotService.getConversations({
+          search: searchQuery || undefined,
+        });
+      }
+
+      setConversations(response.data.data || response.data.conversations || []);
+    } catch (err: any) {
+      console.error('Error fetching conversations:', err);
+      setError('Unable to load conversations');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchConversationDetails = async (convId: number) => {
+    try {
+      const response = await adminChatbotService.getConversationById(convId.toString());
+      const conv = response.data;
+      setSelectedConversation({
+        ...conv.session,
+        messages: conv.messages,
+      });
+    } catch (err) {
+      console.error('Error fetching conversation details:', err);
+    }
+  };
+
+  const getRelativeTime = (timestamp: string) => {
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffMs = now.getTime() - time.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${diffDays}d ago`;
+  };
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!messageInput.trim() || sending || !selectedConversation) return;
+
+    try {
+      setSending(true);
+      const adminData = localStorage.getItem('admin');
+      const adminId = adminData ? JSON.parse(adminData).id : 1;
+
+      await handoffService.sendAdminMessage(selectedConversation.id, adminId, messageInput.trim());
+      setMessageInput('');
+      await fetchConversationDetails(selectedConversation.id);
+    } catch (err) {
+      console.error('Error sending message:', err);
+      alert('Failed to send message');
+    } finally {
+      setSending(false);
+    }
+  };
+
   const filteredConversations = conversations.filter((conv) => {
-    // Tab filter
-    const matchesTab = activeTab === 'all' || 
-                      (activeTab === 'unanswered' && conv.status === 'Unresolved');
-    
-    // Search filter
-    const matchesSearch = conv.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         conv.id.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    // Status filter
-    const matchesStatus = filterStatus === 'all' || conv.status === filterStatus;
-    
-    // Intent filter
-    const matchesIntent = filterIntent === 'all' || 
-                         conv.intents.some(intent => intent === filterIntent);
-    
-    return matchesTab && matchesSearch && matchesStatus && matchesIntent;
+    const customerName = conv.customer?.name || `Visitor ${conv.visitor_id}`;
+    const matchesSearch = customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      conv.id.toString().includes(searchQuery);
+
+    return matchesSearch;
   });
 
   const getIntentColor = (intent: string) => {
@@ -176,8 +177,8 @@ function ConversationsContent() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-[#202224]">Conversation Logs</h1>
-          <p className="text-gray-600 mt-1">View all chatbot conversations</p>
+          <h1 className="text-3xl font-bold text-[#202224]">Lịch Sử Hội Thoại</h1>
+          <p className="text-gray-600 mt-1">Xem tất cả các cuộc trò chuyện với chatbot</p>
         </div>
       </div>
 
@@ -188,26 +189,24 @@ function ConversationsContent() {
             setActiveTab('all');
             router.push('/admin/chatbot/conversations');
           }}
-          className={`px-4 py-3 font-semibold transition relative ${
-            activeTab === 'all'
-              ? 'text-[#4880FF] border-b-2 border-[#4880FF]'
-              : 'text-gray-600 hover:text-gray-800'
-          }`}
+          className={`px-4 py-3 font-semibold transition relative ${activeTab === 'all'
+            ? 'text-[#4880FF] border-b-2 border-[#4880FF]'
+            : 'text-gray-600 hover:text-gray-800'
+            }`}
         >
-          All
+          Tất Cả
         </button>
         <button
           onClick={() => {
-            setActiveTab('unanswered');
-            router.push('/admin/chatbot/conversations?tab=unanswered');
+            setActiveTab('human_active');
+            router.push('/admin/chatbot/conversations?tab=human_active');
           }}
-          className={`px-4 py-3 font-semibold transition relative ${
-            activeTab === 'unanswered'
-              ? 'text-[#4880FF] border-b-2 border-[#4880FF]'
-              : 'text-gray-600 hover:text-gray-800'
-          }`}
+          className={`px-4 py-3 font-semibold transition relative ${activeTab === 'human_active'
+            ? 'text-[#4880FF] border-b-2 border-[#4880FF]'
+            : 'text-gray-600 hover:text-gray-800'
+            }`}
         >
-          Unanswered Questions
+          Hỗ Trợ Trực Tiếp
         </button>
       </div>
 
@@ -218,7 +217,7 @@ function ConversationsContent() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search by ID or customer name..."
+              placeholder="Tìm theo ID hoặc tên khách hàng..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF] text-sm"
@@ -229,23 +228,23 @@ function ConversationsContent() {
             onChange={(e) => setFilterStatus(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF] text-sm"
           >
-            <option value="all">All Status</option>
-            <option value="Resolved">Resolved</option>
-            <option value="Unresolved">Unresolved</option>
-            <option value="Escalated">Escalated</option>
+            <option value="all">Tất Cả Trạng Thái</option>
+            <option value="Resolved">Đã Giải Quyết</option>
+            <option value="Unresolved">Chưa Giải Quyết</option>
+            <option value="Escalated">Đã Chuyển Tiếp</option>
           </select>
           <select
             value={filterIntent}
             onChange={(e) => setFilterIntent(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF] text-sm"
           >
-            <option value="all">All Intents</option>
-            <option value="Product Inquiry">Product Inquiry</option>
-            <option value="Order Status">Order Status</option>
-            <option value="Shipping Info">Shipping Info</option>
-            <option value="Return Policy">Return Policy</option>
-            <option value="Payment">Payment</option>
-            <option value="Size Guide">Size Guide</option>
+            <option value="all">Tất Cả Ý Định</option>
+            <option value="Product Inquiry">Hỏi Sản Phẩm</option>
+            <option value="Order Status">Trạng Thái Đơn Hàng</option>
+            <option value="Shipping Info">Thông Tin Giao Hàng</option>
+            <option value="Return Policy">Chính Sách Trả Hàng</option>
+            <option value="Payment">Thanh Toán</option>
+            <option value="Size Guide">Hướng Dẫn Size</option>
           </select>
         </div>
       </div>
@@ -257,25 +256,25 @@ function ConversationsContent() {
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
                 <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">ID</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Customer</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Status</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Intents</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Messages</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Time</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Khách Hàng</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Trạng Thái</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Ý Định</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Tin Nhắn</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-[#202224]">Thời Gian</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredConversations.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                    No conversations found
+                    Không tìm thấy cuộc trò chuyện nào
                   </td>
                 </tr>
               ) : (
                 filteredConversations.map((conv) => (
-                  <tr 
-                    key={conv.id} 
-                    onClick={() => setSelectedConversation(conv)}
+                  <tr
+                    key={conv.id}
+                    onClick={() => fetchConversationDetails(conv.id)}
                     className="hover:bg-gray-50 transition cursor-pointer"
                   >
                     <td className="px-6 py-4">
@@ -285,7 +284,7 @@ function ConversationsContent() {
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-sm font-semibold text-[#202224]">
-                        {conv.customer}
+                        {conv.customer?.name || `Visitor ${conv.visitor_id}`}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -294,22 +293,13 @@ function ConversationsContent() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex flex-wrap gap-1">
-                        {conv.intents.map((intent, i) => (
-                          <span
-                            key={i}
-                            className={`px-2 py-1 rounded-full text-xs font-semibold ${getIntentColor(intent)}`}
-                          >
-                            {intent}
-                          </span>
-                        ))}
-                      </div>
+                      <span className="text-xs text-gray-500">-</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-gray-600">{conv.messages}</span>
+                      <span className="text-sm text-gray-600">{conv.message_count}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-gray-600">{conv.time}</span>
+                      <span className="text-sm text-gray-600">{getRelativeTime(conv.updated_at)}</span>
                     </td>
                   </tr>
                 ))
@@ -328,10 +318,10 @@ function ConversationsContent() {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-[#202224]">
-                    Conversation #{selectedConversation.id}
+                    Cuộc Trò Chuyện #{selectedConversation.id}
                   </h2>
                   <p className="text-sm text-gray-600 mt-1">
-                    {selectedConversation.customer} • {selectedConversation.time}
+                    {selectedConversation.customer?.name || `Khách ${selectedConversation.visitor_id}`} • {getRelativeTime(selectedConversation.updated_at)}
                   </p>
                 </div>
                 <button
@@ -345,82 +335,85 @@ function ConversationsContent() {
                 <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(selectedConversation.status)}`}>
                   {selectedConversation.status}
                 </span>
-                {selectedConversation.intents.map((intent, i) => (
-                  <span
-                    key={i}
-                    className={`px-3 py-1 rounded-full text-xs font-semibold ${getIntentColor(intent)}`}
-                  >
-                    {intent}
-                  </span>
-                ))}
               </div>
             </div>
 
             {/* Modal Content */}
             <div className="flex-1 overflow-y-auto p-6">
-              {activeTab === 'unanswered' ? (
-                // Q&A Pairs for Unanswered tab
-                <div className="space-y-6">
-                  <h3 className="font-bold text-lg text-[#202224] mb-4">Unanswered Questions</h3>
-                  {selectedConversation.fullConversation
-                    .filter((msg) => msg.role === 'user' || msg.text.includes('[No answer'))
-                    .reduce((acc: Message[][], msg, i, arr) => {
-                      if (msg.role === 'user') {
-                        const nextMsg = arr[i + 1];
-                        if (nextMsg && nextMsg.text.includes('[No answer')) {
-                          acc.push([msg, nextMsg]);
-                        }
-                      }
-                      return acc;
-                    }, [])
-                    .map((pair, i) => (
-                      <div key={i} className="border border-yellow-200 bg-yellow-50 rounded-lg p-4">
-                        <div className="flex items-start gap-3 mb-3">
-                          <User className="w-5 h-5 text-gray-600 flex-shrink-0 mt-1" />
-                          <div className="flex-1">
-                            <p className="text-xs text-gray-500 mb-1">Question:</p>
-                            <p className="text-sm font-semibold text-gray-800">{pair[0].text}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-3 pt-3 border-t border-yellow-300">
-                          <Bot className="w-5 h-5 text-red-600 flex-shrink-0 mt-1" />
-                          <div className="flex-1">
-                            <p className="text-xs text-gray-500 mb-1">Answer:</p>
-                            <p className="text-sm text-red-600 font-semibold">{pair[1].text}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              ) : (
-                // Full Conversation for All tab
-                <div className="space-y-4">
-                  {selectedConversation.fullConversation.map((msg, i) => (
-                    <div key={i} className={`flex gap-3 ${msg.role === 'bot' ? 'justify-end' : ''}`}>
-                      {msg.role === 'user' && (
+              <div className="space-y-4">
+                {selectedConversation.messages && selectedConversation.messages.length > 0 ? (
+                  selectedConversation.messages.map((msg) => (
+                    <div key={msg.id} className={`flex gap-3 ${msg.sender === 'bot' ? 'justify-end' : ''}`}>
+                      {msg.sender === 'customer' && (
                         <div className="w-10 h-10 bg-gray-300 rounded-full flex-shrink-0 flex items-center justify-center">
                           <User className="w-5 h-5 text-white" />
                         </div>
                       )}
-                      <div className={`flex-1 max-w-xl ${msg.role === 'bot' ? 'flex flex-col items-end' : ''}`}>
-                        <span className="text-xs text-gray-500 mb-1 block">{msg.time}</span>
+                      <div className={`flex-1 max-w-xl ${msg.sender === 'bot' ? 'flex flex-col items-end' : ''}`}>
+                        <span className="text-xs text-gray-500 mb-1 block">
+                          {new Date(msg.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
                         <div
-                          className={`rounded-lg p-4 ${
-                            msg.role === 'user' ? 'bg-gray-100' : 'bg-[#4880FF] text-white'
-                          }`}
+                          className={`rounded-lg p-4 ${msg.sender === 'customer'
+                              ? 'bg-gray-100'
+                              : msg.sender === 'admin'
+                                ? 'bg-green-100'
+                                : 'bg-[#4880FF] text-white'
+                            }`}
                         >
-                          <p className="text-sm whitespace-pre-line">{msg.text}</p>
+                          <p className="text-sm whitespace-pre-line">{msg.message}</p>
+                          {msg.intent && (
+                            <span className="text-xs opacity-75 mt-1 block">Ý định: {msg.intent}</span>
+                          )}
                         </div>
                       </div>
-                      {msg.role === 'bot' && (
+                      {msg.sender === 'bot' && (
                         <div className="w-10 h-10 bg-[#4880FF] rounded-full flex-shrink-0 flex items-center justify-center">
                           <Bot className="w-5 h-5 text-white" />
                         </div>
                       )}
+                      {msg.sender === 'admin' && (
+                        <div className="w-10 h-10 bg-green-500 rounded-full flex-shrink-0 flex items-center justify-center">
+                          <User className="w-5 h-5 text-white" />
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-              )}
+                  ))
+                ) : (
+                  <p className="text-center text-gray-500 py-8">Chưa có tin nhắn trong cuộc trò chuyện này</p>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer - Reply Input */}
+            <div className="border-t border-gray-200 p-4">
+              <form onSubmit={handleSendMessage} className="flex gap-3">
+                <input
+                  type="text"
+                  value={messageInput}
+                  onChange={(e) => setMessageInput(e.target.value)}
+                  placeholder="Nhập tin nhắn của bạn..."
+                  disabled={sending}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF] disabled:opacity-50 disabled:bg-gray-50 text-sm"
+                />
+                <button
+                  type="submit"
+                  disabled={!messageInput.trim() || sending}
+                  className="px-4 py-2 bg-[#4880FF] text-white rounded-lg font-semibold hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
+                >
+                  {sending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Đang gửi
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      Gửi
+                    </>
+                  )}
+                </button>
+              </form>
             </div>
           </div>
         </div>

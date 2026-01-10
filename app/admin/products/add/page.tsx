@@ -87,7 +87,7 @@ export default function AddProductPage() {
     } catch (error: any) {
       console.error('❌ Failed to load data:', error);
       console.error('❌ Error response:', error.response?.data);
-      showToast('Failed to load sizes, colors, and categories', 'error');
+      showToast('Lỗi tải dữ liệu kích thước, màu sắc và danh mục', 'error');
     } finally {
       setLoadingData(false);
     }
@@ -112,7 +112,7 @@ export default function AddProductPage() {
 
   const handleStep1Next = () => {
     if (!productName || !categoryId || !costPrice || !sellingPrice || selectedSizeIds.length === 0 || selectedColorIds.length === 0) {
-      showToast('Please fill all required fields and select at least one size and color', 'error');
+      showToast('Vui lòng điền đầy đủ thông tin và chọn ít nhất 1 size và 1 màu', 'error');
       return;
     }
 
@@ -166,8 +166,8 @@ export default function AddProductPage() {
         description,
         full_description: fullDescription,
         category_id: categoryId,
-        cost_price: parseFloat(costPrice),
-        selling_price: parseFloat(sellingPrice),
+        cost_price: parseFloat(costPrice) / 25000,
+        selling_price: parseFloat(sellingPrice) / 25000,
         status,
         sku: slug || generateSlug(productName),
         variants: variants
@@ -187,7 +187,7 @@ export default function AddProductPage() {
       await adminProductService.createProduct(productData);
 
       console.log('✅ Product created successfully!');
-      showToast('Product created successfully!', 'success');
+      showToast('Tạo sản phẩm thành công!', 'success');
       router.push('/admin/products');
     } catch (error: any) {
       console.error('❌ Failed to create product:', error);
@@ -196,7 +196,7 @@ export default function AddProductPage() {
       console.error('❌ Error message:', error.response?.data?.message);
       console.error('❌ Validation errors:', error.response?.data?.errors);
 
-      const errorMsg = error.response?.data?.message || 'Failed to create product';
+      const errorMsg = error.response?.data?.message || 'Lỗi tạo sản phẩm';
       showToast(errorMsg, 'error');
     } finally {
       setLoading(false);
@@ -211,8 +211,8 @@ export default function AddProductPage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-[#202224]">Add New Product</h1>
-            <p className="text-sm text-gray-600 mt-1">Step {step} of 2</p>
+            <h1 className="text-3xl font-bold text-[#202224]">Thêm sản phẩm mới</h1>
+            <p className="text-sm text-gray-600 mt-1">Bước {step}/2</p>
           </div>
         </div>
       </div>
@@ -221,27 +221,27 @@ export default function AddProductPage() {
         <div className="max-w-4xl space-y-6">
           {/* Basic Info */}
           <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <h2 className="text-xl font-bold mb-4">Basic Information</h2>
+            <h2 className="text-xl font-bold mb-4">Thông tin cơ bản</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold mb-2">Product Name *</label>
+                <label className="block text-sm font-semibold mb-2">Tên sản phẩm *</label>
                 <input
                   type="text"
                   required
                   value={productName}
                   onChange={(e) => setProductName(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-                  placeholder="e.g. Gradient Graphic T-shirt"
+                  placeholder="VD: Áo thun Graphic Gradient"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-2">Description</label>
+                <label className="block text-sm font-semibold mb-2">Mô tả ngắn</label>
                 <textarea
                   rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-                  placeholder="Short product description..."
+                  placeholder="Mô tả ngắn về sản phẩm..."
                 ></textarea>
               </div>
               <div>
@@ -251,18 +251,18 @@ export default function AddProductPage() {
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF] bg-gray-50"
-                  placeholder="auto-generated from product name"
+                  placeholder="tự động tạo từ tên sản phẩm"
                 />
-                <p className="text-xs text-gray-500 mt-1">Leave empty to auto-generate</p>
+                <p className="text-xs text-gray-500 mt-1">Để trống để tự động tạo</p>
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-2">Full Description</label>
+                <label className="block text-sm font-semibold mb-2">Mô tả chi tiết</label>
                 <textarea
                   rows={5}
                   value={fullDescription}
                   onChange={(e) => setFullDescription(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-                  placeholder="Detailed information: fabric, care instructions, etc..."
+                  placeholder="Thông tin chi tiết: chất liệu, hướng dẫn bảo quản..."
                 ></textarea>
               </div>
             </div>
@@ -270,35 +270,35 @@ export default function AddProductPage() {
 
           {/* Pricing */}
           <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <h2 className="text-xl font-bold mb-4">Pricing</h2>
+            <h2 className="text-xl font-bold mb-4">Giá cả</h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold mb-2">Cost Price *</label>
+                <label className="block text-sm font-semibold mb-2">Giá vốn (Nghìn Đồng) *</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">₫</span>
                   <input
                     type="number"
                     required
-                    step="0.01"
+                    step="1000"
                     value={costPrice}
                     onChange={(e) => setCostPrice(e.target.value)}
-                    className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-                    placeholder="0.00"
+                    className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
+                    placeholder="0"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-2">Selling Price *</label>
+                <label className="block text-sm font-semibold mb-2">Giá bán (Nghìn Đồng) *</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">₫</span>
                   <input
                     type="number"
                     required
-                    step="0.01"
+                    step="1000"
                     value={sellingPrice}
                     onChange={(e) => setSellingPrice(e.target.value)}
-                    className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
-                    placeholder="0.00"
+                    className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
+                    placeholder="0"
                   />
                 </div>
               </div>
@@ -307,11 +307,11 @@ export default function AddProductPage() {
 
           {/* Category */}
           <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <h2 className="text-xl font-bold mb-4">Category</h2>
+            <h2 className="text-xl font-bold mb-4">Danh mục</h2>
             {loadingData ? (
               <div className="flex items-center gap-2 text-gray-500">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Loading categories...
+                Đang tải danh mục...
               </div>
             ) : (
               <select
@@ -320,7 +320,7 @@ export default function AddProductPage() {
                 onChange={(e) => setCategoryId(parseInt(e.target.value))}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4880FF]"
               >
-                <option value={0}>Select Category</option>
+                <option value={0}>Chọn danh mục</option>
                 {categories.map(cat => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
@@ -330,16 +330,16 @@ export default function AddProductPage() {
 
           {/* Variants */}
           <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <h2 className="text-xl font-bold mb-4">Variants *</h2>
+            <h2 className="text-xl font-bold mb-4">Biến thể *</h2>
             {loadingData ? (
               <div className="flex items-center gap-2 text-gray-500">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Loading sizes and colors...
+                Đang tải size và màu...
               </div>
             ) : (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold mb-3">Select Sizes *</label>
+                  <label className="block text-sm font-semibold mb-3">Chọn kích thước *</label>
                   <div className="flex flex-wrap gap-2">
                     {sizes.map((size) => (
                       <label
@@ -367,7 +367,7 @@ export default function AddProductPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-3">Select Colors *</label>
+                  <label className="block text-sm font-semibold mb-3">Chọn màu sắc *</label>
                   <div className="flex flex-wrap gap-2">
                     {colors.map((color) => (
                       <label
@@ -404,7 +404,7 @@ export default function AddProductPage() {
 
           {/* Status */}
           <div className="bg-white rounded-xl p-6 border border-gray-200">
-            <h2 className="text-xl font-bold mb-4">Product Status</h2>
+            <h2 className="text-xl font-bold mb-4">Trạng thái sản phẩm</h2>
             <div className="flex items-center gap-3">
               <input
                 type="checkbox"
@@ -414,7 +414,7 @@ export default function AddProductPage() {
                 className="w-5 h-5"
               />
               <label htmlFor="active" className="text-sm font-semibold">
-                Active (Product will be visible on store)
+                Kích hoạt (Sản phẩm sẽ hiển thị trên cửa hàng)
               </label>
             </div>
           </div>
@@ -425,13 +425,13 @@ export default function AddProductPage() {
               onClick={handleStep1Next}
               className="px-8 py-3 bg-[#4880FF] text-white rounded-lg font-semibold hover:bg-blue-600 transition"
             >
-              Next: Configure Variants
+              Tiếp: Cấu hình biến thể
             </button>
             <Link
               href="/admin/products"
               className="px-8 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition"
             >
-              Cancel
+              Hủy
             </Link>
           </div>
         </div>
@@ -441,25 +441,25 @@ export default function AddProductPage() {
           <div className="bg-white rounded-xl p-6 border border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-xl font-bold">Variants Matrix</h2>
-                <p className="text-sm text-gray-600 mt-1">{variants.filter(v => v.status === 'active').length} active variants</p>
+                <h2 className="text-xl font-bold">Bảng biến thể</h2>
+                <p className="text-sm text-gray-600 mt-1">{variants.filter(v => v.status === 'active').length} biến thể kích hoạt</p>
               </div>
               <button
                 onClick={() => setStep(1)}
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm font-semibold"
               >
-                Back to Step 1
+                Quay lại Bước 1
               </button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-[#F1F4F9]">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Variant</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Biến thể</th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">SKU</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Stock</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Reorder Point</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Status</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Tồn kho</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Điểm đặt lại</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Trạng thái</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -508,28 +508,28 @@ export default function AddProductPage() {
           {showImageUpload && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowImageUpload(null)}>
               <div className="bg-white rounded-xl p-6 max-w-2xl w-full mx-4" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-xl font-bold mb-4">Upload Variant Images</h3>
+                <h3 className="text-xl font-bold mb-4">Tải ảnh biến thể</h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-semibold mb-2">Main Image *</label>
+                    <label className="block text-sm font-semibold mb-2">Ảnh chính *</label>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#4880FF] transition cursor-pointer">
                       <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm text-gray-600">Upload main product image</p>
+                      <p className="text-sm text-gray-600">Tải ảnh sản phẩm chính</p>
                       <input type="file" accept="image/*" className="hidden" />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold mb-2">Secondary Images</label>
+                    <label className="block text-sm font-semibold mb-2">Ảnh phụ</label>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#4880FF] transition cursor-pointer">
                       <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm text-gray-600">Upload additional images</p>
+                      <p className="text-sm text-gray-600">Tải thêm ảnh</p>
                       <input type="file" accept="image/*" multiple className="hidden" />
                     </div>
                   </div>
                 </div>
                 <div className="flex gap-3 mt-6">
-                  <button className="px-6 py-2 bg-[#4880FF] text-white rounded-lg hover:bg-blue-600 transition">Save</button>
-                  <button onClick={() => setShowImageUpload(null)} className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
+                  <button className="px-6 py-2 bg-[#4880FF] text-white rounded-lg hover:bg-blue-600 transition">Lưu</button>
+                  <button onClick={() => setShowImageUpload(null)} className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">Hủy</button>
                 </div>
               </div>
             </div>
@@ -541,19 +541,19 @@ export default function AddProductPage() {
               onClick={handleSubmit}
               className="px-8 py-3 bg-[#4880FF] text-white rounded-lg font-semibold hover:bg-blue-600 transition"
             >
-              Create Product
+              Tạo sản phẩm
             </button>
             <button
               onClick={() => setStep(1)}
               className="px-8 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition"
             >
-              Back
+              Quay lại
             </button>
             <Link
               href="/admin/products"
               className="px-8 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition"
             >
-              Cancel
+              Hủy
             </Link>
           </div>
         </div>
