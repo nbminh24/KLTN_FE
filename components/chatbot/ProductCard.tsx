@@ -9,10 +9,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
     const formatPrice = (price: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-        }).format(price);
+        return price.toLocaleString('vi-VN') + 'đ';
     };
 
     return (
@@ -50,19 +47,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                         {product.name}
                     </h3>
                 </Link>
-
-                {/* Rating - Only show if rating > 0 */}
-                {product.rating && product.rating > 0 && (
-                    <div className="flex items-center gap-1 mb-2">
-                        <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                        <span className="text-xs font-semibold text-gray-700">
-                            {product.rating.toFixed(1)}
-                        </span>
-                        {product.reviews && product.reviews > 0 && (
-                            <span className="text-xs text-gray-500">({product.reviews})</span>
-                        )}
-                    </div>
-                )}
 
                 {/* Price */}
                 <p className="text-base font-bold text-gray-900">
